@@ -5,10 +5,10 @@ import io.logz.sawmill.Processor;
 
 import java.util.Map;
 
-public class SampleProcessor implements Processor {
+public class TestProcessor implements Processor {
     public static final String TYPE = "sample";
 
-    public SampleProcessor() {
+    public TestProcessor() {
     }
 
     @Override
@@ -26,7 +26,7 @@ public class SampleProcessor implements Processor {
 
         @Override
         public Processor create(Map<String, Object> config) {
-            return new SampleProcessor();
+            return new TestProcessor();
         }
     }
 }

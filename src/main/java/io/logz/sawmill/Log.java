@@ -1,7 +1,7 @@
 package io.logz.sawmill;
 
 import io.logz.sawmill.utilities.JsonUtils;
-import org.json.simple.JSONObject;
+import org.apache.commons.collections4.MapUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,13 +13,14 @@ public class Log {
     private final Map<String, Object> metadata;
 
     public Log(Map<String, Object> source, Map<String, Object> metadata) {
+        if (MapUtils.isEmpty(source)) throw new IllegalArgumentException("source cannot be empty");
         this.source = source;
-        this.metadata = metadata;
+        this.metadata = metadata == null ? new HashMap<>() : metadata;
     }
 
-    public Log(JSONObject json) {
-        if (json == null || json.isEmpty()) throw new IllegalArgumentException("source cannot be empty");
-        this.source = JsonUtils.fromJsonString(Map.class, json.toJSONString());
+    public Log(Map<String, Object> source) {
+        if (MapUtils.isEmpty(source)) throw new IllegalArgumentException("source cannot be empty");
+        this.source = source;
         this.metadata = new HashMap<>();
     }
 
@@ -41,7 +42,7 @@ public class Log {
         if (type.isInstance(object)) {
             return type.cast(object);
         }
-        throw new IllegalArgumentException(String.format("Couldn't cast object type [%s] to type [%s]", object.getClass().getName(), type.getName()));
+        throw new ClassCastException(String.format("Couldn't cast object type [%s] to type [%s]", object.getClass().getName(), type.getName()));
     }
 
     @Override

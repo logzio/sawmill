@@ -7,9 +7,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author amesika
- */
 public class JsonUtils {
 
     private static final ObjectMapper mapper;
