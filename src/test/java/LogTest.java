@@ -54,7 +54,8 @@ public class LogTest {
 
     @Test
     public void testAddFieldValue() {
-        Map<String,Object> source = ImmutableMap.of("message", "hola");
+        Map<String,Object> source = new HashMap<>();
+        source.put("message", "hola");
         Log log = new Log(source);
 
         String fieldName = "newField";
