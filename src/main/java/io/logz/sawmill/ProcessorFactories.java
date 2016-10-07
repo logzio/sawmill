@@ -1,5 +1,6 @@
 package io.logz.sawmill;
 
+import io.logz.sawmill.exceptions.ProcessorMissingException;
 import io.logz.sawmill.processors.TestProcessor;
 
 import java.util.HashMap;
@@ -20,5 +21,11 @@ public class ProcessorFactories {
 
     private void loadBaseProcessors() {
         processorFactories.put(TestProcessor.TYPE, new TestProcessor.Factory());
+    }
+
+    public Processor.Factory get(String type) {
+        Processor.Factory factory = processorFactories.get(type);
+        if (factory == null) throw new ProcessorMissingException("failed to parse processor type " + type);
+        return factory;
     }
 }

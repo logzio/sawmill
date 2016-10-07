@@ -10,4 +10,8 @@ public interface Processor {
     interface Factory {
         Processor create(Map<String, Object> config);
     }
+
+    interface Configuration {
+
+    }
 }
