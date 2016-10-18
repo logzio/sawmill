@@ -2,10 +2,9 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Log;
 import io.logz.sawmill.Processor;
-import io.logz.sawmill.annotations.Process;
+import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
-@Process(type = "test")
 public class TestProcessor implements Processor {
     public static final String TYPE = "test";
 
@@ -25,6 +24,7 @@ public class TestProcessor implements Processor {
 
     public String getValue() { return value; }
 
+    @ProcessorProvider(type = "test")
     public static final class Factory implements Processor.Factory {
         public Factory() {
         }

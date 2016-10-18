@@ -1,18 +1,19 @@
 package io.logz.sawmill;
 
-import io.logz.sawmill.annotations.Process;
+import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorMissingException;
-import io.logz.sawmill.processors.TestProcessor;
 import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Exchanger;
 
 public class ProcessorFactories {
+    private static final Logger logger = LoggerFactory.getLogger(ProcessorFactories.class);
     private final Map<String, Processor.Factory> processorFactories;
 
     public ProcessorFactories() {
@@ -22,19 +23,13 @@ public class ProcessorFactories {
 
     private void loadProcessors() {
         Reflections reflections = new Reflections("io.logz.sawmill");
-        Set<Class<?>> processorTypes =  reflections.getTypesAnnotatedWith(Process.class);
+        Set<Class<?>> processorTypes =  reflections.getTypesAnnotatedWith(ProcessorProvider.class);
         processorTypes.forEach(type -> {
             try {
-                String typeName = type.getAnnotation(Process.class).type();
-                Optional<? extends Class<?>> factory = Arrays.stream(type.getDeclaredClasses()).filter(innerClasse -> innerClasse.getName().endsWith("$Factory")).findFirst();
-                if (factory.isPresent()) {
-                    processorFactories.put(typeName, (Processor.Factory) factory.get().getConstructor().newInstance());
-                }
-                else {
-                    // skip processor
-                }
+                String typeName = type.getAnnotation(ProcessorProvider.class).type();
+                processorFactories.put(typeName, (Processor.Factory) type.getConstructor().newInstance());
             } catch (Exception e) {
-                // skip processor
+                logger.error("failed to load processor, type={}", type.getName(), e);
             }
         });
 
