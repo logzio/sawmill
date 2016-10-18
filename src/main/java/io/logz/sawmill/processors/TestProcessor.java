@@ -1,12 +1,11 @@
 package io.logz.sawmill.processors;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import io.logz.sawmill.Log;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.annotations.Process;
+import io.logz.sawmill.utilities.JsonUtils;
 
-import java.util.Map;
-
+@Process(type = "test")
 public class TestProcessor implements Processor {
     public static final String TYPE = "test";
 
@@ -28,20 +27,17 @@ public class TestProcessor implements Processor {
 
     public static final class Factory implements Processor.Factory {
         public Factory() {
-
         }
 
         @Override
-        public Processor create(Map<String,Object> config) {
-            Gson gson = new Gson();
-            JsonElement jsonConfig = gson.toJsonTree(config);
-            Configuration testConfiguration = gson.fromJson(jsonConfig, Configuration.class);
+        public Processor create(String config) {
+            Configuration testConfiguration = JsonUtils.fromJsonString(Configuration.class, config);
 
             return new TestProcessor(testConfiguration.getValue());
         }
     }
 
-    public class Configuration implements Processor.Configuration {
+    public static class Configuration implements Processor.Configuration {
         private String value;
 
         public Configuration() { }
