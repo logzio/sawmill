@@ -1,10 +1,11 @@
 package io.logz.sawmill;
 
 import io.logz.sawmill.exceptions.PipelineExecutionException;
+import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class Pipeline {
 
@@ -38,14 +39,74 @@ public class Pipeline {
 
     public static final class Factory {
 
-        private final ProcessorFactories processorFactories;
+        private final ProcessorFactories processorFactories = new ProcessorFactories();
 
-        public Factory(ProcessorFactories processorFactories) {
-            this.processorFactories = processorFactories;
+        public Pipeline create(Configuration config) {
+            List<Processor> processors = new ArrayList<>();
+
+            config.getProcessors().forEach(processorDefinition -> {
+                Processor.Factory factory = processorFactories.get(processorDefinition.getName());
+                processors.add(factory.create(JsonUtils.toJsonString(processorDefinition.getConfig())));
+            });
+
+            return new Pipeline(config.getId(),
+                    config.getDescription(),
+                    processors);
+        }
+    }
+
+    public static class Configuration {
+        private String id;
+        private String description;
+        private List<ProcessorDefinition> processors;
+
+        public Configuration() { }
+
+        public String getId() {
+            return id;
         }
 
-        public Pipeline create(Map<String, Object> config) {
-            return null;
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public List<ProcessorDefinition> getProcessors() {
+            return processors;
+        }
+
+        public void setProcessors(List<ProcessorDefinition> processors) {
+            this.processors = processors;
+        }
+    }
+
+    public static class ProcessorDefinition {
+        private String name;
+        private Object config;
+
+        public ProcessorDefinition() { }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public Object getConfig() {
+            return config;
+        }
+
+        public void setConfig(Object config) {
+            this.config = config;
         }
     }
 }

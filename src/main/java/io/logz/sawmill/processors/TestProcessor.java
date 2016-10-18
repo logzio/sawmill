@@ -2,13 +2,16 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Log;
 import io.logz.sawmill.Processor;
-
-import java.util.Map;
+import io.logz.sawmill.annotations.ProcessorProvider;
+import io.logz.sawmill.utilities.JsonUtils;
 
 public class TestProcessor implements Processor {
-    public static final String TYPE = "sample";
+    public static final String TYPE = "test";
 
-    public TestProcessor() {
+    public final String value;
+
+    public TestProcessor(String value) {
+        this.value = value;
     }
 
     @Override
@@ -19,14 +22,36 @@ public class TestProcessor implements Processor {
     @Override
     public String getType() { return TYPE; }
 
+    public String getValue() { return value; }
+
+    @ProcessorProvider(type = "test")
     public static final class Factory implements Processor.Factory {
         public Factory() {
-
         }
 
         @Override
-        public Processor create(Map<String, Object> config) {
-            return new TestProcessor();
+        public Processor create(String config) {
+            Configuration testConfiguration = JsonUtils.fromJsonString(Configuration.class, config);
+
+            return new TestProcessor(testConfiguration.getValue());
+        }
+    }
+
+    public static class Configuration implements Processor.Configuration {
+        private String value;
+
+        public Configuration() { }
+
+        public Configuration(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
         }
     }
 }
