@@ -12,8 +12,20 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class AnnotationLoaderProcessFactoryRegistry {
     private static final Logger logger = LoggerFactory.getLogger(AnnotationLoaderProcessFactoryRegistry.class);
+    private static AnnotationLoaderProcessFactoryRegistry instance;
 
-    public static void loadAnnotatedProcesses(ProcessFactoryRegistry processFactoryRegistry) {
+    private AnnotationLoaderProcessFactoryRegistry() {
+    }
+
+    public static AnnotationLoaderProcessFactoryRegistry getInstance() {
+        if (instance == null) {
+            instance = new AnnotationLoaderProcessFactoryRegistry();
+        }
+
+        return instance;
+    }
+
+    public void loadAnnotatedProcesses(ProcessFactoryRegistry processFactoryRegistry) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         long timeElapsed = 0;
 

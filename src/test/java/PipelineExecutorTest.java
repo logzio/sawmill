@@ -19,13 +19,13 @@ import static uk.org.lidalia.slf4jtest.LoggingEvent.error;
 import static uk.org.lidalia.slf4jtest.LoggingEvent.warn;
 
 public class PipelineExecutorTest {
-
+    public static final long THRESHOLD_TIME = 1000;
     private PipelineExecutor pipelineExecutor;
     private TestLogger logger;
 
     @Before
     public void init() {
-        pipelineExecutor = new PipelineExecutor();
+        pipelineExecutor = new PipelineExecutor(THRESHOLD_TIME);
         logger = TestLoggerFactory.getTestLogger(PipelineExecutor.class);
     }
 
@@ -56,7 +56,7 @@ public class PipelineExecutorTest {
 
         pipelineExecutor.executePipeline(pipeline, doc);
 
-        assertThat(logger.getAllLoggingEvents().get(0)).isEqualTo(warn("processing {} takes too long", doc));
+        assertThat(logger.getAllLoggingEvents().contains(warn("processing {} takes too long, more than threshold={}", doc, THRESHOLD_TIME))).isTrue();
     }
 
     @Test
@@ -108,6 +108,6 @@ public class PipelineExecutorTest {
 
         pipelineExecutor.executePipeline(pipeline, doc);
 
-        assertThat(logger.getAllLoggingEvents().get(0)).isEqualTo(error("pipeline failed"));
+        assertThat(logger.getAllLoggingEvents().contains(error("pipeline failed"))).isTrue();
     }
 }

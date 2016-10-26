@@ -22,7 +22,7 @@ public class PipelineTest {
                     "}]" +
                 "}";
         ProcessFactoryRegistry processFactoryRegistry = new ProcessFactoryRegistry();
-        AnnotationLoaderProcessFactoryRegistry.loadAnnotatedProcesses(processFactoryRegistry);
+        AnnotationLoaderProcessFactoryRegistry.getInstance().loadAnnotatedProcesses(processFactoryRegistry);
         Pipeline.Factory factory = new Pipeline.Factory(processFactoryRegistry);
         Pipeline pipeline = factory.create(JsonUtils.fromJsonString(Pipeline.Configuration.class, configJson));
 

@@ -3,9 +3,14 @@ package io.logz.sawmill;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.MapUtils;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TimeZone;
 
 import static io.logz.sawmill.Doc.State.FAILED;
 import static io.logz.sawmill.Doc.State.PROCESSING;
@@ -23,6 +28,10 @@ public class Doc {
         checkArgument(MapUtils.isEmpty(source), "source cannot be empty");
         this.source = source;
         this.metadata = metadata;
+
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ", Locale.ROOT);
+        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        this.metadata.put("ingestTimestamp", df.format(new Date()));
     }
 
     private void checkArgument(boolean notValid, String errorMsg) {
@@ -43,6 +52,8 @@ public class Doc {
         return (T) field.get();
     }
 
+    public State getState() { return state; }
+
     public void setProcessing() {
         state = PROCESSING;
     }
@@ -51,9 +62,7 @@ public class Doc {
         state = SUCCEEDED;
     }
 
-    public void setFailed() {
-        state = FAILED;
-    }
+    public void setFailed() { state = FAILED; }
 
     public <T> void addFieldValue(String k, T v) {
         source.put(k, v);
