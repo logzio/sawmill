@@ -1,64 +1,66 @@
 package io.logz.sawmill;
 
-import io.logz.sawmill.exceptions.PipelineExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Pipeline {
 
     private final String id;
     private final String description;
-    private final List<Processor> processors;
+    private final List<Process> processes;
 
-    public Pipeline(String id, String description, List<Processor> processors) {
-        if (id.isEmpty()) throw new IllegalArgumentException("id cannot be empty");
-        if (CollectionUtils.isEmpty(processors)) throw new IllegalArgumentException("processors cannot be empty");
+    public Pipeline(String id, String description, List<Process> processes) {
+        checkArgument(id.isEmpty(), "id cannot be empty");
+        checkArgument(CollectionUtils.isEmpty(processes), "processes cannot be empty");
         this.id = id;
         this.description = description;
-        this.processors = processors;
+        this.processes = processes;
+    }
+
+    private void checkArgument(boolean notValid, String errorMsg) {
+        if (notValid) throw new IllegalArgumentException(errorMsg);
     }
 
     public String getId() { return id; }
 
     public String getDescription() { return description; }
 
-    public List<Processor> getProcessors() { return processors; }
-
-    public void execute(Log log) throws PipelineExecutionException {
-        for (Processor processor : processors) {
-            try {
-                processor.execute(log);
-            } catch (Exception e) {
-                throw new PipelineExecutionException(String.format("failed to execute processor %s on log %s", processor.getType(), log.toString()), e);
-            }
-        }
-    }
+    public List<Process> getProcesses() { return processes; }
 
     public static final class Factory {
 
-        private final ProcessorFactories processorFactories = new ProcessorFactories();
+        private final ProcessFactoryRegistry processFactoryRegistry;
+
+        public Factory() {
+            this.processFactoryRegistry = new ProcessFactoryRegistry();
+        }
+
+        public Factory(ProcessFactoryRegistry processFactoryRegistry) {
+            this.processFactoryRegistry = processFactoryRegistry;
+        }
 
         public Pipeline create(Configuration config) {
-            List<Processor> processors = new ArrayList<>();
+            List<Process> processes = new ArrayList<>();
 
-            config.getProcessors().forEach(processorDefinition -> {
-                Processor.Factory factory = processorFactories.get(processorDefinition.getName());
-                processors.add(factory.create(JsonUtils.toJsonString(processorDefinition.getConfig())));
+            config.getProcesses().forEach(processorDefinition -> {
+                Process.Factory factory = processFactoryRegistry.get(processorDefinition.getName());
+                processes.add(factory.create(JsonUtils.toJsonString(processorDefinition.getConfig())));
             });
 
             return new Pipeline(config.getId(),
                     config.getDescription(),
-                    processors);
+                    processes);
         }
     }
 
     public static class Configuration {
         private String id;
         private String description;
-        private List<ProcessorDefinition> processors;
+        private List<ProcessDefinition> processes;
 
         public Configuration() { }
 
@@ -66,47 +68,27 @@ public class Pipeline {
             return id;
         }
 
-        public void setId(String id) {
-            this.id = id;
-        }
-
         public String getDescription() {
             return description;
         }
 
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public List<ProcessorDefinition> getProcessors() {
-            return processors;
-        }
-
-        public void setProcessors(List<ProcessorDefinition> processors) {
-            this.processors = processors;
+        public List<ProcessDefinition> getProcesses() {
+            return processes;
         }
     }
 
-    public static class ProcessorDefinition {
+    public static class ProcessDefinition {
         private String name;
-        private Object config;
+        private Map<String,Object> config;
 
-        public ProcessorDefinition() { }
+        public ProcessDefinition() { }
 
         public String getName() {
             return name;
         }
 
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public Object getConfig() {
+        public Map<String,Object> getConfig() {
             return config;
-        }
-
-        public void setConfig(Object config) {
-            this.config = config;
         }
     }
 }
