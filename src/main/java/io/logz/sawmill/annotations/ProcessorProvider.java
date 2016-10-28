@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface ProcessProvider {
-    String type();
+public @interface ProcessorProvider {
+    String name();
 }

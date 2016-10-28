@@ -1,7 +1,7 @@
-import io.logz.sawmill.AnnotationLoaderProcessFactoryRegistry;
+import io.logz.sawmill.ProcessFactoriesLoader;
 import io.logz.sawmill.Pipeline;
-import io.logz.sawmill.ProcessFactoryRegistry;
-import io.logz.sawmill.processes.TestProcess;
+import io.logz.sawmill.ProcessorFactoryRegistry;
+import io.logz.sawmill.processors.TestProcessor;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.junit.Test;
 
@@ -14,22 +14,22 @@ public class PipelineTest {
         String configJson = "{" +
                     "\"id\": \"abc\"," +
                     "\"description\": \"this is pipeline configuration\"," +
-                    "\"processes\": [{" +
+                    "\"processors\": [{" +
                         "\"name\": \"test\"," +
                         "\"config\": {" +
                             "\"value\": \"message\"" +
                         "}" +
                     "}]" +
                 "}";
-        ProcessFactoryRegistry processFactoryRegistry = new ProcessFactoryRegistry();
-        AnnotationLoaderProcessFactoryRegistry.loadAnnotatedProcesses(processFactoryRegistry);
-        Pipeline.Factory factory = new Pipeline.Factory(processFactoryRegistry);
+        ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
+        ProcessFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
+        Pipeline.Factory factory = new Pipeline.Factory(processorFactoryRegistry);
         Pipeline pipeline = factory.create(JsonUtils.fromJsonString(Pipeline.Configuration.class, configJson));
 
         assertThat(pipeline.getId()).isEqualTo("abc");
         assertThat(pipeline.getDescription()).isEqualTo("this is pipeline configuration");
-        assertThat(pipeline.getProcesses().size()).isEqualTo(1);
-        assertThat(pipeline.getProcesses().get(0).getName()).isEqualTo("test");
-        assertThat(((TestProcess)pipeline.getProcesses().get(0)).getValue()).isEqualTo("message");
+        assertThat(pipeline.getProcessors().size()).isEqualTo(1);
+        assertThat(pipeline.getProcessors().get(0).getName()).isEqualTo("test");
+        assertThat(((TestProcessor)pipeline.getProcessors().get(0)).getValue()).isEqualTo("message");
     }
 }

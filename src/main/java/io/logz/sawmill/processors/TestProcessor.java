@@ -1,21 +1,21 @@
-package io.logz.sawmill.processes;
+package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
-import io.logz.sawmill.Process;
-import io.logz.sawmill.annotations.ProcessProvider;
+import io.logz.sawmill.Processor;
+import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
-public class TestProcess implements Process {
+public class TestProcessor implements Processor {
     public static final String NAME = "test";
 
     public final String value;
 
-    public TestProcess(String value) {
+    public TestProcessor(String value) {
         this.value = value;
     }
 
     @Override
-    public void execute(Doc doc) {
+    public void process(Doc doc) {
 
     }
 
@@ -24,20 +24,20 @@ public class TestProcess implements Process {
 
     public String getValue() { return value; }
 
-    @ProcessProvider(type = "test")
-    public static class Factory implements Process.Factory {
+    @ProcessorProvider(name = "test")
+    public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Process create(String config) {
+        public Processor create(String config) {
             Configuration testConfiguration = JsonUtils.fromJsonString(Configuration.class, config);
 
-            return new TestProcess(testConfiguration.getValue());
+            return new TestProcessor(testConfiguration.getValue());
         }
     }
 
-    public static class Configuration implements Process.Configuration {
+    public static class Configuration implements Processor.Configuration {
         private String value;
 
         public Configuration() { }

@@ -14,7 +14,7 @@ public class DocTest {
     public void testAddAndGetFieldValue() {
         Map<String,Object> source = new HashMap<>();
         source.put("message", "hola");
-        source.put("type", "test");
+        source.put("name", "test");
         source.put("object", ImmutableMap.of("nestedField", "shalom"));
         String value = "shalom";
         String path = "object.nestedField";

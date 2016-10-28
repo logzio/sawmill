@@ -1,12 +1,12 @@
 package io.logz.sawmill;
 
-public interface Process {
-    void execute(Doc doc);
+public interface Processor {
+    void process(Doc doc);
 
     String getName();
 
     interface Factory {
-        Process create(String config);
+        Processor create(String config);
     }
 
     interface Configuration {
