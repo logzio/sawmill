@@ -1,12 +1,12 @@
 package io.logz.sawmill.processors;
 
-import io.logz.sawmill.Log;
+import io.logz.sawmill.Doc;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
 public class TestProcessor implements Processor {
-    public static final String TYPE = "test";
+    public static final String NAME = "test";
 
     public final String value;
 
@@ -15,17 +15,17 @@ public class TestProcessor implements Processor {
     }
 
     @Override
-    public void execute(Log log) {
+    public void process(Doc doc) {
 
     }
 
     @Override
-    public String getType() { return TYPE; }
+    public String getName() { return NAME; }
 
     public String getValue() { return value; }
 
-    @ProcessorProvider(type = "test")
-    public static final class Factory implements Processor.Factory {
+    @ProcessorProvider(name = "test")
+    public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
@@ -48,10 +48,6 @@ public class TestProcessor implements Processor {
 
         public String getValue() {
             return value;
-        }
-
-        public void setValue(String value) {
-            this.value = value;
         }
     }
 }

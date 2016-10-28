@@ -1,9 +1,9 @@
 package io.logz.sawmill;
 
 public interface Processor {
-    void execute(Log log);
+    void process(Doc doc);
 
-    String getType();
+    String getName();
 
     interface Factory {
         Processor create(String config);
