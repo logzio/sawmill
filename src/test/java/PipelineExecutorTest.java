@@ -2,7 +2,7 @@ import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Pipeline;
 import io.logz.sawmill.PipelineExecutor;
-import io.logz.sawmill.Process;
+import io.logz.sawmill.Processor;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,10 +33,10 @@ public class PipelineExecutorTest {
     public void testPipelineLongProcessingExecution() throws InterruptedException{
         String id = "abc";
         String description = "test";
-        ArrayList<Process> processors = new ArrayList<>();
-        processors.add(new Process() {
+        ArrayList<Processor> processors = new ArrayList<>();
+        processors.add(new Processor() {
             @Override
-            public void execute(Doc log) {
+            public void process(Doc log) {
                 try {
                     Thread.sleep(1100);
                 } catch (InterruptedException e) {
@@ -63,10 +63,10 @@ public class PipelineExecutorTest {
     public void testPipelineExecution() throws PipelineExecutionException {
         String id = "abc";
         String description = "test";
-        ArrayList<Process> processes = new ArrayList<>();
-        processes.add(new Process() {
+        ArrayList<Processor> processors = new ArrayList<>();
+        processors.add(new Processor() {
             @Override
-            public void execute(Doc doc) {
+            public void process(Doc doc) {
                 doc.addFieldValue("newField", "Hello");
             }
 
@@ -75,7 +75,7 @@ public class PipelineExecutorTest {
                 return  "test";
             }
         });
-        Pipeline pipeline = new Pipeline(id, description, processes);
+        Pipeline pipeline = new Pipeline(id, description, processors);
         Map<String,Object> source = new HashMap<>();
         source.put("message", "hola");
         Doc doc = new Doc(source);
@@ -89,10 +89,10 @@ public class PipelineExecutorTest {
     public void testPipelineExecutionFailure() throws PipelineExecutionException {
         String id = "abc";
         String description = "test";
-        ArrayList<Process> processes = new ArrayList<>();
-        processes.add(new Process() {
+        ArrayList<Processor> processors = new ArrayList<>();
+        processors.add(new Processor() {
             @Override
-            public void execute(Doc doc) {
+            public void process(Doc doc) {
                 throw new RuntimeException("test failure");
             }
 
@@ -101,7 +101,7 @@ public class PipelineExecutorTest {
                 return  "test";
             }
         });
-        Pipeline pipeline = new Pipeline(id, description, processes);
+        Pipeline pipeline = new Pipeline(id, description, processors);
         Map<String,Object> source = ImmutableMap.of("message", "hola",
                 "type", "test");
         Doc doc = new Doc(source);

@@ -1,7 +1,7 @@
 package io.logz.sawmill;
 
 import com.google.common.base.Stopwatch;
-import io.logz.sawmill.annotations.ProcessProvider;
+import io.logz.sawmill.annotations.ProcessorProvider;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,32 +10,33 @@ import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public class AnnotationLoaderProcessFactoryRegistry {
-    private static final Logger logger = LoggerFactory.getLogger(AnnotationLoaderProcessFactoryRegistry.class);
-    private static AnnotationLoaderProcessFactoryRegistry instance;
+public class ProcessFactoriesLoader {
+    private static final Logger logger = LoggerFactory.getLogger(ProcessFactoriesLoader.class);
+    private static ProcessFactoriesLoader instance;
+    private final Reflections reflections;
 
-    private AnnotationLoaderProcessFactoryRegistry() {
+    private ProcessFactoriesLoader() {
+        reflections = new Reflections("io.logz.sawmill");
     }
 
-    public static AnnotationLoaderProcessFactoryRegistry getInstance() {
+    public static ProcessFactoriesLoader getInstance() {
         if (instance == null) {
-            instance = new AnnotationLoaderProcessFactoryRegistry();
+            instance = new ProcessFactoriesLoader();
         }
 
         return instance;
     }
 
-    public void loadAnnotatedProcesses(ProcessFactoryRegistry processFactoryRegistry) {
+    public void loadAnnotatedProcesses(ProcessorFactoryRegistry processorFactoryRegistry) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         long timeElapsed = 0;
 
         int processesLoaded = 0;
-        Reflections reflections = new Reflections("io.logz.sawmill");
-        Set<Class<?>> processes =  reflections.getTypesAnnotatedWith(ProcessProvider.class);
+        Set<Class<?>> processes =  reflections.getTypesAnnotatedWith(ProcessorProvider.class);
         for (Class<?> process : processes) {
             try {
-                String typeName = process.getAnnotation(ProcessProvider.class).type();
-                processFactoryRegistry.register(typeName, (Process.Factory) process.getConstructor().newInstance());
+                String typeName = process.getAnnotation(ProcessorProvider.class).name();
+                processorFactoryRegistry.register(typeName, (Processor.Factory) process.getConstructor().newInstance());
                 logger.info("{} process factory loaded successfully, took {}s", typeName, stopwatch.elapsed(SECONDS) - timeElapsed);
                 processesLoaded++;
             } catch (Exception e) {

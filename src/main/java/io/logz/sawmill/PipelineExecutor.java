@@ -55,13 +55,13 @@ public class PipelineExecutor {
 
         try {
             doc.setProcessing();
-            for (Process process : pipeline.getProcesses()) {
+            for (Processor processor : pipeline.getProcessors()) {
                 try {
-                    process.execute(doc);
-                    logger.info("process {} executed successfully, took {}s", process.getName(), stopwatch.elapsed(SECONDS) - timeElapsed);
+                    processor.process(doc);
+                    logger.info("processor {} executed successfully, took {}s", processor.getName(), stopwatch.elapsed(SECONDS) - timeElapsed);
                     timeElapsed = stopwatch.elapsed(SECONDS);
                 } catch (Exception e) {
-                    throw new PipelineExecutionException(String.format("failed to execute process %s", process.getName()), e);
+                    throw new PipelineExecutionException(String.format("failed to execute processor %s", processor.getName()), e);
                 }
             }
             doc.setSucceeded();

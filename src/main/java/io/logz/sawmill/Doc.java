@@ -17,6 +17,8 @@ import static io.logz.sawmill.Doc.State.PROCESSING;
 import static io.logz.sawmill.Doc.State.RAW;
 import static io.logz.sawmill.Doc.State.SUCCEEDED;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class Doc {
 
     private final Map<String, Object> source;
@@ -25,17 +27,13 @@ public class Doc {
     private State state = RAW;
 
     public Doc(Map<String, Object> source, Map<String, Object> metadata) {
-        checkArgument(MapUtils.isEmpty(source), "source cannot be empty");
+        checkState(!MapUtils.isEmpty(source), "source cannot be empty");
         this.source = source;
         this.metadata = metadata;
 
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ", Locale.ROOT);
         df.setTimeZone(TimeZone.getTimeZone("UTC"));
         this.metadata.put("ingestTimestamp", df.format(new Date()));
-    }
-
-    private void checkArgument(boolean notValid, String errorMsg) {
-        if (notValid) throw new IllegalArgumentException(errorMsg);
     }
 
     public Doc(Map<String, Object> source) {
@@ -48,7 +46,7 @@ public class Doc {
 
     public <T> T getFieldValue(String path) {
         Optional<Object> field = JsonUtils.getByPath(source, path);
-        checkArgument(!field.isPresent(), String.format("Couldn't resolve field in path [%s]"));
+        checkState(field.isPresent(), String.format("Couldn't resolve field in path [%s]", path));
         return (T) field.get();
     }
 
