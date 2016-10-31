@@ -4,8 +4,6 @@ import io.logz.sawmill.ProcessorFactoryRegistry;
 import io.logz.sawmill.processors.TestProcessor;
 import org.junit.Test;
 
-import static io.logz.sawmill.Pipeline.ConfigurationType.HOCON;
-import static io.logz.sawmill.Pipeline.ConfigurationType.JSON;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class PipelineTest {
@@ -25,7 +23,7 @@ public class PipelineTest {
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
         ProcessFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
         Pipeline.Factory factory = new Pipeline.Factory(processorFactoryRegistry);
-        Pipeline pipeline = factory.create(configJson, JSON);
+        Pipeline pipeline = factory.create(configJson);
 
         assertThat(pipeline.getId()).isEqualTo("abc");
         assertThat(pipeline.getDescription()).isEqualTo("this is pipeline configuration");
@@ -41,7 +39,7 @@ public class PipelineTest {
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
         ProcessFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
         Pipeline.Factory factory = new Pipeline.Factory(processorFactoryRegistry);
-        Pipeline pipeline = factory.create(configHocon, HOCON);
+        Pipeline pipeline = factory.create(configHocon);
 
         assertThat(pipeline.getId()).isEqualTo("abc");
         assertThat(pipeline.getDescription()).isEqualTo("this is hocon");

@@ -56,22 +56,10 @@ public class Pipeline {
                     processors);
         }
 
-        public Pipeline create(String config, ConfigurationType type) {
-            switch (type) {
-                case JSON:
-                    return create(JsonUtils.fromJsonString(Pipeline.Configuration.class, config));
-                case HOCON:
-                    String configJson = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
-                    return create(JsonUtils.fromJsonString(Pipeline.Configuration.class, configJson));
-                default:
-                    throw new IllegalArgumentException("undefined configuration type");
-            }
+        public Pipeline create(String config) {
+            String configJson = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
+            return create(JsonUtils.fromJsonString(Pipeline.Configuration.class, configJson));
         }
-    }
-
-    public enum ConfigurationType {
-        JSON,
-        HOCON
     }
 
     public static class Configuration {
