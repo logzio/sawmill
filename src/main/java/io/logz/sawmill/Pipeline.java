@@ -1,5 +1,7 @@
 package io.logz.sawmill;
 
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigRenderOptions;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -52,6 +54,11 @@ public class Pipeline {
             return new Pipeline(config.getId(),
                     config.getDescription(),
                     processors);
+        }
+
+        public Pipeline create(String config) {
+            String configJson = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
+            return create(JsonUtils.fromJsonString(Pipeline.Configuration.class, configJson));
         }
     }
 
