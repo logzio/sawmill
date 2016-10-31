@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ProcessFactoriesLoader {
     private static final Logger logger = LoggerFactory.getLogger(ProcessFactoriesLoader.class);
@@ -37,15 +37,15 @@ public class ProcessFactoriesLoader {
             try {
                 String typeName = process.getAnnotation(ProcessorProvider.class).name();
                 processorFactoryRegistry.register(typeName, (Processor.Factory) process.getConstructor().newInstance());
-                logger.info("{} process factory loaded successfully, took {}s", typeName, stopwatch.elapsed(SECONDS) - timeElapsed);
+                logger.info("{} processor factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
                 processesLoaded++;
             } catch (Exception e) {
                 logger.error("failed to load process {}", process.getName(), e);
             }
             finally {
-                timeElapsed = stopwatch.elapsed(SECONDS);
+                timeElapsed = stopwatch.elapsed(MILLISECONDS);
             }
         }
-        logger.info("{} process factories loaded, took {}s", processesLoaded, stopwatch.elapsed(SECONDS));
+        logger.info("{} processor factories loaded, took {}ms", processesLoaded, stopwatch.elapsed(MILLISECONDS));
     }
 }

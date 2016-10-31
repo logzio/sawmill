@@ -12,19 +12,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TimeZone;
 
-import static io.logz.sawmill.Doc.State.FAILED;
-import static io.logz.sawmill.Doc.State.PROCESSING;
-import static io.logz.sawmill.Doc.State.RAW;
-import static io.logz.sawmill.Doc.State.SUCCEEDED;
-
 import static com.google.common.base.Preconditions.checkState;
 
 public class Doc {
 
     private final Map<String, Object> source;
     private final Map<String, Object> metadata;
-
-    private State state = RAW;
 
     public Doc(Map<String, Object> source, Map<String, Object> metadata) {
         checkState(!MapUtils.isEmpty(source), "source cannot be empty");
@@ -50,18 +43,6 @@ public class Doc {
         return (T) field.get();
     }
 
-    public State getState() { return state; }
-
-    public void setProcessing() {
-        state = PROCESSING;
-    }
-
-    public void setSucceeded() {
-        state = SUCCEEDED;
-    }
-
-    public void setFailed() { state = FAILED; }
-
     public <T> void addFieldValue(String k, T v) {
         source.put(k, v);
     }
@@ -72,12 +53,5 @@ public class Doc {
                 "source=" + source +
                 ", metadata=" + metadata +
                 '}';
-    }
-
-    public enum State {
-        RAW,
-        PROCESSING,
-        SUCCEEDED,
-        FAILED
     }
 }

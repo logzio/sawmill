@@ -4,10 +4,10 @@ import io.logz.sawmill.Pipeline;
 import io.logz.sawmill.PipelineExecutor;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
+import logback.TestingAppenderFactory;
+import logback.WaitForAppender;
 import org.junit.Before;
 import org.junit.Test;
-import uk.org.lidalia.slf4jtest.TestLogger;
-import uk.org.lidalia.slf4jtest.TestLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,18 +15,17 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
-import static uk.org.lidalia.slf4jtest.LoggingEvent.error;
-import static uk.org.lidalia.slf4jtest.LoggingEvent.warn;
 
 public class PipelineExecutorTest {
     public static final long THRESHOLD_TIME = 1000;
     private PipelineExecutor pipelineExecutor;
-    private TestLogger logger;
+    private TestingAppenderFactory testingAppenderFactory;
+
 
     @Before
     public void init() {
         pipelineExecutor = new PipelineExecutor(THRESHOLD_TIME);
-        logger = TestLoggerFactory.getTestLogger(PipelineExecutor.class);
+        testingAppenderFactory = new TestingAppenderFactory();
     }
 
     @Test
@@ -54,9 +53,15 @@ public class PipelineExecutorTest {
                 "type", "test");
         Doc doc = new Doc(source);
 
+        String searchString = String.format("processing %s takes too long, more than threshold=%s",doc, THRESHOLD_TIME);
+
+        WaitForAppender appender = testingAppenderFactory.createWaitForAppender(PipelineExecutor.class, searchString);
+
         pipelineExecutor.executePipeline(pipeline, doc);
 
-        assertThat(logger.getAllLoggingEvents().contains(warn("processing {} takes too long, more than threshold={}", doc, THRESHOLD_TIME))).isTrue();
+        assertThat(appender.foundSearchString()).isTrue();
+
+        testingAppenderFactory.removeWaitForAppender(PipelineExecutor.class, appender);
     }
 
     @Test
@@ -106,8 +111,14 @@ public class PipelineExecutorTest {
                 "type", "test");
         Doc doc = new Doc(source);
 
+        String searchString = "pipeline failed";
+
+        WaitForAppender appender = testingAppenderFactory.createWaitForAppender(PipelineExecutor.class, searchString);
+
         pipelineExecutor.executePipeline(pipeline, doc);
 
-        assertThat(logger.getAllLoggingEvents().contains(error("pipeline failed"))).isTrue();
+        assertThat(appender.foundSearchString()).isTrue();
+
+        testingAppenderFactory.removeWaitForAppender(PipelineExecutor.class, appender);
     }
 }

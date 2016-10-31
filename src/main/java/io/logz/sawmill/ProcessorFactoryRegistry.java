@@ -16,7 +16,7 @@ public class ProcessorFactoryRegistry {
 
     public Processor.Factory get(String name) {
         Processor.Factory factory = processorFactories.get(name);
-        if (factory == null) throw new ProcessorMissingException("No such process with name " + name);
+        if (factory == null) throw new ProcessorMissingException("No such processor with name " + name);
         return factory;
     }
 }

@@ -14,7 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class PipelineExecutor {
     public static final int QUEUE_SIZE = 10;
@@ -54,20 +54,17 @@ public class PipelineExecutor {
         currentBucket.addDoc(id, doc);
 
         try {
-            doc.setProcessing();
             for (Processor processor : pipeline.getProcessors()) {
                 try {
                     processor.process(doc);
-                    logger.info("processor {} executed successfully, took {}s", processor.getName(), stopwatch.elapsed(SECONDS) - timeElapsed);
-                    timeElapsed = stopwatch.elapsed(SECONDS);
+                    logger.info("processor {} executed successfully, took {}ms", processor.getName(), stopwatch.elapsed(MILLISECONDS) - timeElapsed);
+                    timeElapsed = stopwatch.elapsed(MILLISECONDS);
                 } catch (Exception e) {
                     throw new PipelineExecutionException(String.format("failed to execute processor %s", processor.getName()), e);
                 }
             }
-            doc.setSucceeded();
-            logger.info("pipeline executed successfully, took {}s", stopwatch.elapsed(SECONDS));
+            logger.info("pipeline executed successfully, took {}ms", stopwatch.elapsed(MILLISECONDS));
         } catch (PipelineExecutionException e) {
-            doc.setFailed();
             logger.error("pipeline failed");
         }
         finally {
