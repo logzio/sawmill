@@ -1,5 +1,7 @@
 package io.logz.sawmill;
 
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigRenderOptions;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -53,6 +55,23 @@ public class Pipeline {
                     config.getDescription(),
                     processors);
         }
+
+        public Pipeline create(String config, ConfigurationType type) {
+            switch (type) {
+                case JSON:
+                    return create(JsonUtils.fromJsonString(Pipeline.Configuration.class, config));
+                case HOCON:
+                    String configJson = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
+                    return create(JsonUtils.fromJsonString(Pipeline.Configuration.class, configJson));
+                default:
+                    throw new IllegalArgumentException("undefined configuration type");
+            }
+        }
+    }
+
+    public enum ConfigurationType {
+        JSON,
+        HOCON
     }
 
     public static class Configuration {
