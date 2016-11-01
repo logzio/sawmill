@@ -3,14 +3,10 @@ package io.logz.sawmill;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.MapUtils;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TimeZone;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -24,9 +20,7 @@ public class Doc {
         this.source = source;
         this.metadata = metadata;
 
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ", Locale.ROOT);
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        this.metadata.put("ingestTimestamp", df.format(new Date()));
+        this.metadata.put("ingestTimestamp", new Date());
     }
 
     public Doc(Map<String, Object> source) {

@@ -13,6 +13,7 @@ public class PipelineTest {
     public void testFactoryCreation() {
         String configJson = "{" +
                     "\"id\": \"abc\"," +
+                    "\"name\": \"test pipeline\"" +
                     "\"description\": \"this is pipeline configuration\"," +
                     "\"processors\": [{" +
                         "\"name\": \"test\"," +
@@ -28,6 +29,7 @@ public class PipelineTest {
         Pipeline pipeline = factory.create(JsonUtils.fromJsonString(Pipeline.Configuration.class, configJson));
 
         assertThat(pipeline.getId()).isEqualTo("abc");
+        assertThat(pipeline.getName()).isEqualTo("test pipeline");
         assertThat(pipeline.getDescription()).isEqualTo("this is pipeline configuration");
         assertThat(pipeline.getProcessors().size()).isEqualTo(1);
         assertThat(pipeline.getProcessors().get(0).getName()).isEqualTo("test");
