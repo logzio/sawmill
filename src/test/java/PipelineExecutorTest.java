@@ -1,17 +1,15 @@
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Pipeline;
-import io.logz.sawmill.PipelineExecutionTimeWatchdog;
 import io.logz.sawmill.PipelineExecutor;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
-import logback.TestingAppenderFactory;
-import logback.WaitForAppender;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,14 +18,15 @@ import static org.junit.Assert.assertNotNull;
 
 public class PipelineExecutorTest {
     public static final long THRESHOLD_TIME_MS = 1000;
-    private PipelineExecutor pipelineExecutor;
-    private TestingAppenderFactory testingAppenderFactory;
 
+    private PipelineExecutor pipelineExecutor;
+    private List<Doc> overtimeProcessingDocs = new ArrayList<>();
 
     @Before
     public void init() {
-        pipelineExecutor = new PipelineExecutor(THRESHOLD_TIME_MS);
-        testingAppenderFactory = new TestingAppenderFactory();
+        pipelineExecutor = new PipelineExecutor(THRESHOLD_TIME_MS, doc -> {
+            overtimeProcessingDocs.add(doc);
+        });
     }
 
     @Test
@@ -41,15 +40,9 @@ public class PipelineExecutorTest {
         Doc doc = createDoc("message", "hola",
                 "type", "test");
 
-        String searchString = String.format("processing %s takes too long, more than threshold=%s",doc, THRESHOLD_TIME_MS);
-
-        WaitForAppender appender = testingAppenderFactory.createWaitForAppender(PipelineExecutionTimeWatchdog.class, searchString);
-
         pipelineExecutor.executePipeline(pipeline, doc);
 
-        assertThat(appender.foundSearchString()).isTrue();
-
-        testingAppenderFactory.removeWaitForAppender(PipelineExecutionTimeWatchdog.class, appender);
+        assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
     }
 
     private Doc createDoc(Object... objects) {

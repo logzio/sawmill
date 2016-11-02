@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -14,8 +15,8 @@ public class PipelineExecutor {
 
     private final PipelineExecutionTimeWatchdog watchdog;
 
-    public PipelineExecutor(long thresholdTimeMs) {
-        this.watchdog = new PipelineExecutionTimeWatchdog(thresholdTimeMs);
+    public PipelineExecutor(long thresholdTimeMs, Consumer<Doc> overtimeOp) {
+        this.watchdog = new PipelineExecutionTimeWatchdog(thresholdTimeMs, overtimeOp);
     }
 
 
