@@ -1,13 +1,11 @@
 package io.logz.sawmill;
 
-import java.util.Date;
-
 public class ExecutionContext {
     private final Doc doc;
     private final String pipelineId;
-    private final Date ingestTimestamp;
+    private final long ingestTimestamp;
 
-    public ExecutionContext(Doc doc, String pipelineId, Date ingestTimestamp) {
+    public ExecutionContext(Doc doc, String pipelineId, long ingestTimestamp) {
         this.doc = doc;
         this.pipelineId = pipelineId;
         this.ingestTimestamp = ingestTimestamp;
@@ -17,5 +15,5 @@ public class ExecutionContext {
 
     public String getPipelineId() { return pipelineId; }
 
-    public Date getIngestTimestamp() { return ingestTimestamp; }
+    public long getIngestTimestamp() { return ingestTimestamp; }
 }

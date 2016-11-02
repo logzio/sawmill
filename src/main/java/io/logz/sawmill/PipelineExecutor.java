@@ -5,7 +5,6 @@ import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -25,9 +24,8 @@ public class PipelineExecutor {
         Stopwatch stopwatch = Stopwatch.createStarted();
         long timeElapsed = 0;
 
-        PipelineExecutionTimeWatchdog.Bucket currentBucket = watchdog.getCurrentBucket();
         String id = UUID.randomUUID().toString();
-        currentBucket.addDoc(id, new ExecutionContext(doc, pipeline.getId(), new Date()));
+        watchdog.addExecution(id, new ExecutionContext(doc, pipeline.getId(), System.currentTimeMillis()));
 
         try {
             for (Processor processor : pipeline.getProcessors()) {
@@ -45,7 +43,7 @@ public class PipelineExecutor {
         }
         finally {
             stopwatch.stop();
-            currentBucket.removeDoc(id);
+            watchdog.removeExecution(id);
         }
     }
 }

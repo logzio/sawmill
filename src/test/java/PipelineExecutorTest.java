@@ -7,10 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,7 +35,7 @@ public class PipelineExecutorTest {
         ArrayList<Processor> processors = new ArrayList<>();
         processors.add(createSleepProcessor(1100));
         Pipeline pipeline = new Pipeline(id, name, description, processors);
-        Doc doc = createDoc("message", "hola",
+        Doc doc = createDoc("id", "long", "message", "hola",
                 "type", "test");
 
         pipelineExecutor.executePipeline(pipeline, doc);
@@ -81,13 +79,12 @@ public class PipelineExecutorTest {
         ArrayList<Processor> processors = new ArrayList<>();
         processors.add(createAddFieldProcessor("newField", "Hello"));
         Pipeline pipeline = new Pipeline(id, name, description, processors);
-        Map<String,Object> source = new HashMap<>();
-        source.put("message", "hola");
-        Doc doc = new Doc(source);
+        Doc doc = createDoc("id", "add", "message", "hola");
 
         pipelineExecutor.executePipeline(pipeline, doc);
 
         assertNotNull(doc.getSource().get("newField"));
+        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
     }
 
     private Processor createAddFieldProcessor(String k, String v) {
@@ -112,9 +109,10 @@ public class PipelineExecutorTest {
         ArrayList<Processor> processors = new ArrayList<>();
         processors.add(createFailAlwaysProcessor());
         Pipeline pipeline = new Pipeline(id, name, description, processors);
-        Doc doc = createDoc("message", "hola",
+        Doc doc = createDoc("id", "fail", "message", "hola",
                 "type", "test");
 
+        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
         assertThatThrownBy(() -> pipelineExecutor.executePipeline(pipeline, doc)).isInstanceOf(PipelineExecutionException.class);
     }
 
