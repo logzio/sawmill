@@ -17,9 +17,9 @@ public class PipelineExecutionTimeWatchdog {
     public static final int QUEUE_SIZE = 10;
     private final CircularFifoQueue<Bucket> circularFifoQueue;
     private final long timeFrame;
-    private final Consumer<Doc> overtimeOp;
+    private final Consumer<ExecutionContext> overtimeOp;
 
-    public PipelineExecutionTimeWatchdog(long thresholdTimeMs, Consumer<Doc> overtimeOp) {
+    public PipelineExecutionTimeWatchdog(long thresholdTimeMs, Consumer<ExecutionContext> overtimeOp) {
         this.overtimeOp = overtimeOp;
         this.timeFrame = thresholdTimeMs / QUEUE_SIZE;
         this.circularFifoQueue = new CircularFifoQueue<>(initQueue());
@@ -55,26 +55,26 @@ public class PipelineExecutionTimeWatchdog {
     }
 
     public class Bucket {
-        private final ConcurrentMap<String, Doc> idToDocs;
+        private final ConcurrentMap<String, ExecutionContext> idToInfo;
 
         private Bucket() {
-            idToDocs = new ConcurrentHashMap<>();
+            idToInfo = new ConcurrentHashMap<>();
         }
 
-        public void addDoc(String id, Doc doc) {
-            idToDocs.put(id, doc);
+        public void addDoc(String id, ExecutionContext context) {
+            idToInfo.put(id, context);
         }
 
         public void removeDoc(String id) {
-            idToDocs.remove(id);
+            idToInfo.remove(id);
         }
 
         private void clearBucket() {
-            idToDocs.clear();
+            idToInfo.clear();
         }
 
-        private List<Doc> getOnProcessDocs() {
-            return idToDocs.values().stream().collect(Collectors.toList());
+        private List<ExecutionContext> getOnProcessDocs() {
+            return idToInfo.values().stream().collect(Collectors.toList());
         }
     }
 }

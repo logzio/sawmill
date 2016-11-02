@@ -24,8 +24,8 @@ public class PipelineExecutorTest {
 
     @Before
     public void init() {
-        pipelineExecutor = new PipelineExecutor(THRESHOLD_TIME_MS, doc -> {
-            overtimeProcessingDocs.add(doc);
+        pipelineExecutor = new PipelineExecutor(THRESHOLD_TIME_MS, context -> {
+            overtimeProcessingDocs.add(context.getDoc());
         });
     }
 

@@ -5,6 +5,7 @@ import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -15,7 +16,7 @@ public class PipelineExecutor {
 
     private final PipelineExecutionTimeWatchdog watchdog;
 
-    public PipelineExecutor(long thresholdTimeMs, Consumer<Doc> overtimeOp) {
+    public PipelineExecutor(long thresholdTimeMs, Consumer<ExecutionContext> overtimeOp) {
         this.watchdog = new PipelineExecutionTimeWatchdog(thresholdTimeMs, overtimeOp);
     }
 
@@ -26,7 +27,7 @@ public class PipelineExecutor {
 
         PipelineExecutionTimeWatchdog.Bucket currentBucket = watchdog.getCurrentBucket();
         String id = UUID.randomUUID().toString();
-        currentBucket.addDoc(id, doc);
+        currentBucket.addDoc(id, new ExecutionContext(doc, pipeline.getId(), new Date()));
 
         try {
             for (Processor processor : pipeline.getProcessors()) {
