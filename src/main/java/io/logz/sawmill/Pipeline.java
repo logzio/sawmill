@@ -18,7 +18,7 @@ public class Pipeline {
 
     public Pipeline(String id, String name, String description, List<Processor> processors) {
         checkState(!id.isEmpty(), "id cannot be empty");
-        checkState(!CollectionUtils.isEmpty(processors), "processors cannot be empty");
+        checkState(CollectionUtils.isNotEmpty(processors), "processors cannot be empty");
         this.id = id;
         this.name = name;
         this.description = description;

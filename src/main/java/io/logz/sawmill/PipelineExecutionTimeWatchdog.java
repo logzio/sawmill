@@ -1,5 +1,6 @@
 package io.logz.sawmill;
 
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -9,17 +10,17 @@ import java.util.function.Consumer;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class PipelineExecutionTimeWatchdog {
-    public static final int DIVIDE_FACTOR = 10;
+    public static final int THRESHOLD_CHECK_FACTOR = 10;
 
     private final long thresholdTimeMs;
-    private final ConcurrentMap<String, ExecutionContext> idToInfo;
+    private final ConcurrentMap<String, ExecutionContext> currentlyRunning;
     private final Consumer<ExecutionContext> overtimeOp;
 
     public PipelineExecutionTimeWatchdog(long thresholdTimeMs, Consumer<ExecutionContext> overtimeOp) {
         this.overtimeOp = overtimeOp;
         this.thresholdTimeMs = thresholdTimeMs;
-        this.idToInfo = new ConcurrentHashMap<>();
-        initWatchdog(thresholdTimeMs / DIVIDE_FACTOR);
+        this.currentlyRunning = new ConcurrentHashMap<>();
+        initWatchdog(thresholdTimeMs / THRESHOLD_CHECK_FACTOR);
     }
 
     private void initWatchdog(long periodMs) {
@@ -29,14 +30,17 @@ public class PipelineExecutionTimeWatchdog {
 
     private void alertOvertimeExecutions() {
         long now = System.currentTimeMillis();
-        idToInfo.values().stream().filter(context -> now - context.getIngestTimestamp() > thresholdTimeMs).forEach(overtimeOp);
+        currentlyRunning.values().stream().filter(context -> now - context.getIngestTimestamp() > thresholdTimeMs).forEach(overtimeOp);
     }
 
-    public void addExecution(String id, ExecutionContext context) {
-        idToInfo.put(id, context);
+    public String startedExecution(ExecutionContext context) {
+        String id = UUID.randomUUID().toString();
+        currentlyRunning.put(id, context);
+
+        return id;
     }
 
     public void removeExecution(String id) {
-        idToInfo.remove(id);
+        currentlyRunning.remove(id);
     }
 }

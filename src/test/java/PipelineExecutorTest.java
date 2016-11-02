@@ -1,5 +1,6 @@
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Pipeline;
+import io.logz.sawmill.PipelineExecutionTimeWatchdog;
 import io.logz.sawmill.PipelineExecutor;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
@@ -7,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -17,30 +19,55 @@ import static org.junit.Assert.assertNotNull;
 public class PipelineExecutorTest {
     public static final long THRESHOLD_TIME_MS = 1000;
 
-    private PipelineExecutor pipelineExecutor;
-    private List<Doc> overtimeProcessingDocs = new ArrayList<>();
+    public PipelineExecutor pipelineExecutor;
+    public List<Doc> overtimeProcessingDocs;
 
     @Before
     public void init() {
-        pipelineExecutor = new PipelineExecutor(THRESHOLD_TIME_MS, context -> {
-            overtimeProcessingDocs.add(context.getDoc());
-        });
+        overtimeProcessingDocs = new ArrayList<>();
+        PipelineExecutionTimeWatchdog watchdog = new PipelineExecutionTimeWatchdog(THRESHOLD_TIME_MS,
+                context -> overtimeProcessingDocs.add(context.getDoc()));
+        pipelineExecutor = new PipelineExecutor(watchdog);
     }
 
     @Test
     public void testPipelineLongProcessingExecution() throws InterruptedException{
-        String id = "abc";
-        String name = "test";
-        String description = "test";
-        ArrayList<Processor> processors = new ArrayList<>();
-        processors.add(createSleepProcessor(1100));
-        Pipeline pipeline = new Pipeline(id, name, description, processors);
+        Pipeline pipeline = createPipeline(createSleepProcessor(1100));
         Doc doc = createDoc("id", "long", "message", "hola",
                 "type", "test");
 
-        pipelineExecutor.executePipeline(pipeline, doc);
+        pipelineExecutor.execute(pipeline, doc);
 
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
+    }
+
+    @Test
+    public void testPipelineExecution() throws PipelineExecutionException {
+        Pipeline pipeline = createPipeline(createAddFieldProcessor("newField", "Hello"));
+        Doc doc = createDoc("id", "add", "message", "hola");
+
+        pipelineExecutor.execute(pipeline, doc);
+
+        assertNotNull(doc.getSource().get("newField"));
+        assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
+        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+    }
+
+    @Test
+    public void testPipelineExecutionFailure() throws PipelineExecutionException {
+        Pipeline pipeline = createPipeline(createFailAlwaysProcessor());
+        Doc doc = createDoc("id", "fail", "message", "hola",
+                "type", "test");
+
+        assertThatThrownBy(() -> pipelineExecutor.execute(pipeline, doc)).isInstanceOf(PipelineExecutionException.class);
+        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+    }
+
+    private Pipeline createPipeline(Processor... processors) {
+        String id = "abc";
+        String name = "test";
+        String description = "test";
+        return new Pipeline(id, name, description, Arrays.asList(processors));
     }
 
     private Doc createDoc(Object... objects) {
@@ -66,54 +93,23 @@ public class PipelineExecutorTest {
 
             @Override
             public String getName() {
-                return  "test";
+                return  "sleep";
             }
         };
-    }
-
-    @Test
-    public void testPipelineExecution() throws PipelineExecutionException {
-        String id = "abc";
-        String name = "test";
-        String description = "test";
-        ArrayList<Processor> processors = new ArrayList<>();
-        processors.add(createAddFieldProcessor("newField", "Hello"));
-        Pipeline pipeline = new Pipeline(id, name, description, processors);
-        Doc doc = createDoc("id", "add", "message", "hola");
-
-        pipelineExecutor.executePipeline(pipeline, doc);
-
-        assertNotNull(doc.getSource().get("newField"));
-        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
     }
 
     private Processor createAddFieldProcessor(String k, String v) {
         return new Processor() {
             @Override
             public void process(Doc doc) {
-                doc.addFieldValue(k, v);
+                doc.addField(k, v);
             }
 
             @Override
             public String getName() {
-                return  "test";
+                return  "addField";
             }
         };
-    }
-
-    @Test
-    public void testPipelineExecutionFailure() throws PipelineExecutionException {
-        String id = "abc";
-        String name = "test";
-        String description = "test";
-        ArrayList<Processor> processors = new ArrayList<>();
-        processors.add(createFailAlwaysProcessor());
-        Pipeline pipeline = new Pipeline(id, name, description, processors);
-        Doc doc = createDoc("id", "fail", "message", "hola",
-                "type", "test");
-
-        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
-        assertThatThrownBy(() -> pipelineExecutor.executePipeline(pipeline, doc)).isInstanceOf(PipelineExecutionException.class);
     }
 
     private Processor createFailAlwaysProcessor() {
@@ -125,7 +121,7 @@ public class PipelineExecutorTest {
 
             @Override
             public String getName() {
-                return  "test";
+                return  "fail";
             }
         };
     }

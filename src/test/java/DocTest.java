@@ -23,10 +23,10 @@ public class DocTest {
 
         String fieldName = "newField";
         String fieldValue = "hello";
-        doc.addFieldValue(fieldName, fieldValue);
+        doc.addField(fieldName, fieldValue);
 
         assertNotNull(doc.getSource().get(fieldName));
         assertThat(doc.getSource().get(fieldName)).isEqualTo(fieldValue);
-        assertThat((String) doc.getFieldValue(path)).isEqualTo(value);
+        assertThat((String) doc.getField(path)).isEqualTo(value);
     }
 }

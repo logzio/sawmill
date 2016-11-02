@@ -13,7 +13,7 @@ public class PipelineTest {
     public void testFactoryCreation() {
         String configJson = "{" +
                     "\"id\": \"abc\"," +
-                    "\"name\": \"test pipeline\"" +
+                    "\"name\": \"test pipeline\"," +
                     "\"description\": \"this is pipeline configuration\"," +
                     "\"processors\": [{" +
                         "\"name\": \"test\"," +
