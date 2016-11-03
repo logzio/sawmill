@@ -5,8 +5,6 @@ import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Consumer;
-
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class PipelineExecutor {
@@ -23,7 +21,7 @@ public class PipelineExecutor {
         Stopwatch stopwatch = Stopwatch.createStarted();
         long timeElapsed = 0;
 
-        String executionIdentifier = watchdog.startedExecution(new ExecutionContext(doc, pipeline.getId(), System.currentTimeMillis()));
+        long executionIdentifier = watchdog.startedExecution(new ExecutionContext(doc, pipeline.getId(), System.currentTimeMillis()));
 
         try {
             for (Processor processor : pipeline.getProcessors()) {

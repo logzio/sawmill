@@ -1,4 +1,4 @@
-import io.logz.sawmill.ProcessFactoriesLoader;
+import io.logz.sawmill.ProcessorFactoriesLoader;
 import io.logz.sawmill.Pipeline;
 import io.logz.sawmill.ProcessorFactoryRegistry;
 import io.logz.sawmill.processors.TestProcessor;
@@ -24,7 +24,7 @@ public class PipelineTest {
                 "}";
 
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
-        ProcessFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
+        ProcessorFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
         Pipeline.Factory factory = new Pipeline.Factory(processorFactoryRegistry);
         Pipeline pipeline = factory.create(JsonUtils.fromJsonString(Pipeline.Configuration.class, configJson));
 
