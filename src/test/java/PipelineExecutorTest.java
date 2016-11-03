@@ -2,8 +2,10 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.Pipeline;
 import io.logz.sawmill.PipelineExecutionTimeWatchdog;
 import io.logz.sawmill.PipelineExecutor;
+import io.logz.sawmill.PipelineExecutorMBean;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
+import metrics.PipelineExecutorMetrics;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,13 +23,18 @@ public class PipelineExecutorTest {
 
     public PipelineExecutor pipelineExecutor;
     public List<Doc> overtimeProcessingDocs;
+    public PipelineExecutorMBean pipelineExecutorMetrics;
 
     @Before
     public void init() {
         overtimeProcessingDocs = new ArrayList<>();
+        pipelineExecutorMetrics = new PipelineExecutorMetrics();
         PipelineExecutionTimeWatchdog watchdog = new PipelineExecutionTimeWatchdog(THRESHOLD_TIME_MS,
-                context -> overtimeProcessingDocs.add(context.getDoc()));
-        pipelineExecutor = new PipelineExecutor(watchdog);
+                context -> {
+                    overtimeProcessingDocs.add(context.getDoc());
+                    pipelineExecutorMetrics.incrementOvertime();
+                });
+        pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
     }
 
     @Test
@@ -39,6 +46,7 @@ public class PipelineExecutorTest {
         pipelineExecutor.execute(pipeline, doc);
 
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
+        assertThat(pipelineExecutorMetrics.getOvertime()).isEqualTo(1);
     }
 
     @Test
@@ -51,6 +59,7 @@ public class PipelineExecutorTest {
         assertNotNull(doc.getSource().get("newField"));
         assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.getSucceeded()).isEqualTo(1);
     }
 
     @Test
@@ -61,6 +70,7 @@ public class PipelineExecutorTest {
 
         assertThatThrownBy(() -> pipelineExecutor.execute(pipeline, doc)).isInstanceOf(PipelineExecutionException.class);
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.getFailed()).isEqualTo(1);
     }
 
     private Pipeline createPipeline(Processor... processors) {

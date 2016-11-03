@@ -5,17 +5,17 @@ import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Consumer;
-
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class PipelineExecutor {
     private static final Logger logger = LoggerFactory.getLogger(PipelineExecutor.class);
 
     private final PipelineExecutionTimeWatchdog watchdog;
+    private final PipelineExecutorMBean pipelineExecutorMBean;
 
-    public PipelineExecutor(PipelineExecutionTimeWatchdog watchdog) {
+    public PipelineExecutor(PipelineExecutionTimeWatchdog watchdog, PipelineExecutorMBean pipelineExecutorMBean) {
         this.watchdog = watchdog;
+        this.pipelineExecutorMBean = pipelineExecutorMBean;
     }
 
 
@@ -34,7 +34,9 @@ public class PipelineExecutor {
                     timeElapsed = totalProcessTime;
 
                     logger.trace("processor {} executed successfully, took {}ms", processor.getName(), processorTook);
+                    pipelineExecutorMBean.processorFinished(processor.getName(), processorTook);
                 } catch (Exception e) {
+                    pipelineExecutorMBean.incrementFailed();
                     throw new PipelineExecutionException(pipeline.getName(), processor.getName(), e);
                 }
             }
@@ -44,5 +46,7 @@ public class PipelineExecutor {
             stopwatch.stop();
             watchdog.removeExecution(executionIdentifier);
         }
+
+        pipelineExecutorMBean.incrementSucceeded();
     }
 }
