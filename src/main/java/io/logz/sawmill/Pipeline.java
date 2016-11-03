@@ -1,5 +1,7 @@
 package io.logz.sawmill;
 
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigRenderOptions;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -19,6 +21,7 @@ public class Pipeline {
     public Pipeline(String id, String name, String description, List<Processor> processors) {
         checkState(!id.isEmpty(), "id cannot be empty");
         checkState(CollectionUtils.isNotEmpty(processors), "processors cannot be empty");
+
         this.id = id;
         this.name = name;
         this.description = description;
@@ -57,6 +60,11 @@ public class Pipeline {
                     config.getName(),
                     config.getDescription(),
                     processors);
+        }
+
+        public Pipeline create(String config) {
+            String configJson = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
+            return create(JsonUtils.fromJsonString(Pipeline.Configuration.class, configJson));
         }
     }
 
