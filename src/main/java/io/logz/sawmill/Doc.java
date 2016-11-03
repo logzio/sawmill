@@ -15,7 +15,7 @@ public class Doc {
     private final Map<String, Object> metadata;
 
     public Doc(Map<String, Object> source, Map<String, Object> metadata) {
-        checkState(!MapUtils.isEmpty(source), "source cannot be empty");
+        checkState(MapUtils.isNotEmpty(source), "source cannot be empty");
         this.source = source;
         this.metadata = metadata;
     }
@@ -28,13 +28,13 @@ public class Doc {
 
     public Map<String, Object> getMetadata() { return metadata; }
 
-    public <T> T getFieldValue(String path) {
+    public <T> T getField(String path) {
         Optional<Object> field = JsonUtils.getByPath(source, path);
         checkState(field.isPresent(), String.format("Couldn't resolve field in path [%s]", path));
         return (T) field.get();
     }
 
-    public <T> void addFieldValue(String k, T v) {
+    public <T> void addField(String k, T v) {
         source.put(k, v);
     }
 

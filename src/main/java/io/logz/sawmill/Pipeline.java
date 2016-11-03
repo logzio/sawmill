@@ -14,18 +14,23 @@ import static com.google.common.base.Preconditions.checkState;
 public class Pipeline {
 
     private final String id;
+    private final String name;
     private final String description;
     private final List<Processor> processors;
 
-    public Pipeline(String id, String description, List<Processor> processors) {
+    public Pipeline(String id, String name, String description, List<Processor> processors) {
         checkState(!id.isEmpty(), "id cannot be empty");
-        checkState(!CollectionUtils.isEmpty(processors), "processors cannot be empty");
+        checkState(CollectionUtils.isNotEmpty(processors), "processors cannot be empty");
+
         this.id = id;
+        this.name = name;
         this.description = description;
         this.processors = processors;
     }
 
     public String getId() { return id; }
+
+    public String getName() { return name; }
 
     public String getDescription() { return description; }
 
@@ -52,6 +57,7 @@ public class Pipeline {
             });
 
             return new Pipeline(config.getId(),
+                    config.getName(),
                     config.getDescription(),
                     processors);
         }
@@ -64,6 +70,7 @@ public class Pipeline {
 
     public static class Configuration {
         private String id;
+        private String name;
         private String description;
         private List<ProcessorDefinition> processors;
 
@@ -72,6 +79,8 @@ public class Pipeline {
         public String getId() {
             return id;
         }
+
+        public String getName() { return name; }
 
         public String getDescription() {
             return description;
