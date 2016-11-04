@@ -1,25 +1,25 @@
-package metrics;
+package io.logz.sawmill;
 
-import io.logz.sawmill.PipelineExecutorMBean;
+import io.logz.sawmill.PipelineExecutionMetricsTracker;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.LongAdder;
 
-public class PipelineExecutorMetrics implements PipelineExecutorMBean {
+public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTracker {
     private final LongAdder succeeded = new LongAdder();
     private final LongAdder failed = new LongAdder();
     private final LongAdder overtime = new LongAdder();
     private final ConcurrentMap<String, ProcessorMetrics> processorsMetrics = new ConcurrentHashMap<>();
 
     @Override
-    public long getTotal() { return succeeded.longValue() + failed.longValue() + overtime.longValue(); }
+    public long totalDocsProcessed() { return succeeded.longValue() + failed.longValue() + overtime.longValue(); }
 
     @Override
-    public long getSucceeded() { return succeeded.longValue(); }
+    public long totalDocsSucceededProcessing() { return succeeded.longValue(); }
 
     @Override
-    public long getFailed() { return failed.longValue(); }
+    public long totalDocsFailedProcessing() { return failed.longValue(); }
 
     @Override
     public long getOvertime() { return overtime.longValue(); }
@@ -34,17 +34,17 @@ public class PipelineExecutorMetrics implements PipelineExecutorMBean {
     public long getMaxProcessorProcessingTime(String processorName) { return processorsMetrics.get(processorName).getMaxTime(); }
 
     @Override
-    public void incrementSucceeded() { succeeded.increment(); }
+    public void processedDocSuccessfully(String pipelineId, Doc doc, long timeTookNs) { succeeded.increment(); }
 
     @Override
-    public void incrementFailed() { failed.increment(); }
+    public void processorFailed(String pipelineId, String processorName, Doc doc) { failed.increment(); }
 
     @Override
-    public void incrementOvertime() { overtime.increment(); }
+    public void overtimeProcessingDoc(String pipelineId, Doc doc) { overtime.increment(); }
 
     @Override
-    public void processorFinished(String processorName, long duration) {
-        processorsMetrics.computeIfAbsent(processorName, k -> new ProcessorMetrics()).addEvent(duration);
+    public void processorFinished(String processorName, long timeTookNs) {
+        processorsMetrics.computeIfAbsent(processorName, k -> new ProcessorMetrics()).addEvent(timeTookNs);
     }
 
     private class ProcessorMetrics {
