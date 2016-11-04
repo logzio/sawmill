@@ -1,4 +1,4 @@
-package io.logz.sawmill.processors;
+package processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Processor;
