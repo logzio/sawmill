@@ -4,11 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -20,15 +20,17 @@ public class PipelineExecutionTimeWatchdog {
     private static final Logger logger = LoggerFactory.getLogger(PipelineExecutionTimeWatchdog.class);
 
     private final long thresholdTimeMs;
-    private final ConcurrentMap<String, ExecutionContext> currentlyRunning;
+    private final ConcurrentMap<Long, ExecutionContext> currentlyRunning;
     private final Consumer<ExecutionContext> overtimeOp;
     private final PipelineExecutionMetricsTracker metricsTracker;
+    private final AtomicLong executionIdGenerator;
 
     public PipelineExecutionTimeWatchdog(long thresholdTimeMs, PipelineExecutionMetricsTracker metricsTracker, Consumer<ExecutionContext> overtimeOp) {
         this.thresholdTimeMs = thresholdTimeMs;
         this.metricsTracker = metricsTracker;
         this.overtimeOp = overtimeOp;
         this.currentlyRunning = new ConcurrentHashMap<>();
+        this.executionIdGenerator = new AtomicLong();
         initWatchdog(thresholdTimeMs / THRESHOLD_CHECK_FACTOR);
     }
 
@@ -52,14 +54,14 @@ public class PipelineExecutionTimeWatchdog {
         metricsTracker.overtimeProcessingDoc(context.getPipelineId(), context.getDoc());
     }
 
-    public String startedExecution(ExecutionContext context) {
-        String id = UUID.randomUUID().toString();
+    public long startedExecution(ExecutionContext context) {
+        long id = executionIdGenerator.incrementAndGet();
         currentlyRunning.put(id, context);
 
         return id;
     }
 
-    public void removeExecution(String id) {
+    public void removeExecution(long id) {
         currentlyRunning.remove(id);
     }
 }

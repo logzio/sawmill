@@ -7,7 +7,7 @@ public interface PipelineExecutionMetricsTracker {
 
     long totalDocsFailedProcessing();
 
-    long getOvertime();
+    long totalDocsOvertimeProcessing();
 
     float getAvgProcessorProcessingTime(String processorName);
 

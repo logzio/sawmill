@@ -1,6 +1,6 @@
 package io.logz.sawmill;
 
-import io.logz.sawmill.PipelineExecutionMetricsTracker;
+import org.weakref.jmx.Managed;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -12,24 +12,31 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     private final LongAdder overtime = new LongAdder();
     private final ConcurrentMap<String, ProcessorMetrics> processorsMetrics = new ConcurrentHashMap<>();
 
+    @Managed
     @Override
     public long totalDocsProcessed() { return succeeded.longValue() + failed.longValue() + overtime.longValue(); }
 
+    @Managed
     @Override
     public long totalDocsSucceededProcessing() { return succeeded.longValue(); }
 
+    @Managed
     @Override
     public long totalDocsFailedProcessing() { return failed.longValue(); }
 
+    @Managed
     @Override
-    public long getOvertime() { return overtime.longValue(); }
+    public long totalDocsOvertimeProcessing() { return overtime.longValue(); }
 
+    @Managed
     @Override
     public float getAvgProcessorProcessingTime(String processorName) { return processorsMetrics.get(processorName).getAvgTime(); }
 
+    @Managed
     @Override
     public long getMinProcessorProcessingTime(String processorName) { return processorsMetrics.get(processorName).getMinTime(); }
 
+    @Managed
     @Override
     public long getMaxProcessorProcessingTime(String processorName) { return processorsMetrics.get(processorName).getMaxTime(); }
 

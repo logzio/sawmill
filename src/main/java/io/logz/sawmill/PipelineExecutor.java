@@ -23,7 +23,7 @@ public class PipelineExecutor {
         Stopwatch stopwatch = Stopwatch.createStarted();
         long timeElapsed = 0;
 
-        String executionIdentifier = watchdog.startedExecution(new ExecutionContext(doc, pipeline.getId(), System.currentTimeMillis()));
+        long executionIdentifier = watchdog.startedExecution(new ExecutionContext(doc, pipeline.getId(), System.currentTimeMillis()));
 
         try {
             for (Processor processor : pipeline.getProcessors()) {
