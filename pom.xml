@@ -64,6 +64,11 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.21</version>
         </dependency>
+        <dependency>
+            <groupId>org.weakref</groupId>
+            <artifactId>jmxutils</artifactId>
+            <version>1.19</version>
+        </dependency>
 
         <dependency>
             <groupId>junit</groupId>

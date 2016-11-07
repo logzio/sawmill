@@ -2,8 +2,10 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.Pipeline;
 import io.logz.sawmill.PipelineExecutionTimeWatchdog;
 import io.logz.sawmill.PipelineExecutor;
+import io.logz.sawmill.PipelineExecutionMetricsTracker;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
+import io.logz.sawmill.PipelineExecutionMetricsMBean;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,13 +23,17 @@ public class PipelineExecutorTest {
 
     public PipelineExecutor pipelineExecutor;
     public List<Doc> overtimeProcessingDocs;
+    public PipelineExecutionMetricsTracker pipelineExecutorMetrics;
 
     @Before
     public void init() {
         overtimeProcessingDocs = new ArrayList<>();
-        PipelineExecutionTimeWatchdog watchdog = new PipelineExecutionTimeWatchdog(THRESHOLD_TIME_MS,
-                context -> overtimeProcessingDocs.add(context.getDoc()));
-        pipelineExecutor = new PipelineExecutor(watchdog);
+        pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
+        PipelineExecutionTimeWatchdog watchdog = new PipelineExecutionTimeWatchdog(THRESHOLD_TIME_MS, pipelineExecutorMetrics,
+                context -> {
+                    overtimeProcessingDocs.add(context.getDoc());
+                });
+        pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
     }
 
     @Test
@@ -39,6 +45,7 @@ public class PipelineExecutorTest {
         pipelineExecutor.execute(pipeline, doc);
 
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
+        assertThat(pipelineExecutorMetrics.totalDocsOvertimeProcessing()).isEqualTo(1);
     }
 
     @Test
@@ -51,6 +58,7 @@ public class PipelineExecutorTest {
         assertNotNull(doc.getSource().get("newField"));
         assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.totalDocsSucceededProcessing()).isEqualTo(1);
     }
 
     @Test
@@ -61,6 +69,7 @@ public class PipelineExecutorTest {
 
         assertThatThrownBy(() -> pipelineExecutor.execute(pipeline, doc)).isInstanceOf(PipelineExecutionException.class);
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.totalDocsFailedProcessing()).isEqualTo(1);
     }
 
     private Pipeline createPipeline(Processor... processors) {
