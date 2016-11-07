@@ -34,8 +34,39 @@ public class Doc {
         return (T) field.get();
     }
 
-    public <T> void addField(String k, T v) {
-        source.put(k, v);
+    public void addField(String path, Object value) {
+        Map<String, Object> context = source;
+        String[] pathElements = path.split("\\.");
+
+        String leafKey = pathElements[pathElements.length - 1];
+
+        for (int i=0; i< pathElements.length - 1; i++) {
+            String pathElement = pathElements[i];
+            if (context.containsKey(pathElement)) {
+                context = (Map) context.get(pathElement);
+            } else {
+                Map<String, Object> newMap = new HashMap<>();
+                context.put(pathElement, newMap);
+                context = newMap;
+            }
+        }
+
+        context.put(leafKey, value);
+    }
+
+    public void removeField(String path) {
+        Map<String, Object> context = source;
+        String[] pathElements = path.split("\\.");
+
+        String leafKey = pathElements[pathElements.length - 1];
+
+        if (pathElements.length > 1) {
+            String pathWithoutLeaf = path.substring(0, path.lastIndexOf("."));
+            context = getField(pathWithoutLeaf);
+        }
+
+        checkState(context.containsKey(leafKey), String.format("Couldn't resolve field in path [%s]", path));
+        context.remove(leafKey);
     }
 
     @Override

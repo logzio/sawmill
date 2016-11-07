@@ -1,6 +1,5 @@
-import io.logz.sawmill.Pipeline;
-import io.logz.sawmill.ProcessorFactoriesLoader;
-import io.logz.sawmill.ProcessorFactoryRegistry;
+package io.logz.sawmill;
+
 import io.logz.sawmill.processors.TestProcessor;
 import org.junit.Test;
 
@@ -19,10 +18,17 @@ public class PipelineTest {
                         "\"config\": {" +
                             "\"value\": \"message\"" +
                         "}" +
+                    "},{" +
+                            "\"name\": \"addField\"," +
+                            "\"config\": {" +
+                                "\"path\": \"path\"," +
+                                "\"value\": \"sheker\"" +
+                            "}" +
                     "}]" +
                 "}";
 
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
+        processorFactoryRegistry.register("test", new TestProcessor.Factory());
         ProcessorFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
         Pipeline.Factory factory = new Pipeline.Factory(processorFactoryRegistry);
         Pipeline pipeline = factory.create(configJson);
@@ -30,8 +36,9 @@ public class PipelineTest {
         assertThat(pipeline.getId()).isEqualTo("abc");
         assertThat(pipeline.getName()).isEqualTo("test pipeline");
         assertThat(pipeline.getDescription()).isEqualTo("this is pipeline configuration");
-        assertThat(pipeline.getProcessors().size()).isEqualTo(1);
+        assertThat(pipeline.getProcessors().size()).isEqualTo(2);
         assertThat(pipeline.getProcessors().get(0).getName()).isEqualTo("test");
+        assertThat(pipeline.getProcessors().get(1).getName()).isEqualTo("addField");
         assertThat(((TestProcessor)pipeline.getProcessors().get(0)).getValue()).isEqualTo("message");
     }
 
@@ -40,7 +47,7 @@ public class PipelineTest {
         String configHocon = "id : abc, name : hocon, description : this is hocon, processors: [{name:test,config.value:message}]";
 
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
-        ProcessorFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
+        processorFactoryRegistry.register("test", new TestProcessor.Factory());
         Pipeline.Factory factory = new Pipeline.Factory(processorFactoryRegistry);
         Pipeline pipeline = factory.create(configHocon);
 
