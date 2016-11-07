@@ -1,9 +1,8 @@
-import io.logz.sawmill.Pipeline;
-import io.logz.sawmill.ProcessFactoriesLoader;
-import io.logz.sawmill.ProcessorFactoryRegistry;
+package io.logz.sawmill;
+
+import io.logz.sawmill.processors.TestProcessor;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.junit.Test;
-import processors.TestProcessor;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 

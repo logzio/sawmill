@@ -65,6 +65,7 @@ public class Doc {
             context = getField(pathWithoutLeaf);
         }
 
+        checkState(context.containsKey(leafKey), String.format("Couldn't resolve field in path [%s]", path));
         context.remove(leafKey);
     }
 

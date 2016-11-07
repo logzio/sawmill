@@ -9,9 +9,11 @@ public class RemoveFieldProcessor implements Processor {
     public static final String NAME = "removeField";
 
     private final String path;
+    private final boolean ignoreMissing;
 
-    public RemoveFieldProcessor(String path) {
+    public RemoveFieldProcessor(String path, boolean ignoreMissing) {
         this.path = path;
+        this.ignoreMissing = ignoreMissing;
     }
 
     @Override
@@ -19,7 +21,11 @@ public class RemoveFieldProcessor implements Processor {
 
     @Override
     public void process(Doc doc) {
-        doc.removeField(path);
+        try {
+            doc.removeField(path);
+        } catch (IllegalStateException e) {
+            if (!ignoreMissing) throw e;
+        }
     }
 
     @ProcessorProvider(name = "removeField")
@@ -29,21 +35,25 @@ public class RemoveFieldProcessor implements Processor {
 
         @Override
         public Processor create(String config) {
-            RemoveFieldProcessor.Configuration addFieldConfig = JsonUtils.fromJsonString(RemoveFieldProcessor.Configuration.class, config);
+            RemoveFieldProcessor.Configuration removeFieldConfig = JsonUtils.fromJsonString(RemoveFieldProcessor.Configuration.class, config);
 
-            return new RemoveFieldProcessor(addFieldConfig.getPath());
+            return new RemoveFieldProcessor(removeFieldConfig.getPath(), removeFieldConfig.isIgnoreMissing());
         }
     }
 
     public static class Configuration implements Processor.Configuration {
         private String path;
+        private boolean ignoreMissing;
 
         public Configuration() { }
 
-        public Configuration(String path) {
+        public Configuration(String path, boolean ignoreMissing) {
             this.path = path;
+            this.ignoreMissing = ignoreMissing;
         }
 
         public String getPath() { return path; }
+
+        public boolean isIgnoreMissing() { return ignoreMissing; }
     }
 }

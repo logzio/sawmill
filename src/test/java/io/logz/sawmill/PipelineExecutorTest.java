@@ -1,19 +1,14 @@
-import io.logz.sawmill.Doc;
-import io.logz.sawmill.Pipeline;
-import io.logz.sawmill.PipelineExecutionTimeWatchdog;
-import io.logz.sawmill.PipelineExecutor;
-import io.logz.sawmill.PipelineExecutionMetricsTracker;
-import io.logz.sawmill.Processor;
+package io.logz.sawmill;
+
 import io.logz.sawmill.exceptions.PipelineExecutionException;
-import io.logz.sawmill.PipelineExecutionMetricsMBean;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 
+import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertNotNull;
@@ -77,16 +72,6 @@ public class PipelineExecutorTest {
         String name = "test";
         String description = "test";
         return new Pipeline(id, name, description, Arrays.asList(processors));
-    }
-
-    private Doc createDoc(Object... objects) {
-        LinkedHashMap map = new LinkedHashMap<>();
-        if (objects != null) {
-            for (int i = 0; i < objects.length; i++) {
-                map.put(objects[i], objects[++i]);
-            }
-        }
-        return new Doc(map);
     }
 
     private Processor createSleepProcessor(long millis) {

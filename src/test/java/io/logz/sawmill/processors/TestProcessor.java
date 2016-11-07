@@ -1,8 +1,7 @@
-package processors;
+package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Processor;
-import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
 public class TestProcessor implements Processor {
@@ -24,7 +23,6 @@ public class TestProcessor implements Processor {
 
     public String getValue() { return value; }
 
-    @ProcessorProvider(name = "test")
     public static class Factory implements Processor.Factory {
         public Factory() {
         }

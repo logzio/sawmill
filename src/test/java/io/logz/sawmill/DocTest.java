@@ -1,4 +1,5 @@
-import io.logz.sawmill.Doc;
+package io.logz.sawmill;
+
 import org.junit.Test;
 
 import java.util.HashMap;
