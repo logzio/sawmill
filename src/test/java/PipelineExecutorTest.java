@@ -45,7 +45,7 @@ public class PipelineExecutorTest {
         pipelineExecutor.execute(pipeline, doc);
 
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
-        assertThat(pipelineExecutorMetrics.getOvertime()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.totalDocsOvertimeProcessing()).isEqualTo(1);
     }
 
     @Test
