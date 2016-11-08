@@ -69,6 +69,11 @@ public class Doc {
         context.remove(leafKey);
     }
 
+    public void convertField(String path, Class clazz) {
+        Object field = getField(path);
+        clazz.cast(field);
+    }
+
     @Override
     public String toString() {
         return "Doc{" +
