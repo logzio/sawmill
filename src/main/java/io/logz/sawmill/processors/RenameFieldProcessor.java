@@ -4,9 +4,12 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RenameFieldProcessor implements Processor {
     public static final String NAME = "renameField";
+    private static final Logger logger = LoggerFactory.getLogger(RenameFieldProcessor.class);
 
     private final String from;
     private final String to;
@@ -21,12 +24,16 @@ public class RenameFieldProcessor implements Processor {
 
     @Override
     public void process(Doc doc) {
-        Object fieldValue = doc.getField(from);
-        doc.removeField(from);
-        doc.addField(to, fieldValue);
+        try {
+            Object fieldValue = doc.getField(from);
+            doc.removeField(from);
+            doc.addField(to, fieldValue);
+        } catch (Exception e) {
+            logger.trace("failed to rename field [{}] to [{}]", from, to, e);
+        }
     }
 
-    @ProcessorProvider(name = "renameField")
+    @ProcessorProvider(name = NAME)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
