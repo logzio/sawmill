@@ -10,23 +10,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class AddAndRemoveFieldProcessorTest {
 
     @Test
-    public void testRemoveField() {
+    public void testAddAndRemoveField() {
         String path = "message.hola.hello";
         AddFieldProcessor addFieldProcessor = new AddFieldProcessor(path, "shalom");
-        RemoveFieldProcessor removeFieldIgnoreMissingProcessor = new RemoveFieldProcessor(path, true);
-        RemoveFieldProcessor removeFieldDontIgnoreMissingProcessor = new RemoveFieldProcessor(path, false);
+        RemoveFieldProcessor removeFieldProcessor = new RemoveFieldProcessor(path);
 
         Doc doc = createDoc("field", "value");
 
-        removeFieldIgnoreMissingProcessor.process(doc);
+        // Tests no exception thrown in case of missing field
+        removeFieldProcessor.process(doc);
 
         addFieldProcessor.process(doc);
 
         assertThat((String) doc.getField(path)).isEqualTo("shalom");
 
-        removeFieldDontIgnoreMissingProcessor.process(doc);
+        removeFieldProcessor.process(doc);
 
         assertThatThrownBy(() ->  doc.getField(path)).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> removeFieldDontIgnoreMissingProcessor.process(doc)).isInstanceOf(IllegalStateException.class);
     }
 }

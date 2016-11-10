@@ -30,7 +30,7 @@ public class Doc {
 
     public Map<String, Object> getMetadata() { return metadata; }
 
-    public boolean fieldExists(String path) {
+    public boolean hasField(String path) {
         Optional<Object> field = JsonUtils.getByPath(source, path);
         return field.isPresent();
     }
@@ -78,11 +78,19 @@ public class Doc {
 
     public void appendList(String path, Object value) {
         List<Object> list;
-        if (!fieldExists(path)) {
+        if (!hasField(path)) {
             addField(path, new ArrayList<>());
         }
 
-        list = getField(path);
+        Object field = getField(path);
+        if (field instanceof List) {
+            list = (List) field;
+        } else {
+            list = new ArrayList<>();
+            list.add(field);
+            removeField(path);
+            addField(path, list);
+        }
         if (value instanceof List) {
             list.addAll((List)value);
         } else {
@@ -92,8 +100,9 @@ public class Doc {
 
     public void removeFromList(String path, Object value) {
         List<Object> list = getField(path);
+
         if (value instanceof List) {
-            list.removeAll((List)value);
+            list.removeAll((List) value);
         } else {
             list.remove(value);
         }

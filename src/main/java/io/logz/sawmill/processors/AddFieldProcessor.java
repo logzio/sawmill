@@ -6,7 +6,7 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
 public class AddFieldProcessor implements Processor {
-    public static final String NAME = "addField";
+    private static final String NAME = "addField";
 
     private final String path;
     private final Object value;
@@ -24,7 +24,7 @@ public class AddFieldProcessor implements Processor {
         doc.addField(path, value);
     }
 
-    @ProcessorProvider(name = "addField")
+    @ProcessorProvider(name = NAME)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }

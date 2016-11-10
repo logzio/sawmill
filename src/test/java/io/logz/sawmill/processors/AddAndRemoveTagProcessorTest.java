@@ -11,14 +11,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class AddAndRemoveTagProcessorTest {
     @Test
-    public void testAddAndRemoveSingleTag() {
+    public void testAddAndRemoveSingleTagWhileTagsFieldIsNotList() {
         AddTagProcessor addTagProcessor = new AddTagProcessor(Arrays.asList("test_tag"));
         RemoveTagProcessor removeTagProcessor = new RemoveTagProcessor(Arrays.asList("test_tag"));
-        Doc doc = createDoc("field1", "value");
+        Doc doc = createDoc("tags", "value");
+
+        // Tests no exception thrown in case of none tags
+        removeTagProcessor.process(doc);
 
         addTagProcessor.process(doc);
 
-        assertThat((List)doc.getField("tags")).contains("test_tag");
+        assertThat(((List)doc.getField("tags")).contains("value")).isTrue();
+        assertThat(((List)doc.getField("tags")).contains("test_tag")).isTrue();
 
         removeTagProcessor.process(doc);
 
@@ -26,7 +30,7 @@ public class AddAndRemoveTagProcessorTest {
     }
 
     @Test
-    public void testAddAndRemoveSeveralTags() {
+    public void testAddAndRemoveSeveralTagsWhileTagsFielsMissing() {
         List<String> tags = Arrays.asList("tag1", "tag2", "tag3");
         AddTagProcessor addTagProcessor = new AddTagProcessor(tags);
         RemoveTagProcessor removeTagProcessor = new RemoveTagProcessor(tags);
@@ -34,10 +38,15 @@ public class AddAndRemoveTagProcessorTest {
 
         addTagProcessor.process(doc);
 
-        assertThat((List)doc.getField("tags")).containsAll(tags);
+        for (String tag : tags) {
+            assertThat(((List) doc.getField("tags")).contains(tag)).isTrue();
+        }
 
         removeTagProcessor.process(doc);
 
-        assertThat(((List)doc.getField("tags")).containsAll(tags)).isFalse();
+        for (String tag : tags) {
+            assertThat(((List) doc.getField("tags")).contains(tag)).isFalse();
+        }
+        assertThat((String) doc.getField("field1")).isEqualTo("value");
     }
 }

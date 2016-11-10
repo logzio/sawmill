@@ -8,7 +8,7 @@ import io.logz.sawmill.utilities.JsonUtils;
 import java.util.List;
 
 public class AddTagProcessor implements Processor {
-    public static final String NAME = "addTag";
+    private static final String NAME = "addTag";
 
     private final List<String> tags;
 
@@ -24,7 +24,7 @@ public class AddTagProcessor implements Processor {
         doc.appendList("tags", tags);
     }
 
-    @ProcessorProvider(name = "addTag")
+    @ProcessorProvider(name = NAME)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }

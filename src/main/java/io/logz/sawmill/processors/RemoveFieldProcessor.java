@@ -4,16 +4,17 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RemoveFieldProcessor implements Processor {
-    public static final String NAME = "removeField";
+    private static final String NAME = "removeField";
+    private static final Logger logger = LoggerFactory.getLogger(RemoveFieldProcessor.class);
 
     private final String path;
-    private final boolean ignoreMissing;
 
-    public RemoveFieldProcessor(String path, boolean ignoreMissing) {
+    public RemoveFieldProcessor(String path) {
         this.path = path;
-        this.ignoreMissing = ignoreMissing;
     }
 
     @Override
@@ -24,11 +25,11 @@ public class RemoveFieldProcessor implements Processor {
         try {
             doc.removeField(path);
         } catch (IllegalStateException e) {
-            if (!ignoreMissing) throw e;
+            logger.trace("failed to remove field in path [{}]", path, e);
         }
     }
 
-    @ProcessorProvider(name = "removeField")
+    @ProcessorProvider(name = NAME)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
@@ -37,23 +38,19 @@ public class RemoveFieldProcessor implements Processor {
         public Processor create(String config) {
             RemoveFieldProcessor.Configuration removeFieldConfig = JsonUtils.fromJsonString(RemoveFieldProcessor.Configuration.class, config);
 
-            return new RemoveFieldProcessor(removeFieldConfig.getPath(), removeFieldConfig.isIgnoreMissing());
+            return new RemoveFieldProcessor(removeFieldConfig.getPath());
         }
     }
 
     public static class Configuration implements Processor.Configuration {
         private String path;
-        private boolean ignoreMissing;
 
         public Configuration() { }
 
         public Configuration(String path, boolean ignoreMissing) {
             this.path = path;
-            this.ignoreMissing = ignoreMissing;
         }
 
         public String getPath() { return path; }
-
-        public boolean isIgnoreMissing() { return ignoreMissing; }
     }
 }

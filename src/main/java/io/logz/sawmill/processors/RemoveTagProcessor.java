@@ -4,11 +4,15 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class RemoveTagProcessor implements Processor {
-    public static final String NAME = "removeTag";
+    private static final String NAME = "removeTag";
+    private static final Logger logger = LoggerFactory.getLogger(RemoveTagProcessor.class);
+
 
     private final List<String> tags;
 
@@ -21,10 +25,14 @@ public class RemoveTagProcessor implements Processor {
 
     @Override
     public void process(Doc doc) {
-        doc.removeFromList("tags", tags);
+        try {
+            doc.removeFromList("tags", tags);
+        } catch (Exception e) {
+            logger.trace("failed to remove tags [{}]", tags, e);
+        }
     }
 
-    @ProcessorProvider(name = "removeTag")
+    @ProcessorProvider(name = NAME)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
