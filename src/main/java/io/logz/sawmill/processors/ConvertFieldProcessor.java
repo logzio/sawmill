@@ -4,10 +4,13 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.codehaus.jackson.annotate.JsonProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConvertFieldProcessor implements Processor {
-    public static final String NAME = "convertField";
+    private static final String NAME = "convertField";
+    private static final Logger logger = LoggerFactory.getLogger(ConvertFieldProcessor.class);
+
 
     private final String path;
     private final FieldType type;
@@ -15,10 +18,6 @@ public class ConvertFieldProcessor implements Processor {
     public ConvertFieldProcessor(String path, FieldType type) {
         this.path = path;
         this.type = type;
-    }
-
-    public String getPath() {
-        return path;
     }
 
     public FieldType getType() {
@@ -30,14 +29,52 @@ public class ConvertFieldProcessor implements Processor {
 
     @Override
     public void process(Doc doc) {
-        try {
-            doc.convertField(path, Class.forName(type.getClassName()));
-        } catch (ClassNotFoundException e) {
-
+        if (type == null) {
+            logger.trace("failed to convert field in path [{}], type is null", path);
+            return;
         }
+
+        try {
+            Object afterCast;
+            Object beforeCast = doc.getField(path);
+            switch (type) {
+                case LONG: {
+                    afterCast = Long.parseLong(beforeCast.toString());
+                    break;
+                }
+                case DOUBLE: {
+                    afterCast = Double.parseDouble(beforeCast.toString());
+                    break;
+                }
+                case BOOLEAN: {
+                    if (beforeCast.toString().matches("^(t|true|yes|y|1)$")) {
+                        afterCast = true;
+                    } else if (beforeCast.toString().matches("^(f|false|no|n|0)$")) {
+                        afterCast = false;
+                    } else {
+                        logger.trace("failed to convert field in path [{}] to Boolean, unknown value [{}]", path, beforeCast);
+                        return;
+                    }
+                    break;
+                }
+                case STRING: {
+                    afterCast = beforeCast.toString();
+                    break;
+                } default: {
+                    logger.trace("failed to convert field in path [{}], unknown field type", path);
+                    return;
+                }
+            }
+
+            doc.removeField(path);
+            doc.addField(path, afterCast);
+        } catch (Exception e){
+            logger.trace("failed to convert field in path [{}] to type [{}]", path, type, e);
+        }
+
     }
 
-    @ProcessorProvider(name = "convertField")
+    @ProcessorProvider(name = NAME)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
@@ -46,7 +83,7 @@ public class ConvertFieldProcessor implements Processor {
         public Processor create(String config) {
             ConvertFieldProcessor.Configuration convertFieldConfig = JsonUtils.fromJsonString(ConvertFieldProcessor.Configuration.class, config);
 
-            return new ConvertFieldProcessor(convertFieldConfig.getPath(), convertFieldConfig.isType());
+            return new ConvertFieldProcessor(convertFieldConfig.getPath(), convertFieldConfig.getType());
         }
     }
 
@@ -63,23 +100,18 @@ public class ConvertFieldProcessor implements Processor {
 
         public String getPath() { return path; }
 
-        public FieldType isType() { return type; }
+        public FieldType getType() { return type; }
     }
 
     public enum FieldType {
-        INTEGER("java.lang.Integer"),
-        FLOAT("java.lang.Float"),
-        STRING("java.lang.String"),
-        BOOLEAN("java.lang.Boolean");
+        LONG,
+        DOUBLE,
+        STRING,
+        BOOLEAN;
 
-        private final String className;
-
-        FieldType(String className) {
-            this.className = className;
-        }
-
-        public String getClassName() {
-            return className;
+        @Override
+        public String toString() {
+            return this.name().toLowerCase();
         }
     }
 }

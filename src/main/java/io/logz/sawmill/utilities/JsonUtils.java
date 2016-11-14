@@ -1,5 +1,6 @@
 package io.logz.sawmill.utilities;
 
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
@@ -14,8 +15,9 @@ public class JsonUtils {
     static {
         mapper = new ObjectMapper();
         mapper.configure(SerializationConfig.Feature.WRITE_NULL_MAP_VALUES, false);
-        mapper.disable(org.codehaus.jackson.map.DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
-        mapper.disable(org.codehaus.jackson.map.SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS);
+        mapper.disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
+        mapper.disable(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS);
+        mapper.enable(DeserializationConfig.Feature.READ_ENUMS_USING_TO_STRING);
     }
 
     public static <T> T fromJsonString(Class<T> type, String json) {
