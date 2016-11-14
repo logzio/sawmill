@@ -9,10 +9,8 @@ import io.logz.sawmill.PipelineExecutor;
 import io.logz.sawmill.ProcessorFactoriesLoader;
 import io.logz.sawmill.ProcessorFactoryRegistry;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.json.simple.parser.JSONParser;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -29,11 +27,11 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -41,14 +39,13 @@ import java.util.Random;
 @State(Scope.Benchmark)
 public class SawmillBenchmark {
 
+    public static final int MAX_FIELDS_AMOUNT = 20;
+
     @Param({"id : 1, name : pipeline1, description : desc, processors: [{name:addField,config.path:benchTest, config.value:value}]"})
     public String pipelineConfig;
 
     @Param({"/Users/ori/Documents/logs"})
     public String docsPath;
-
-    @Param({"/Users/ori/Documents/logs/config/config.json"})
-    public String jsonConfigPath;
 
     @Param({"1000"})
     public static long thresholdTimeMs;
@@ -63,7 +60,7 @@ public class SawmillBenchmark {
     @Setup
     public void setup(BenchmarkParams params) {
         random = new Random();
-        //generateDocs();
+        generateDocs();
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
         ProcessorFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
         Pipeline.Factory pipelineFactory = new Pipeline.Factory(processorFactoryRegistry);
@@ -73,15 +70,42 @@ public class SawmillBenchmark {
     }
 
     private void generateDocs() {
-        JsonFactory jsonFactory = new JsonFactory();
         for (int i=0; i< docsAmount; i++) {
             try {
-                Writer writer = new FileWriter(RandomStringUtils.randomAlphabetic(5) + ".json");
-                JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
+                File file = new File(docsPath + "/" + RandomStringUtils.randomAlphabetic(5) + ".json");
+                Map<String,Object> map = new HashMap<>();
+                generateMap(map, random.nextInt(MAX_FIELDS_AMOUNT), 0);
+                String data = JsonUtils.toJsonString(map);
+                FileUtils.writeStringToFile(file, data, "UTF-8");
             } catch (IOException e) {
+                throw new RuntimeException("failed to generate docs", e);
             }
         }
 
+    }
+
+    private void generateMap(Map<String,Object> map, int size, int deepLevel) {
+        for (int i=0; i < size; i++) {
+            String fieldName = RandomStringUtils.randomAlphabetic(5);
+            if (deepLevel < 3 && random.nextBoolean()) {
+                Map<String,Object> nestedMap = new HashMap<>();
+                generateMap(nestedMap, random.nextInt(MAX_FIELDS_AMOUNT / 2), ++deepLevel);
+                map.put(fieldName, nestedMap);
+            } else if (random.nextBoolean()) {
+                map.put(fieldName, generateList(random.nextInt(MAX_FIELDS_AMOUNT / 2)));
+            } else {
+                map.put(fieldName, RandomStringUtils.randomAlphanumeric(5));
+            }
+        }
+    }
+
+    private List<String> generateList(int size) {
+        List<String> list = new ArrayList<>(size);
+        for (int i=0; i < size; i++) {
+            list.add(RandomStringUtils.randomAlphanumeric(5));
+        }
+
+        return list;
     }
 
     @State(Scope.Thread)
@@ -103,14 +127,12 @@ public class SawmillBenchmark {
 
         private Doc getRandomDoc() {
             Doc doc;
-            File file = docsFilesJson[random.nextInt(docsFilesJson.length)];
-            try (FileReader fileReader = new FileReader(file)){
-                Object parse = new JSONParser().parse(fileReader);
-                doc = new Doc(JsonUtils.fromJsonString(Map.class, parse.toString()));
+            try {
+                File file = docsFilesJson[random.nextInt(docsFilesJson.length)];
+                String jsonString = FileUtils.readFileToString(file, "UTF-8");
+                doc = new Doc(JsonUtils.fromJsonString(Map.class, jsonString));
             } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            finally {
+                throw new RuntimeException("failed to get random doc", e);
             }
 
             return doc;

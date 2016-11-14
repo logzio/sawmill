@@ -12,3 +12,6 @@ target/
 
 # Docker
 *.tar
+
+# JMH
+jmh-result.text

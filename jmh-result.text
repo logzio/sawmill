@@ -1,2 +1,0 @@
-Benchmark                       (docsAmount)                 (docsPath)           (jsonConfigPath)                                                                                                       (pipelineConfig)  (thresholdTimeMs)   Mode  Cnt        Score       Error  Units
-SawmillBenchmark.testExecution          1000  /Users/ori/Documents/logs  /Users/ori/Documents/logs  id : 1, name : pipeline1, description : desc, processors: [{name:addField,config.path:benchTest, config.value:value}]               1000  thrpt   10  2718192.150 ± 78243.987  ops/s
