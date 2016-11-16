@@ -25,7 +25,11 @@
         <dependency>
             <groupId>io.logz.sawmill</groupId>
             <artifactId>sawmill-core</artifactId>
-            <version>0.1.1-SNAPSHOT</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>

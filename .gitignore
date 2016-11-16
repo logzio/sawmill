@@ -14,4 +14,4 @@ target/
 *.tar
 
 # JMH
-jmh-result.text
+jmh-result.*
