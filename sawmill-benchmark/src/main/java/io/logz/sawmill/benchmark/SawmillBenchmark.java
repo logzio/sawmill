@@ -1,5 +1,6 @@
 package io.logz.sawmill.benchmark;
 
+import com.google.common.collect.Iterables;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Pipeline;
 import io.logz.sawmill.PipelineExecutionMetricsMBean;
@@ -9,7 +10,6 @@ import io.logz.sawmill.PipelineExecutor;
 import io.logz.sawmill.ProcessorFactoriesLoader;
 import io.logz.sawmill.ProcessorFactoryRegistry;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -20,15 +20,13 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.infra.BenchmarkParams;
-import org.openjdk.jmh.results.format.ResultFormatType;
-import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.options.Options;
-import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @BenchmarkMode(Mode.Throughput)
@@ -58,80 +56,65 @@ public class SawmillBenchmark {
     public static File[] docsFilesJson;
     public static AtomicInteger docIndex;
     public static PipelineExecutionTimeWatchdog watchdog;
+    public static PipelineExecutor pipelineExecutor;
 
     @Setup
     public void setup(BenchmarkParams params) {
-        docIndex = new AtomicInteger();
         DocumentGenerator.generateDocs(docsPath, docsAmount / docsPerFile, docsPerFile, DocumentGenerator.DocType.valueOf(docType));
+
+        setupSawmill();
+        setupDocHandler();
+    }
+
+    private void setupDocHandler() {
+        docIndex = new AtomicInteger();
+        File dir = new File(docsPath);
+        FilenameFilter filter = (File directory, String name) -> name.matches(".*\\.json$");
+        docsFilesJson = dir.listFiles(filter);
+    }
+
+    private void setupSawmill() {
+        // TODO: change sawmill setup to be easier
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
         ProcessorFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
         pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
-        watchdog = new PipelineExecutionTimeWatchdog(thresholdTimeMs, pipelineExecutorMetrics,
-                context -> {
-
-                });
+        watchdog = new PipelineExecutionTimeWatchdog(thresholdTimeMs, pipelineExecutorMetrics, context -> { });
+        pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
         Pipeline.Factory pipelineFactory = new Pipeline.Factory(processorFactoryRegistry);
         pipeline = pipelineFactory.create(pipelineConfig);
-        File dir = new File(docsPath);
-        FilenameFilter filter = new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                if (name.matches(".*\\.json$")) return true;
-                return false;
-            }
-        };
-        docsFilesJson = dir.listFiles(filter);
     }
 
     @State(Scope.Thread)
     public static class ExecutorState {
-        public PipelineExecutor pipelineExecutor;
-        public Queue<Doc> docQueue;
+        public Iterator<Doc> docIterator;
 
         @Setup()
         public void setup() {
-            pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
-            docQueue = getDocs();
+            File file = docsFilesJson[docIndex.getAndIncrement()];
+            docIterator = extractDocs(file);
         }
 
-        private Queue<Doc> getDocs() {
-            Queue<Doc> queue = new CircularFifoQueue<>(docsPerFile);
+        private Iterator<Doc> extractDocs(File file) {
+            List<Doc> docs = new ArrayList<>();
             try {
-                File file = docsFilesJson[docIndex.getAndIncrement()];
                 LineIterator lineIterator = FileUtils.lineIterator(file, "UTF-8");
                 while (lineIterator.hasNext()) {
                     String line = lineIterator.next();
                     if (!line.isEmpty()) {
-                        queue.add(new Doc(JsonUtils.fromJsonString(Map.class, line)));
+                        docs.add(new Doc(JsonUtils.fromJsonString(Map.class, line)));
                     }
                 }
 
             } catch (Exception e) {
-                throw new RuntimeException("failed to get random doc", e);
+                throw new RuntimeException("failed to extract docs from file [" + file + "]", e);
             }
 
-            return queue;
+            return Iterables.cycle(docs).iterator();
         }
     }
 
     @Benchmark
     public void testExecution(ExecutorState state) {
-        Doc doc = state.docQueue.peek();
-        state.pipelineExecutor.execute(pipeline, doc);
-        state.docQueue.add(doc);
-    }
-
-    public static void main(String... args) throws Exception {
-        Options opts = new OptionsBuilder()
-                .include(".*")
-                .warmupIterations(2)
-                .measurementIterations(10)
-                .jvmArgs("-server")
-                .forks(1)
-                .threads(8)
-                .resultFormat(ResultFormatType.JSON)
-                .build();
-
-        new Runner(opts).run();
+        pipelineExecutor.execute(pipeline, state.docIterator.next());
     }
 }
