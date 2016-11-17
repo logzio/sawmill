@@ -16,6 +16,8 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.VerboseMode;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Main {
 
@@ -25,10 +27,12 @@ public class Main {
         OptionParser parser = new OptionParser();
         OptionSpec<String> runningMode = parser.accepts("m", "Running Mode: sawmill or normal (default: sawmill)").withRequiredArg().ofType(String.class);
         OptionSpec<String> configFilePath = parser.accepts("cp", "Config File Path").withOptionalArg().ofType(String.class);
+        parser.allowsUnrecognizedOptions();
         OptionSet set = parser.parse(args);
 
         if (set.has(runningMode) && runningMode.value(set).toLowerCase().equals(NORMAL_MODE)) {
-            org.openjdk.jmh.Main.main(args);
+            String[] newArgs = removeCustomArgs(args);
+            org.openjdk.jmh.Main.main(newArgs);
             System.exit(0);
         }
 
@@ -66,4 +70,17 @@ public class Main {
             System.exit(1);
         }
 
-    }}
+    }
+
+    private static String[] removeCustomArgs(String[] args) {
+        ArrayList<String> argsList = new ArrayList<>(Arrays.asList(args));
+        for (int i=0; i < args.length - 1; i+=2) {
+            if (argsList.get(i).equals("-m") || argsList.get(i).equals("-cp")) {
+                argsList.remove(i);
+                argsList.remove(i++);
+            }
+        }
+
+        return argsList.toArray(new String[0]);
+    }
+}
