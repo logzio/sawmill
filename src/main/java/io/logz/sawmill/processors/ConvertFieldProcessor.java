@@ -7,6 +7,8 @@ import io.logz.sawmill.utilities.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class ConvertFieldProcessor implements Processor {
     private static final String NAME = "convertField";
     private static final Logger logger = LoggerFactory.getLogger(ConvertFieldProcessor.class);
@@ -16,6 +18,7 @@ public class ConvertFieldProcessor implements Processor {
     private final FieldType type;
 
     public ConvertFieldProcessor(String path, FieldType type) {
+        checkState(type != null, "convert type cannot be empty");
         this.path = path;
         this.type = type;
     }
@@ -29,11 +32,6 @@ public class ConvertFieldProcessor implements Processor {
 
     @Override
     public void process(Doc doc) {
-        if (type == null) {
-            logger.trace("failed to convert field in path [{}], type is null", path);
-            return;
-        }
-
         try {
             Object afterCast;
             Object beforeCast = doc.getField(path);
