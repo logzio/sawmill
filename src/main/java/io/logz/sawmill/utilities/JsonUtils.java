@@ -1,8 +1,8 @@
 package io.logz.sawmill.utilities;
 
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
@@ -14,10 +14,11 @@ public class JsonUtils {
 
     static {
         mapper = new ObjectMapper();
-        mapper.configure(SerializationConfig.Feature.WRITE_NULL_MAP_VALUES, false);
-        mapper.disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
-        mapper.disable(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS);
-        mapper.enable(DeserializationConfig.Feature.READ_ENUMS_USING_TO_STRING);
+
+        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
     }
 
     public static <T> T fromJsonString(Class<T> type, String json) {
