@@ -14,9 +14,11 @@ public class JsonUtils {
 
     static {
         mapper = new ObjectMapper();
+
         mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
     }
 
     public static <T> T fromJsonString(Class<T> type, String json) {
