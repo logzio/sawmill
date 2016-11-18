@@ -39,7 +39,7 @@ public class SawmillBenchmark {
     @Param({"/Users/ori/Documents/logs"})
     public static String docsPath;
 
-    @Param({"1000"})
+    @Param({"50"})
     public static long thresholdTimeMs;
 
     @Param({"1000"})
@@ -53,7 +53,7 @@ public class SawmillBenchmark {
 
     public static Pipeline pipeline;
     public static PipelineExecutionMetricsTracker pipelineExecutorMetrics;
-    public static File[] docsFilesJson;
+    public static File[] jsonDocFiles;
     public static AtomicInteger docIndex;
     public static PipelineExecutionTimeWatchdog watchdog;
     public static PipelineExecutor pipelineExecutor;
@@ -63,18 +63,17 @@ public class SawmillBenchmark {
         DocumentGenerator.generateDocs(docsPath, docsAmount / docsPerFile, docsPerFile, DocumentGenerator.DocType.valueOf(docType));
 
         setupSawmill();
-        setupDocHandler();
+        setupInput();
     }
 
-    private void setupDocHandler() {
+    private void setupInput() {
         docIndex = new AtomicInteger();
         File dir = new File(docsPath);
         FilenameFilter filter = (File directory, String name) -> name.matches(".*\\.json$");
-        docsFilesJson = dir.listFiles(filter);
+        jsonDocFiles = dir.listFiles(filter);
     }
 
     private void setupSawmill() {
-        // TODO: change sawmill setup to be easier
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
         ProcessorFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
         pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
@@ -90,7 +89,7 @@ public class SawmillBenchmark {
 
         @Setup()
         public void setup() {
-            File file = docsFilesJson[docIndex.getAndIncrement()];
+            File file = jsonDocFiles[docIndex.getAndIncrement()];
             docIterator = extractDocs(file);
         }
 

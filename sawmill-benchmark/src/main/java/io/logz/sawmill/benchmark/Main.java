@@ -3,6 +3,7 @@ package io.logz.sawmill.benchmark;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigRenderOptions;
 import io.logz.sawmill.utilities.JsonUtils;
+import joptsimple.NonOptionArgumentSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
@@ -16,71 +17,75 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.VerboseMode;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Main {
 
-    public static final String NORMAL_MODE = "normal";
+    public static OptionParser parser = new OptionParser();
+
+    public static NonOptionArgumentSpec<String> modeSpec = parser.nonOptions("Run Mode: normal JMH or scenario file").ofType(String.class);
+    public static OptionSpec<File> configFileSpec = parser.accepts("sf", "Scenario file").withRequiredArg().ofType(File.class);
 
     public static void main(String... args) throws Exception {
-        OptionParser parser = new OptionParser();
-        OptionSpec<String> runningMode = parser.accepts("m", "Running Mode: sawmill or normal (default: sawmill)").withRequiredArg().ofType(String.class);
-        OptionSpec<String> configFilePath = parser.accepts("cp", "Config File Path").withOptionalArg().ofType(String.class);
-        parser.allowsUnrecognizedOptions();
+        Runner runner = null;
+        Options opts = null;
+        RunMode mode = null;
+
         OptionSet set = parser.parse(args);
 
-        if (set.has(runningMode) && runningMode.value(set).toLowerCase().equals(NORMAL_MODE)) {
-            String[] newArgs = removeCustomArgs(args);
-            org.openjdk.jmh.Main.main(newArgs);
-            System.exit(0);
-        }
+        String modeValue = modeSpec.value(set);
 
         try {
-            File configFile = new File(configFilePath.value(set));
-            String config = FileUtils.readFileToString(configFile, "UTF-8");
-            String json = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
-            Options opts = JsonUtils.fromJsonString(SawmillBenchmarkOptions.class, json).withParams();
-
-            Runner runner = new Runner(opts);
-
-            try {
-                runner.run();
-            } catch (NoBenchmarksException e) {
-                System.err.println("No matching benchmarks. Miss-spelled regexp?");
-
-                if (opts.verbosity().orElse(Defaults.VERBOSITY) != VerboseMode.EXTRA) {
-                    System.err.println("Use " + VerboseMode.EXTRA + " verbose mode to debug the pattern matching.");
-                } else {
-                    runner.list();
-                }
-                System.exit(1);
-            } catch (ProfilersFailedException e) {
-                // This is not exactly an error, set non-zero exit code
-                System.err.println(e.getMessage());
-                System.exit(1);
-            } catch (RunnerException e) {
-                System.err.print("ERROR: ");
-                e.printStackTrace(System.err);
-                System.exit(1);
-            }
+            mode = RunMode.valueOf(modeValue.toUpperCase());
         } catch (Exception e) {
-            System.err.println("Error parsing command line:");
-            System.err.println(" " + e.getMessage());
+            parser.printHelpOn(System.err);
             System.exit(1);
         }
 
-    }
+        switch (mode) {
+            case JMH:
+                org.openjdk.jmh.Main.main(Arrays.copyOfRange(args, 1, args.length));
+                System.exit(0);
+            case SCENARIO_FILE: {
+                try {
+                    String config = FileUtils.readFileToString(configFileSpec.value(set), "UTF-8");
+                    String json = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
+                    opts = JsonUtils.fromJsonString(SawmillBenchmarkOptions.class, json).toJmhOptions();
 
-    private static String[] removeCustomArgs(String[] args) {
-        ArrayList<String> argsList = new ArrayList<>(Arrays.asList(args));
-        for (int i=0; i < args.length - 1; i+=2) {
-            if (argsList.get(i).equals("-m") || argsList.get(i).equals("-cp")) {
-                argsList.remove(i);
-                argsList.remove(i++);
+                    runner = new Runner(opts);
+                } catch (Exception e) {
+                    System.err.println("Error parsing command line:");
+                    System.err.println(" " + e);
+                    parser.printHelpOn(System.err);
+                    System.exit(1);
+                }
+
+                try {
+                    runner.run();
+                } catch (NoBenchmarksException e) {
+                    System.err.println("No matching benchmarks. Miss-spelled regexp?");
+
+                    if (opts.verbosity().orElse(Defaults.VERBOSITY) != VerboseMode.EXTRA) {
+                        System.err.println("Use " + VerboseMode.EXTRA + " verbose mode to debug the pattern matching.");
+                    } else {
+                        runner.list();
+                    }
+                    System.exit(1);
+                } catch (ProfilersFailedException e) {
+                    // This is not exactly an error, set non-zero exit code
+                    System.err.println(e.getMessage());
+                    System.exit(1);
+                } catch (RunnerException e) {
+                    System.err.print("ERROR: ");
+                    e.printStackTrace(System.err);
+                    System.exit(1);
+                }
             }
         }
+    }
 
-        return argsList.toArray(new String[0]);
+    public enum RunMode {
+        JMH,
+        SCENARIO_FILE
     }
 }
