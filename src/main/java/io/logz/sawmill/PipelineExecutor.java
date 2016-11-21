@@ -13,7 +13,15 @@ public class PipelineExecutor {
     private final PipelineExecutionTimeWatchdog watchdog;
     private final PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker;
 
-    public PipelineExecutor(PipelineExecutionTimeWatchdog watchdog, PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker) {
+    public PipelineExecutor() {
+        this(new SawmillConfig());
+    }
+
+    public PipelineExecutor(SawmillConfig config) {
+        this(config.getWatchdog(), config.getMetricsTracker());
+    }
+
+    private PipelineExecutor(PipelineExecutionTimeWatchdog watchdog, PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker) {
         this.watchdog = watchdog;
         this.pipelineExecutionMetricsTracker = pipelineExecutionMetricsTracker;
     }

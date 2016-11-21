@@ -42,6 +42,7 @@ public class Pipeline {
 
         public Factory() {
             this.processorFactoryRegistry = new ProcessorFactoryRegistry();
+            ProcessorFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
         }
 
         public Factory(ProcessorFactoryRegistry processorFactoryRegistry) {

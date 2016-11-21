@@ -19,16 +19,17 @@ public class PipelineExecutorTest {
     public PipelineExecutor pipelineExecutor;
     public List<Doc> overtimeProcessingDocs;
     public PipelineExecutionMetricsTracker pipelineExecutorMetrics;
+    public SawmillConfig sawmillConfig;
 
     @Before
     public void init() {
         overtimeProcessingDocs = new ArrayList<>();
-        pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
+        sawmillConfig = new SawmillConfig();
+        pipelineExecutorMetrics = sawmillConfig.getMetricsTracker();
         PipelineExecutionTimeWatchdog watchdog = new PipelineExecutionTimeWatchdog(THRESHOLD_TIME_MS, pipelineExecutorMetrics,
-                context -> {
-                    overtimeProcessingDocs.add(context.getDoc());
-                });
-        pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
+                context -> overtimeProcessingDocs.add(context.getDoc()));
+        sawmillConfig.setWatchdog(watchdog);
+        pipelineExecutor = new PipelineExecutor(sawmillConfig);
     }
 
     @Test
