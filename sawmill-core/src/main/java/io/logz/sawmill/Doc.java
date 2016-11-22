@@ -3,7 +3,9 @@ package io.logz.sawmill;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.MapUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,6 +29,11 @@ public class Doc {
     public Map<String, Object> getSource() { return source; }
 
     public Map<String, Object> getMetadata() { return metadata; }
+
+    public boolean hasField(String path) {
+        Optional<Object> field = JsonUtils.getByPath(source, path);
+        return field.isPresent();
+    }
 
     public <T> T getField(String path) {
         Optional<Object> field = JsonUtils.getByPath(source, path);
@@ -67,6 +74,38 @@ public class Doc {
 
         checkState(context.containsKey(leafKey), String.format("Couldn't resolve field in path [%s]", path));
         context.remove(leafKey);
+    }
+
+    public void appendList(String path, Object value) {
+        List<Object> list;
+        if (!hasField(path)) {
+            addField(path, new ArrayList<>());
+        }
+
+        Object field = getField(path);
+        if (field instanceof List) {
+            list = (List) field;
+        } else {
+            list = new ArrayList<>();
+            list.add(field);
+            removeField(path);
+            addField(path, list);
+        }
+        if (value instanceof List) {
+            list.addAll((List)value);
+        } else {
+            list.add(value);
+        }
+    }
+
+    public void removeFromList(String path, Object value) {
+        List<Object> list = getField(path);
+
+        if (value instanceof List) {
+            list.removeAll((List) value);
+        } else {
+            list.remove(value);
+        }
     }
 
     @Override
