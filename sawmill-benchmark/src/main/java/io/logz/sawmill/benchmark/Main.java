@@ -1,5 +1,6 @@
 package io.logz.sawmill.benchmark;
 
+import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigRenderOptions;
 import io.logz.sawmill.utilities.JsonUtils;
@@ -53,6 +54,11 @@ public class Main {
                     opts = JsonUtils.fromJsonString(SawmillBenchmarkOptions.class, json).toJmhOptions();
 
                     runner = new Runner(opts);
+                } catch (ConfigException e) {
+                    System.err.println("Error parsing config file:");
+                    System.err.println(" " + e);
+                    parser.printHelpOn(System.err);
+                    System.exit(1);
                 } catch (Exception e) {
                     System.err.println("Error parsing command line:");
                     System.err.println(" " + e);
