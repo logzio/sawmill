@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RemoveFieldProcessor implements Processor {
-    private static final String NAME = "removeField";
+    public static final String NAME = "removeField";
     private static final Logger logger = LoggerFactory.getLogger(RemoveFieldProcessor.class);
 
     private final String path;
@@ -29,7 +29,7 @@ public class RemoveFieldProcessor implements Processor {
         }
     }
 
-    @ProcessorProvider(name = NAME)
+    @ProcessorProvider(name = "removeField")
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
@@ -47,7 +47,7 @@ public class RemoveFieldProcessor implements Processor {
 
         public Configuration() { }
 
-        public Configuration(String path, boolean ignoreMissing) {
+        public Configuration(String path) {
             this.path = path;
         }
 
