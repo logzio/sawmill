@@ -17,12 +17,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class SawmillBenchmarkOptions implements Serializable {
 
     private JmhOptions jmhOptions;
-    private Object pipeline;
+    private Map<String,Object> pipeline;
     private InputOptions input;
     private ExecutionOptions execution;
 
