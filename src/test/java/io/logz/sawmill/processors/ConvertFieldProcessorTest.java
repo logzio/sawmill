@@ -3,6 +3,8 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import org.junit.Test;
 
+import java.util.Collections;
+
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -11,7 +13,7 @@ public class ConvertFieldProcessorTest {
     public void testFactory() {
         String config = "{ \"path\": \"fieldName\", \"type\": \"long\" }";
 
-        ConvertFieldProcessor convertFieldProcessor = (ConvertFieldProcessor) new ConvertFieldProcessor.Factory().create(config);
+        ConvertFieldProcessor convertFieldProcessor = (ConvertFieldProcessor) new ConvertFieldProcessor.Factory().create(config, null);
 
         assertThat(convertFieldProcessor.getType()).isEqualTo(ConvertFieldProcessor.FieldType.LONG);
     }
@@ -21,7 +23,7 @@ public class ConvertFieldProcessorTest {
         String path = "bool";
         ConvertFieldProcessor.FieldType type = ConvertFieldProcessor.FieldType.BOOLEAN;
 
-        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type);
+        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type, Collections.EMPTY_LIST, true);
 
         Doc doc = createDoc(path, "yes");
 
@@ -35,7 +37,7 @@ public class ConvertFieldProcessorTest {
         String path = "double";
         ConvertFieldProcessor.FieldType type = ConvertFieldProcessor.FieldType.DOUBLE;
 
-        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type);
+        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type, Collections.EMPTY_LIST, true);
 
         Doc doc = createDoc(path, "1.55");
 
@@ -49,7 +51,7 @@ public class ConvertFieldProcessorTest {
         String path = "long";
         ConvertFieldProcessor.FieldType type = ConvertFieldProcessor.FieldType.LONG;
 
-        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type);
+        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type, Collections.EMPTY_LIST, true);
 
         Doc doc = createDoc(path, "12345");
 

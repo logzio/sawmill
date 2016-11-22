@@ -10,6 +10,8 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     private final LongAdder succeeded = new LongAdder();
     private final LongAdder failed = new LongAdder();
     private final LongAdder overtime = new LongAdder();
+    private final LongAdder unexpectedFailure = new LongAdder();
+    private final LongAdder docsDropped = new LongAdder();
     private final ConcurrentMap<String, ProcessorMetrics> processorsMetrics = new ConcurrentHashMap<>();
 
     @Managed
@@ -27,6 +29,18 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     @Managed
     @Override
     public long totalDocsOvertimeProcessing() { return overtime.longValue(); }
+
+    @Managed
+    @Override
+    public long totalDocsFailedOnUnexpectedError() {
+        return unexpectedFailure.longValue();
+    }
+
+    @Managed
+    @Override
+    public long totalDocsDropped() {
+        return docsDropped.longValue();
+    }
 
     @Managed
     @Override
@@ -52,6 +66,16 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     @Override
     public void processorFinished(String processorName, long timeTookNs) {
         processorsMetrics.computeIfAbsent(processorName, k -> new ProcessorMetrics()).addEvent(timeTookNs);
+    }
+
+    @Override
+    public void processorFailedOnUnexpectedError(String pipelineId, String processorName, Doc doc, Exception e) {
+        unexpectedFailure.increment();
+    }
+
+    @Override
+    public void docDropped(Doc doc) {
+        docsDropped.increment();
     }
 
     private class ProcessorMetrics {

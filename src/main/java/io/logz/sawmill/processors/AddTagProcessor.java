@@ -1,7 +1,9 @@
 package io.logz.sawmill.processors;
 
+import io.logz.sawmill.AbstractProcessor;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.ProcessorFactoryRegistry;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
@@ -30,14 +32,14 @@ public class AddTagProcessor implements Processor {
         }
 
         @Override
-        public Processor create(String config) {
+        public Processor create(String config, ProcessorFactoryRegistry processorFactoryRegistry) {
             AddTagProcessor.Configuration addTagConfig = JsonUtils.fromJsonString(AddTagProcessor.Configuration.class, config);
 
             return new AddTagProcessor(addTagConfig.getTags());
         }
     }
 
-    public static class Configuration implements Processor.Configuration {
+    public static class Configuration extends AbstractProcessor.Configuration {
         private List<String> tags;
 
         public Configuration() { }

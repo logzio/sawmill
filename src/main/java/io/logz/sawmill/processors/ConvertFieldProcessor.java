@@ -1,26 +1,34 @@
 package io.logz.sawmill.processors;
 
+import io.logz.sawmill.AbstractProcessor;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.ProcessorFactoryRegistry;
 import io.logz.sawmill.annotations.ProcessorProvider;
+import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 
 public class ConvertFieldProcessor implements Processor {
     private static final String NAME = "convertField";
-    private static final Logger logger = LoggerFactory.getLogger(ConvertFieldProcessor.class);
-
 
     private final String path;
     private final FieldType type;
+    private final List<Processor> onFailureProcessors;
+    private final boolean ignoreFailure;
 
-    public ConvertFieldProcessor(String path, FieldType type) {
+    public ConvertFieldProcessor(String path, FieldType type, List<Processor> onFailureProcessors, boolean ignoreFailure) {
         checkState(type != null, "convert type cannot be empty");
         this.path = path;
         this.type = type;
+        this.onFailureProcessors = onFailureProcessors;
+        this.ignoreFailure = ignoreFailure;
     }
 
     public FieldType getType() {
@@ -50,7 +58,7 @@ public class ConvertFieldProcessor implements Processor {
                     } else if (beforeCast.toString().matches("^(f|false|no|n|0)$")) {
                         afterCast = false;
                     } else {
-                        logger.trace("failed to convert field in path [{}] to Boolean, unknown value [{}]", path, beforeCast);
+                        handleFailure(doc, String.format("failed to convert field in path [%s] to Boolean, unknown value [%s]", path, beforeCast), Optional.empty());
                         return;
                     }
                     break;
@@ -59,33 +67,53 @@ public class ConvertFieldProcessor implements Processor {
                     afterCast = beforeCast.toString();
                     break;
                 } default: {
-                    logger.trace("failed to convert field in path [{}], unknown field type", path);
+                    handleFailure(doc, String.format("failed to convert field in path [%s], unknown field type", path), Optional.empty());
                     return;
                 }
             }
 
             doc.removeField(path);
             doc.addField(path, afterCast);
-        } catch (Exception e){
-            logger.trace("failed to convert field in path [{}] to type [{}]", path, type, e);
+        } catch (Exception e) {
+            handleFailure(doc, String.format("failed to convert field in path [%s] to type [%s]", path, type), Optional.of(e));
         }
 
     }
 
+    private void handleFailure(Doc doc, String errorMsg, Optional<Exception> e) {
+        if (ignoreFailure) {
+            return;
+        }
+
+        if (onFailureProcessors.isEmpty()) {
+            if (e.isPresent()) {
+                throw new ProcessorExecutionException(getName(), errorMsg, e.get());
+            } else {
+                throw new ProcessorExecutionException(getName(), errorMsg);
+            }
+        } else {
+            for (Processor processor : onFailureProcessors) {
+                processor.process(doc);
+            }
+        }
+    }
+
     @ProcessorProvider(name = NAME)
-    public static class Factory implements Processor.Factory {
+    public static class Factory extends AbstractProcessor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
+        public Processor create(String config, ProcessorFactoryRegistry processorFactoryRegistry) {
             ConvertFieldProcessor.Configuration convertFieldConfig = JsonUtils.fromJsonString(ConvertFieldProcessor.Configuration.class, config);
 
-            return new ConvertFieldProcessor(convertFieldConfig.getPath(), convertFieldConfig.getType());
+            List<Processor> onFailureProcessors = extractProcessors(convertFieldConfig.getOnFailureProcessors(), processorFactoryRegistry);
+
+            return new ConvertFieldProcessor(convertFieldConfig.getPath(), convertFieldConfig.getType(), onFailureProcessors, convertFieldConfig.isIgnoreFailure());
         }
     }
 
-    public static class Configuration implements Processor.Configuration {
+    public static class Configuration extends AbstractProcessor.Configuration {
         private String path;
         private FieldType type;
 

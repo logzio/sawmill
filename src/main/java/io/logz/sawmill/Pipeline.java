@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkState;
+import static io.logz.sawmill.Pipeline.FailureHandler.ABORT;
 
 public class Pipeline {
 
@@ -17,8 +18,9 @@ public class Pipeline {
     private final String name;
     private final String description;
     private final List<Processor> processors;
+    private final FailureHandler failureHandler;
 
-    public Pipeline(String id, String name, String description, List<Processor> processors) {
+    public Pipeline(String id, String name, String description, List<Processor> processors, FailureHandler failureHandler) {
         checkState(!id.isEmpty(), "id cannot be empty");
         checkState(CollectionUtils.isNotEmpty(processors), "processors cannot be empty");
 
@@ -26,6 +28,7 @@ public class Pipeline {
         this.name = name;
         this.description = description;
         this.processors = processors;
+        this.failureHandler = failureHandler;
     }
 
     public String getId() { return id; }
@@ -35,6 +38,10 @@ public class Pipeline {
     public String getDescription() { return description; }
 
     public List<Processor> getProcessors() { return processors; }
+
+    public FailureHandler getFailureHandler() {
+        return failureHandler;
+    }
 
     public static final class Factory {
 
@@ -53,13 +60,14 @@ public class Pipeline {
 
             config.getProcessors().forEach(processorDefinition -> {
                 Processor.Factory factory = processorFactoryRegistry.get(processorDefinition.getName());
-                processors.add(factory.create(JsonUtils.toJsonString(processorDefinition.getConfig())));
+                processors.add(factory.create(JsonUtils.toJsonString(processorDefinition.getConfig()), processorFactoryRegistry));
             });
 
             return new Pipeline(config.getId(),
                     config.getName(),
                     config.getDescription(),
-                    processors);
+                    processors,
+                    config.getFailureHandler());
         }
 
         public Pipeline create(String config) {
@@ -72,7 +80,8 @@ public class Pipeline {
         private String id;
         private String name;
         private String description;
-        private List<ProcessorDefinition> processors;
+        private List<Processor.ProcessorDefinition> processors;
+        private FailureHandler failureHandler;
 
         public Configuration() { }
 
@@ -86,23 +95,23 @@ public class Pipeline {
             return description;
         }
 
-        public List<ProcessorDefinition> getProcessors() {
+        public List<Processor.ProcessorDefinition> getProcessors() {
             return processors;
+        }
+
+        public FailureHandler getFailureHandler() {
+            return failureHandler != null ? failureHandler : ABORT;
         }
     }
 
-    public static class ProcessorDefinition {
-        private String name;
-        private Map<String,Object> config;
+    public enum FailureHandler {
+        CONTINUE,
+        DROP,
+        ABORT;
 
-        public ProcessorDefinition() { }
-
-        public String getName() {
-            return name;
-        }
-
-        public Map<String,Object> getConfig() {
-            return config;
+        @Override
+        public String toString() {
+            return this.name().toLowerCase();
         }
     }
 }

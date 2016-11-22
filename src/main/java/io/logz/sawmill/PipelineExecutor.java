@@ -2,9 +2,12 @@ package io.logz.sawmill;
 
 import com.google.common.base.Stopwatch;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
+import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.logz.sawmill.Pipeline.FailureHandler.ABORT;
+import static io.logz.sawmill.Pipeline.FailureHandler.DROP;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class PipelineExecutor {
@@ -35,9 +38,17 @@ public class PipelineExecutor {
 
                     logger.trace("processor {} executed successfully, took {}ns", processor.getName(), processorTook);
                     pipelineExecutionMetricsTracker.processorFinished(processor.getName(), processorTook);
+                } catch (ProcessorExecutionException e) {
+                    if (pipeline.getFailureHandler() == ABORT) {
+                        pipelineExecutionMetricsTracker.processorFailed(pipeline.getId(), processor.getName(), doc);
+                        throw new PipelineExecutionException(pipeline.getName(), e);
+                    } else if (pipeline.getFailureHandler() == DROP) {
+                        pipelineExecutionMetricsTracker.docDropped(doc);
+                        break;
+                    }
                 } catch (Exception e) {
-                    pipelineExecutionMetricsTracker.processorFailed(pipeline.getId(), processor.getName(), doc);
-                    throw new PipelineExecutionException(pipeline.getName(), processor.getName(), e);
+                    pipelineExecutionMetricsTracker.processorFailedOnUnexpectedError(pipeline.getId(), processor.getName(), doc, e);
+                    throw new RuntimeException(String.format("failed to execute pipeline [%s] , processor [%s] thrown unexpected error", pipeline.getName(), processor.getName()), e);
                 }
             }
             logger.trace("pipeline executed successfully, took {}ms", stopwatch.elapsed(NANOSECONDS));

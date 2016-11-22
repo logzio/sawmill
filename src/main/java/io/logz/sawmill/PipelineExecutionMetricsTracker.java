@@ -9,6 +9,10 @@ public interface PipelineExecutionMetricsTracker {
 
     long totalDocsOvertimeProcessing();
 
+    long totalDocsFailedOnUnexpectedError();
+
+    long totalDocsDropped();
+
     float getAvgProcessorProcessingTime(String processorName);
 
     long getMinProcessorProcessingTime(String processorName);
@@ -19,7 +23,11 @@ public interface PipelineExecutionMetricsTracker {
 
     void processorFailed(String pipelineId, String processorName, Doc doc);
 
+    void processorFailedOnUnexpectedError(String pipelineId, String processorName, Doc doc, Exception e);
+
     void overtimeProcessingDoc(String pipelineId, Doc doc);
 
     void processorFinished(String processorName, long timeTookNs);
+
+    void docDropped(Doc doc);
 }

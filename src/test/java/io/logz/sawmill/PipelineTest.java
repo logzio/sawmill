@@ -16,14 +16,16 @@ public class PipelineTest {
                     "\"processors\": [{" +
                         "\"name\": \"test\"," +
                         "\"config\": {" +
-                            "\"value\": \"message\"" +
+                            "\"value\": \"message\", " +
+                            "\"ignoreFailure\": \"true\", " +
+                            "\"onFailureProcessors\": [{" +
+                                "\"name\": \"addField\"," +
+                                "\"config\": {" +
+                                    "\"path\": \"path\"," +
+                                    "\"value\": \"sheker\"" +
+                                "}" +
+                            "}]" +
                         "}" +
-                    "},{" +
-                            "\"name\": \"addField\"," +
-                            "\"config\": {" +
-                                "\"path\": \"path\"," +
-                                "\"value\": \"sheker\"" +
-                            "}" +
                     "}]" +
                 "}";
 
@@ -36,10 +38,13 @@ public class PipelineTest {
         assertThat(pipeline.getId()).isEqualTo("abc");
         assertThat(pipeline.getName()).isEqualTo("test pipeline");
         assertThat(pipeline.getDescription()).isEqualTo("this is pipeline configuration");
-        assertThat(pipeline.getProcessors().size()).isEqualTo(2);
-        assertThat(pipeline.getProcessors().get(0).getName()).isEqualTo("test");
-        assertThat(pipeline.getProcessors().get(1).getName()).isEqualTo("addField");
-        assertThat(((TestProcessor)pipeline.getProcessors().get(0)).getValue()).isEqualTo("message");
+        assertThat(pipeline.getProcessors().size()).isEqualTo(1);
+        TestProcessor processor = (TestProcessor) pipeline.getProcessors().get(0);
+        assertThat(processor.getName()).isEqualTo("test");
+        assertThat(processor.getValue()).isEqualTo("message");
+        assertThat(processor.isIgnoreFailure()).isTrue();
+        assertThat(processor.getOnFailureProcessors().size()).isEqualTo(1);
+        assertThat(processor.getOnFailureProcessors().get(0).getName()).isEqualTo("addField");
     }
 
     @Test
