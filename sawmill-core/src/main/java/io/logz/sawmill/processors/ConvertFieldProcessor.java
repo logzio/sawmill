@@ -1,5 +1,7 @@
 package io.logz.sawmill.processors;
 
+import com.google.common.primitives.Doubles;
+import com.google.common.primitives.Longs;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
@@ -29,15 +31,15 @@ public class ConvertFieldProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
-        Object afterCast;
+        Object afterCast = null;
         Object beforeCast = doc.getField(path);
         switch (fieldType) {
             case LONG: {
-                afterCast = Long.parseLong(beforeCast.toString());
+                afterCast = Longs.tryParse(beforeCast.toString());
                 break;
             }
             case DOUBLE: {
-                afterCast = Double.parseDouble(beforeCast.toString());
+                afterCast = Doubles.tryParse(beforeCast.toString());
                 break;
             }
             case BOOLEAN: {
@@ -45,17 +47,17 @@ public class ConvertFieldProcessor implements Processor {
                     afterCast = true;
                 } else if (beforeCast.toString().matches("^(f|false|no|n|0)$")) {
                     afterCast = false;
-                } else {
-                    return failureResult(String.format("failed to convert field in path [%s] to Boolean, unknown value [%s]", path, beforeCast));
                 }
                 break;
             }
             case STRING: {
                 afterCast = beforeCast.toString();
                 break;
-            } default: {
-                return failureResult(String.format("failed to convert field in path [%s], unknown field fieldType", path));
             }
+        }
+
+        if (afterCast == null) {
+            return failureResult(beforeCast);
         }
 
         boolean succeeded = doc.removeField(path);
@@ -63,12 +65,12 @@ public class ConvertFieldProcessor implements Processor {
             doc.addField(path, afterCast);
             return new ProcessResult(true);
         } else {
-            return failureResult(String.format("failed to convert field in path [%s] to fieldType [%s]", path, fieldType));
+            return failureResult(beforeCast);
         }
     }
 
-    private ProcessResult failureResult(String errorMsg) {
-        return new ProcessResult(false, errorMsg);
+    private ProcessResult failureResult(Object beforeCastValue) {
+        return new ProcessResult(false, String.format("failed to convert field in path [%s] to %s, unknown value [%s]", path, fieldType, beforeCastValue));
     }
 
     @ProcessorProvider(name = TYPE)
