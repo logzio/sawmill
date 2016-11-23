@@ -1,68 +1,45 @@
 package io.logz.sawmill.processors;
 
-import io.logz.sawmill.AbstractProcessor;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
-import io.logz.sawmill.ProcessorFactoryRegistry;
 import io.logz.sawmill.annotations.ProcessorProvider;
-import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class RemoveTagProcessor implements Processor {
-    private static final String NAME = "removeTag";
+    private static final String TYPE = "removeTag";
 
     private final List<String> tags;
-    private final List<Processor> onFailureProcessors;
-    private final boolean ignoreFailure;
 
-    public RemoveTagProcessor(List<String> tags, List<Processor> onFailureProcessors, boolean ignoreFailure) {
+    public RemoveTagProcessor(List<String> tags) {
         this.tags = tags;
-        this.onFailureProcessors = onFailureProcessors;
-        this.ignoreFailure = ignoreFailure;
     }
 
     @Override
-    public String getName() { return NAME; }
+    public String getType() { return TYPE; }
 
     @Override
-    public void process(Doc doc) {
-        try {
-            doc.removeFromList("tags", tags);
-        } catch (Exception e) {
-            if (ignoreFailure) {
-                return;
-            }
-
-            if (onFailureProcessors.isEmpty()) {
-                throw new ProcessorExecutionException(getName(), String.format("failed to remove tags [%s]", tags), e);
-            } else {
-                for (Processor processor : onFailureProcessors) {
-                    processor.process(doc);
-                }
-            }
-        }
+    public ProcessResult process(Doc doc) {
+        boolean succeeded = doc.removeFromList("tags", tags);
+        return succeeded ? new ProcessResult(true) : new ProcessResult(false, String.format("failed to remove tags [%s]", tags));
     }
 
-    @ProcessorProvider(name = NAME)
-    public static class Factory extends AbstractProcessor.Factory {
+    @ProcessorProvider(name = TYPE)
+    public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config, ProcessorFactoryRegistry processorFactoryRegistry) {
+        public Processor create(String config) {
             RemoveTagProcessor.Configuration removeTagConfig = JsonUtils.fromJsonString(RemoveTagProcessor.Configuration.class, config);
 
-            List<Processor> onFailureProcessors = extractProcessors(removeTagConfig.getOnFailureProcessors(), processorFactoryRegistry);
-
-            return new RemoveTagProcessor(removeTagConfig.getTags(), onFailureProcessors, removeTagConfig.isIgnoreFailure());
+            return new RemoveTagProcessor(removeTagConfig.getTags());
         }
     }
 
-    public static class Configuration extends AbstractProcessor.Configuration {
+    public static class Configuration implements Processor.Configuration {
         private List<String> tags;
 
         public Configuration() { }

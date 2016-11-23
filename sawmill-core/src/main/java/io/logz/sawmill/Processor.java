@@ -4,25 +4,28 @@ import java.util.List;
 import java.util.Map;
 
 public interface Processor {
-    void process(Doc doc);
+    ProcessResult process(Doc doc);
 
-    String getName();
+    String getType();
 
     interface Factory {
-        Processor create(String config, ProcessorFactoryRegistry processorFactoryRegistry);
+        Processor create(String config);
     }
 
     interface Configuration {
-        List<ProcessorDefinition> getOnFailureProcessors();
-
-        Boolean isIgnoreFailure();
     }
 
-    class ProcessorDefinition {
+    class Definition {
+        private String type;
         private String name;
         private Map<String,Object> config;
+        private List<Definition> onFailure;
 
-        public ProcessorDefinition() { }
+        public Definition() { }
+
+        public String getType() {
+            return type;
+        }
 
         public String getName() {
             return name;
@@ -30,6 +33,10 @@ public interface Processor {
 
         public Map<String,Object> getConfig() {
             return config;
+        }
+
+        public List<Definition> getOnFailure() {
+            return onFailure;
         }
     }
 }

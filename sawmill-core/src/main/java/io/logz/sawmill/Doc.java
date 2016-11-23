@@ -61,7 +61,10 @@ public class Doc {
         context.put(leafKey, value);
     }
 
-    public void removeField(String path) {
+    public boolean removeField(String path) {
+        if (!hasField(path)) {
+            return false;
+        }
         Map<String, Object> context = source;
         String[] pathElements = path.split("\\.");
 
@@ -72,8 +75,9 @@ public class Doc {
             context = getField(pathWithoutLeaf);
         }
 
-        checkState(context.containsKey(leafKey), String.format("Couldn't resolve field in path [%s]", path));
         context.remove(leafKey);
+
+        return true;
     }
 
     public void appendList(String path, Object value) {
@@ -98,14 +102,25 @@ public class Doc {
         }
     }
 
-    public void removeFromList(String path, Object value) {
-        List<Object> list = getField(path);
-
-        if (value instanceof List) {
-            list.removeAll((List) value);
-        } else {
-            list.remove(value);
+    public boolean removeFromList(String path, Object value) {
+        if (!hasField(path)) {
+            return false;
         }
+
+        Object field = getField(path);
+        if (field instanceof List) {
+            List<Object> list = (List) field;
+
+            if (value instanceof List) {
+                list.removeAll((List) value);
+            } else {
+                list.remove(value);
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     @Override

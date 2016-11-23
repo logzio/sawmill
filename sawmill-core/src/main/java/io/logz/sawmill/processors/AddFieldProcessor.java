@@ -1,14 +1,13 @@
 package io.logz.sawmill.processors;
 
-import io.logz.sawmill.AbstractProcessor;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Processor;
-import io.logz.sawmill.ProcessorFactoryRegistry;
+import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
 public class AddFieldProcessor implements Processor {
-    private static final String NAME = "addField";
+    private static final String TYPE = "addField";
 
     private final String path;
     private final Object value;
@@ -19,27 +18,28 @@ public class AddFieldProcessor implements Processor {
     }
 
     @Override
-    public String getName() { return NAME; }
+    public String getType() { return TYPE; }
 
     @Override
-    public void process(Doc doc) {
+    public ProcessResult process(Doc doc) {
         doc.addField(path, value);
+        return new ProcessResult(true);
     }
 
-    @ProcessorProvider(name = NAME)
+    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config, ProcessorFactoryRegistry processorFactoryRegistry) {
+        public Processor create(String config) {
             AddFieldProcessor.Configuration addFieldConfig = JsonUtils.fromJsonString(AddFieldProcessor.Configuration.class, config);
 
             return new AddFieldProcessor(addFieldConfig.getPath(), addFieldConfig.getValue());
         }
     }
 
-    public static class Configuration extends AbstractProcessor.Configuration {
+    public static class Configuration implements Processor.Configuration {
         private String path;
         private Object value;
 

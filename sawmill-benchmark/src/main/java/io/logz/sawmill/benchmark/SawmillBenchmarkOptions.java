@@ -1,6 +1,5 @@
 package io.logz.sawmill.benchmark;
 
-import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.results.format.ResultFormatType;
