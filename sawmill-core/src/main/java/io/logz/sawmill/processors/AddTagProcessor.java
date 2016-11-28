@@ -8,8 +8,8 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.List;
 
+@ProcessorProvider(type = "addTag", factory = AddTagProcessor.Factory.class)
 public class AddTagProcessor implements Processor {
-    private static final String TYPE = "addTag";
 
     private final List<String> tags;
 
@@ -18,15 +18,11 @@ public class AddTagProcessor implements Processor {
     }
 
     @Override
-    public String getType() { return TYPE; }
-
-    @Override
     public ProcessResult process(Doc doc) {
         doc.appendList("tags", tags);
-        return new ProcessResult(true);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }

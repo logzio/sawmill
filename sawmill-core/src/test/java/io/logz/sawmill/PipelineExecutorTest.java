@@ -6,7 +6,6 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,7 +18,7 @@ public class PipelineExecutorTest {
 
     public PipelineExecutor pipelineExecutor;
     public List<Doc> overtimeProcessingDocs;
-    public PipelineExecutionMetricsTracker pipelineExecutorMetrics;
+    public PipelineExecutionMetricsMBean pipelineExecutorMetrics;
 
     @Before
     public void init() {
@@ -71,7 +70,7 @@ public class PipelineExecutorTest {
     }
 
     private ExecutionStep createExecutionStep(Processor failAlwaysProcessor, List<Processor> processors) {
-        return new ExecutionStep(failAlwaysProcessor.getType() + "1", failAlwaysProcessor, processors);
+        return new ExecutionStep("fail1", failAlwaysProcessor, processors);
     }
 
     @Test
@@ -104,8 +103,8 @@ public class PipelineExecutorTest {
 
         ExecutionResult result = pipelineExecutor.execute(pipeline, doc);
         assertThat(result.isSucceeded()).isFalse();
-        assertThat(result.getException().isPresent()).isTrue();
-        assertThat(result.getException().get()).isInstanceOf(PipelineExecutionException.class);
+        assertThat(result.getError().get().getException().isPresent()).isTrue();
+        assertThat(result.getError().get().getException().get()).isInstanceOf(PipelineExecutionException.class);
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
         assertThat(pipelineExecutorMetrics.totalDocsFailedOnUnexpectedError()).isEqualTo(1);
     }
@@ -126,7 +125,7 @@ public class PipelineExecutorTest {
         String name = "test";
         String description = "test";
         List<ExecutionStep> executionSteps = (List<ExecutionStep>) Arrays.asList(processors).stream()
-                .map(processor -> new ExecutionStep(processor.getType() + "1", processor, Collections.EMPTY_LIST))
+                .map(processor -> new ExecutionStep(processor.toString() + "1", processor, null))
                 .collect(Collectors.toList());
         return new Pipeline(id,
                 name,
@@ -136,64 +135,30 @@ public class PipelineExecutorTest {
     }
 
     private Processor createSleepProcessor(long millis) {
-        return new Processor() {
-            @Override
-            public ProcessResult process(Doc log) {
+        return (Doc log) -> {
                 try {
                     Thread.sleep(millis);
                 } catch (InterruptedException e) {
 
                 }
-                return new ProcessResult(true);
-            }
-
-            @Override
-            public String getType() {
-                return  "sleep";
-            }
-        };
+                return ProcessResult.success();
+            };
     }
 
     private Processor createAddFieldProcessor(String k, String v) {
-        return new Processor() {
-            @Override
-            public ProcessResult process(Doc doc) {
+        return (Doc doc) -> {
                 doc.addField(k, v);
-                return new ProcessResult(true);
-            }
-
-            @Override
-            public String getType() {
-                return  "addField";
-            }
-        };
+                return ProcessResult.success();
+            };
     }
 
     private Processor createUnexpectedFailAlwaysProcessor() {
-        return new Processor() {
-            @Override
-            public ProcessResult process(Doc doc) {
+        return (Doc doc) -> {
                 throw new RuntimeException("test failure");
-            }
-
-            @Override
-            public String getType() {
-                return  "failHard";
-            }
-        };
+            };
     }
 
     private Processor createFailAlwaysProcessor() {
-        return new Processor() {
-            @Override
-            public ProcessResult process(Doc doc) {
-                return new ProcessResult(false, "test failure");
-            }
-
-            @Override
-            public String getType() {
-                return  "fail";
-            }
-        };
+        return (Doc doc) -> ProcessResult.failure("test failure");
     }
 }

@@ -6,9 +6,8 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
+@ProcessorProvider(type = "rename", factory = RenameFieldProcessor.Factory.class)
 public class RenameFieldProcessor implements Processor {
-    public static final String TYPE = "renameField";
-
     private final String from;
     private final String to;
 
@@ -18,21 +17,17 @@ public class RenameFieldProcessor implements Processor {
     }
 
     @Override
-    public String getType() { return TYPE; }
-
-    @Override
     public ProcessResult process(Doc doc) {
         if (!doc.hasField(from)) {
-            return new ProcessResult(false, String.format("failed to rename field [%s] to [%s]", from, to));
+            return ProcessResult.failure(String.format("failed to rename field [%s] to [%s]", from, to));
         }
         Object fieldValue = doc.getField(from);
         doc.removeField(from);
         doc.addField(to, fieldValue);
 
-        return new ProcessResult(true);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }

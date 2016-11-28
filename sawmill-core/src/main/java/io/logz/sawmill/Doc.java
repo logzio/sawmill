@@ -61,6 +61,12 @@ public class Doc {
         context.put(leafKey, value);
     }
 
+    /**
+     * removes field from source
+     * @param path
+     * @return {@code true} if field has been removed
+     *         {@code false} if field wasn't exist
+     */
     public boolean removeField(String path) {
         if (!hasField(path)) {
             return false;
@@ -102,6 +108,13 @@ public class Doc {
         }
     }
 
+    /**
+     * removes value from a list
+     * @param path
+     * @param value
+     * @return {@code true} if value removed from list
+     *         {@code false} otherwise
+     */
     public boolean removeFromList(String path, Object value) {
         if (!hasField(path)) {
             return false;

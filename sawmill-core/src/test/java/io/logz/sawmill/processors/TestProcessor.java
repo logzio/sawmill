@@ -6,8 +6,6 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.utilities.JsonUtils;
 
 public class TestProcessor implements Processor {
-    public static final String NAME = "test";
-
     public final String value;
 
     public TestProcessor(String value) {
@@ -18,9 +16,6 @@ public class TestProcessor implements Processor {
     public ProcessResult process(Doc doc) {
         return null;
     }
-
-    @Override
-    public String getType() { return NAME; }
 
     public String getValue() { return value; }
 

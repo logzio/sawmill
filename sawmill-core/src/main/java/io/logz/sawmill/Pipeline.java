@@ -63,13 +63,13 @@ public class Pipeline {
                     config.getName(),
                     config.getDescription(),
                     executionSteps,
-                    config.getIgnoreFailure() != null ? config.getIgnoreFailure() : false);
+                    config.getIgnoreFailure());
         }
 
-        private ExecutionStep extractExecutionStep(Processor.Definition processorDefinition) {
+        private ExecutionStep extractExecutionStep(ProcessorDefinition processorDefinition) {
             Processor processor = extractProcessor(processorDefinition);
 
-            List<Processor> onFailureProcessors = new ArrayList<>();
+            List<Processor> onFailureProcessors = null;
             if (CollectionUtils.isNotEmpty(processorDefinition.getOnFailure())) {
                 onFailureProcessors = processorDefinition.getOnFailure().stream()
                         .map(this::extractProcessor)
@@ -81,10 +81,9 @@ public class Pipeline {
                     onFailureProcessors);
         }
 
-        private Processor extractProcessor(Processor.Definition definition) {
+        private Processor extractProcessor(ProcessorDefinition definition) {
             Processor.Factory factory = processorFactoryRegistry.get(definition.getType());
-            String processorConfig = JsonUtils.toJsonString(definition.getConfig());
-            return factory.create(processorConfig);
+            return factory.create(definition.getConfig());
         }
 
         public Pipeline create(String config) {
@@ -97,8 +96,8 @@ public class Pipeline {
         private String id;
         private String name;
         private String description;
-        private List<Processor.Definition> processors;
-        private Boolean ignoreFailure;
+        private List<ProcessorDefinition> processors;
+        private boolean ignoreFailure;
 
         public Definition() { }
 
@@ -112,11 +111,11 @@ public class Pipeline {
             return description;
         }
 
-        public List<Processor.Definition> getProcessors() {
+        public List<ProcessorDefinition> getProcessors() {
             return processors;
         }
 
-        public Boolean getIgnoreFailure() {
+        public boolean getIgnoreFailure() {
             return ignoreFailure;
         }
     }

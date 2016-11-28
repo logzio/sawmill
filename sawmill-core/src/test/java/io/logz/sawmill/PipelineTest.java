@@ -43,11 +43,10 @@ public class PipelineTest {
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
         ExecutionStep executionStep = pipeline.getExecutionSteps().get(0);
         TestProcessor processor = (TestProcessor) executionStep.getProcessor();
-        assertThat(processor.getType()).isEqualTo("test");
+        assertThat(executionStep.getProcessorName()).isEqualTo("test1");
         assertThat(processor.getValue()).isEqualTo("message");
         assertThat(pipeline.isIgnoreFailure()).isTrue();
-        assertThat(executionStep.getOnFailureProcessors().size()).isEqualTo(1);
-        assertThat(executionStep.getOnFailureProcessors().get(0).getType()).isEqualTo("addField");
+        assertThat(executionStep.getOnFailureProcessors().get().size()).isEqualTo(1);
     }
 
     @Test
@@ -62,8 +61,9 @@ public class PipelineTest {
         assertThat(pipeline.getId()).isEqualTo("abc");
         assertThat(pipeline.getDescription()).isEqualTo("this is hocon");
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
-        Processor processor = pipeline.getExecutionSteps().get(0).getProcessor();
-        assertThat(processor.getType()).isEqualTo("test");
+        ExecutionStep executionStep = pipeline.getExecutionSteps().get(0);
+        Processor processor = executionStep.getProcessor();
+        assertThat(executionStep.getProcessorName()).isEqualTo("test1");
         assertThat(((TestProcessor) processor).getValue()).isEqualTo("message");
     }
 }

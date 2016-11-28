@@ -8,8 +8,8 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.List;
 
+@ProcessorProvider(type = "removeTag", factory = RemoveTagProcessor.Factory.class)
 public class RemoveTagProcessor implements Processor {
-    private static final String TYPE = "removeTag";
 
     private final List<String> tags;
 
@@ -18,15 +18,11 @@ public class RemoveTagProcessor implements Processor {
     }
 
     @Override
-    public String getType() { return TYPE; }
-
-    @Override
     public ProcessResult process(Doc doc) {
-        boolean succeeded = doc.removeFromList("tags", tags);
-        return succeeded ? new ProcessResult(true) : new ProcessResult(false, String.format("failed to remove tags [%s]", tags));
+        doc.removeFromList("tags", tags);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
