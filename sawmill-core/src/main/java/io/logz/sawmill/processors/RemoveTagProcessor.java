@@ -8,13 +8,19 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.List;
 
-@ProcessorProvider(type = "removeTag", factory = RemoveTagProcessor.Factory.class)
+@ProcessorProvider(type = RemoveTagProcessor.TYPE, factory = RemoveTagProcessor.Factory.class)
 public class RemoveTagProcessor implements Processor {
+    public static final String TYPE = "removeTag";
 
     private final List<String> tags;
 
     public RemoveTagProcessor(List<String> tags) {
         this.tags = tags;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
     }
 
     @Override

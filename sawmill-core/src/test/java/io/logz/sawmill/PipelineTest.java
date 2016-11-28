@@ -33,7 +33,7 @@ public class PipelineTest {
 
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
         processorFactoryRegistry.register("test", new TestProcessor.Factory());
-        ProcessorFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
+        ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
         Pipeline.Factory factory = new Pipeline.Factory(processorFactoryRegistry);
         Pipeline pipeline = factory.create(configJson);
 

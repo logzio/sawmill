@@ -6,8 +6,9 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
-@ProcessorProvider(type = "addField", factory = AddFieldProcessor.Factory.class)
+@ProcessorProvider(type = AddFieldProcessor.TYPE, factory = AddFieldProcessor.Factory.class)
 public class AddFieldProcessor implements Processor {
+    public static final String TYPE = "addField";
 
     private final String path;
     private final Object value;
@@ -15,6 +16,11 @@ public class AddFieldProcessor implements Processor {
     public AddFieldProcessor(String path, Object value) {
         this.path = path;
         this.value = value;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
     }
 
     @Override

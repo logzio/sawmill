@@ -13,6 +13,11 @@ public class TestProcessor implements Processor {
     }
 
     @Override
+    public String getType() {
+        return "test";
+    }
+
+    @Override
     public ProcessResult process(Doc doc) {
         return null;
     }

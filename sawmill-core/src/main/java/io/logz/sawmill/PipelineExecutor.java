@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -22,8 +23,7 @@ public class PipelineExecutor {
 
 
     public ExecutionResult execute(Pipeline pipeline, Doc doc) {
-        Stopwatch stopwatch = Stopwatch.createStarted();
-        long timeElapsed = 0;
+        PipelineStopwatch pipelineStopwatch = new PipelineStopwatch().start();
 
         long executionIdentifier = watchdog.startedExecution(new ExecutionContext(doc, pipeline.getId(), System.currentTimeMillis()));
 
@@ -32,18 +32,9 @@ public class PipelineExecutor {
                 try {
                     Processor processor = executionStep.getProcessor();
 
-                    ProcessResult processResult = processor.process(doc);
+                    ProcessResult processResult = executeProcessor(doc, processor, pipelineStopwatch, pipeline.getId(), executionStep.getProcessorName());
 
-                    long totalProcessTime = stopwatch.elapsed(NANOSECONDS);
-                    long processorTook = totalProcessTime - timeElapsed;
-                    timeElapsed = totalProcessTime;
-
-                     if (processResult.isSucceeded()) {
-                         logger.trace("processor {} executed successfully, took {}ns", executionStep.getProcessorName(), processorTook);
-                         pipelineExecutionMetricsTracker.processorFinished(pipeline.getId(), executionStep.getProcessorName(), processorTook);
-                     } else {
-                         pipelineExecutionMetricsTracker.processorFailed(pipeline.getId(), executionStep.getProcessorName(), doc);
-
+                    if (!processResult.isSucceeded()) {
                          if (pipeline.isIgnoreFailure()) {
                              continue;
                          }
@@ -55,31 +46,72 @@ public class PipelineExecutor {
                                              new PipelineExecutionException(pipeline.getName(), processResult.getError().get().getException().get()) :
                                              null);
                          } else {
-                             executeOnFailure(doc, executionStep.getOnFailureProcessors().get());
+                             executeOnFailure(doc, executionStep.getOnFailureProcessors().get(), pipelineStopwatch, pipeline.getId(), executionStep.getProcessorName());
                          }
                      }
                 } catch (RuntimeException e) {
                     pipelineExecutionMetricsTracker.processorFailedOnUnexpectedError(pipeline.getId(), executionStep.getProcessorName(), doc, e);
-                    return ExecutionResult.failure(String.format("failed to execute pipeline [%s] , processor [%s] thrown unexpected error", pipeline.getName(), executionStep.getProcessorName()),
-                            executionStep.getProcessorName(),
-                            new PipelineExecutionException(pipeline.getName(), e));
+                    throw new PipelineExecutionException(pipeline.getName(), e);
                 }
             }
-            logger.trace("pipeline executed successfully, took {}ms", stopwatch.elapsed(NANOSECONDS));
+            logger.trace("pipeline executed successfully, took {}ms", pipelineStopwatch.elapsed(NANOSECONDS));
         }
         finally {
-            stopwatch.stop();
+            pipelineStopwatch.stop();
             watchdog.removeExecution(executionIdentifier);
         }
 
-        pipelineExecutionMetricsTracker.processedDocSuccessfully(pipeline.getId(), doc, stopwatch.elapsed(NANOSECONDS));
+        pipelineExecutionMetricsTracker.processedDocSuccessfully(pipeline.getId(), doc, pipelineStopwatch.elapsed(NANOSECONDS));
 
         return ExecutionResult.success();
     }
 
-    private void executeOnFailure(Doc doc, List<Processor> onFailureProcessors) {
+    private ProcessResult executeProcessor(Doc doc, Processor processor, PipelineStopwatch pipelineStopwatch, String pipelineId, String processorName) {
+        ProcessResult processResult = processor.process(doc);
+        long totalProcessTime = pipelineStopwatch.elapsed(NANOSECONDS);
+        long processorTook = totalProcessTime - pipelineStopwatch.getTimeElapsed();
+        pipelineStopwatch.setTimeElapsed(totalProcessTime);
+
+        if (processResult.isSucceeded()) {
+            logger.trace("processor {} executed successfully, took {}ns", processorName, processorTook);
+            pipelineExecutionMetricsTracker.processorFinished(pipelineId, processorName, processorTook);
+        } else {
+            pipelineExecutionMetricsTracker.processorFailed(pipelineId, processorName, doc);
+        }
+
+        return processResult;
+    }
+
+    private void executeOnFailure(Doc doc, List<Processor> onFailureProcessors, PipelineStopwatch pipelineStopwatch, String pipelineId, String processorName) {
         for (Processor processor : onFailureProcessors) {
-            processor.process(doc);
+            executeProcessor(doc, processor, pipelineStopwatch, pipelineId, processorName + "-" + processor.getType());
+        }
+    }
+
+    private class PipelineStopwatch {
+        private Stopwatch stopwatch;
+        private long timeElapsed;
+
+        public void setTimeElapsed(long timeElapsed) {
+            this.timeElapsed = timeElapsed;
+        }
+
+        public long getTimeElapsed() {
+            return timeElapsed;
+        }
+
+        public PipelineStopwatch start() {
+            stopwatch = Stopwatch.createStarted();
+            timeElapsed = 0;
+            return this;
+        }
+
+        public long elapsed(TimeUnit timeUnit) {
+            return stopwatch.elapsed(timeUnit);
+        }
+
+        public void stop() {
+            stopwatch.stop();
         }
     }
 }

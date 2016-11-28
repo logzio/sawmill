@@ -27,7 +27,7 @@ public class ProcessorFactoriesLoader {
         return instance;
     }
 
-    public void loadAnnotatedProcesses(ProcessorFactoryRegistry processorFactoryRegistry) {
+    public void loadAnnotatedProcessors(ProcessorFactoryRegistry processorFactoryRegistry) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         long timeElapsed = 0;
 

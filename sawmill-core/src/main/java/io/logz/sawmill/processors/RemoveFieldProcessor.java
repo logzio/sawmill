@@ -6,12 +6,19 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
-@ProcessorProvider(type = "removeField", factory = RemoveFieldProcessor.Factory.class)
+@ProcessorProvider(type = RemoveFieldProcessor.TYPE, factory = RemoveFieldProcessor.Factory.class)
 public class RemoveFieldProcessor implements Processor {
+    public static final String TYPE = "removeField";
+
     private final String path;
 
     public RemoveFieldProcessor(String path) {
         this.path = path;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
     }
 
     @Override

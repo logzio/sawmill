@@ -5,7 +5,6 @@ import com.typesafe.config.ConfigRenderOptions;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,6 +47,7 @@ public class Pipeline {
 
         public Factory() {
             this.processorFactoryRegistry = new ProcessorFactoryRegistry();
+            ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
         }
 
         public Factory(ProcessorFactoryRegistry processorFactoryRegistry) {

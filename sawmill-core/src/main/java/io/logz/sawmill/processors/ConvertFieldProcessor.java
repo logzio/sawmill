@@ -12,8 +12,9 @@ import io.logz.sawmill.utilities.JsonUtils;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-@ProcessorProvider(type = "convert", factory = ConvertFieldProcessor.Factory.class)
+@ProcessorProvider(type = ConvertFieldProcessor.TYPE, factory = ConvertFieldProcessor.Factory.class)
 public class ConvertFieldProcessor implements Processor {
+    public static final String TYPE = "convert";
 
     private final String path;
     private final FieldType fieldType;
@@ -22,6 +23,11 @@ public class ConvertFieldProcessor implements Processor {
         checkNotNull(fieldType);
         this.path = path;
         this.fieldType = fieldType;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
     }
 
     public FieldType getFieldType() {

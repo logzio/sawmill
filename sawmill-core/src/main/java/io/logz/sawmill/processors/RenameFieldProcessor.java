@@ -6,14 +6,21 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
-@ProcessorProvider(type = "rename", factory = RenameFieldProcessor.Factory.class)
+@ProcessorProvider(type = RenameFieldProcessor.TYPE, factory = RenameFieldProcessor.Factory.class)
 public class RenameFieldProcessor implements Processor {
+    public static final String TYPE = "rename";
+
     private final String from;
     private final String to;
 
     public RenameFieldProcessor(String from, String to) {
         this.from = from;
         this.to = to;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
     }
 
     @Override

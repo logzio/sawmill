@@ -8,13 +8,19 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.List;
 
-@ProcessorProvider(type = "addTag", factory = AddTagProcessor.Factory.class)
+@ProcessorProvider(type = AddTagProcessor.TYPE, factory = AddTagProcessor.Factory.class)
 public class AddTagProcessor implements Processor {
+    public static final String TYPE = "addTag";
 
     private final List<String> tags;
 
     public AddTagProcessor(List<String> tags) {
         this.tags = tags;
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
     }
 
     @Override
