@@ -15,6 +15,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>ua_parser</groupId>
+            <artifactId>ua-parser</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
         </dependency>

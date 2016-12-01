@@ -14,6 +14,13 @@
 
     <packaging>pom</packaging>
 
+    <repositories>
+        <repository>
+            <id>twitter-twttr</id>
+            <url>http://maven.twttr.com/</url>
+        </repository>
+    </repositories>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jackson.version>2.8.4</jackson.version>
@@ -28,6 +35,7 @@
         <assertj.version>3.5.2</assertj.version>
         <logback.version>1.1.7</logback.version>
         <commonsIO.version>2.5</commonsIO.version>
+        <uaParser.version>1.3.0</uaParser.version>
     </properties>
 
     <build>
@@ -46,6 +54,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>ua_parser</groupId>
+                <artifactId>ua-parser</artifactId>
+                <version>${uaParser.version}</version>
+            </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
