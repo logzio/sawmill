@@ -41,7 +41,7 @@ public class ConvertFieldProcessor implements Processor {
         }
         Object beforeCast = doc.getField(path);
 
-        Object afterCast = fieldType.parse(beforeCast);
+        Object afterCast = fieldType.convertFrom(beforeCast);
 
         if (afterCast == null) {
             return failureResult(beforeCast);
@@ -69,7 +69,7 @@ public class ConvertFieldProcessor implements Processor {
             ConvertFieldProcessor.Configuration convertFieldConfig = JsonUtils.fromJsonString(ConvertFieldProcessor.Configuration.class, config);
 
             if (convertFieldConfig.getType() == null) {
-                throw new ProcessorParseException("failed to parse convert processor, could not resolve field type");
+                throw new ProcessorParseException("failed to convertFrom convert processor, could not resolve field type");
             }
 
             return new ConvertFieldProcessor(convertFieldConfig.getPath(), convertFieldConfig.getType());
@@ -95,25 +95,25 @@ public class ConvertFieldProcessor implements Processor {
     public enum FieldType {
         LONG {
             @Override
-            public Object parse(Object value) {
+            public Object convertFrom(Object value) {
                 return Longs.tryParse(value.toString());
             }
         },
         DOUBLE {
             @Override
-            public Object parse(Object value) {
+            public Object convertFrom(Object value) {
                 return Doubles.tryParse(value.toString());
             }
         },
         STRING {
             @Override
-            public Object parse(Object value) {
+            public Object convertFrom(Object value) {
                 return value.toString();
             }
         },
         BOOLEAN {
             @Override
-            public Object parse(Object value) {
+            public Object convertFrom(Object value) {
                 if (value.toString().matches("^(t|true|yes|y|1)$")) {
                     return true;
                 } else if (value.toString().matches("^(f|false|no|n|0)$")) {
@@ -129,6 +129,6 @@ public class ConvertFieldProcessor implements Processor {
             return this.name().toLowerCase();
         }
 
-        public abstract Object parse(Object value);
+        public abstract Object convertFrom(Object value);
     }
 }

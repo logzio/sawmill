@@ -21,7 +21,7 @@ public class ExecutionResult {
 
     private ExecutionResult(String errorMessage, String failedProcessorName, PipelineExecutionException e) {
         this.succeeded = false;
-        this.error = Optional.of(new Error(errorMessage, failedProcessorName, e == null ? Optional.empty() : Optional.of(e)));
+        this.error = Optional.of(new Error(errorMessage, failedProcessorName, Optional.ofNullable(e)));
     }
 
     public static ExecutionResult success() {

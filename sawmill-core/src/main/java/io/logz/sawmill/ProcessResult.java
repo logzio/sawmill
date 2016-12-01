@@ -21,7 +21,7 @@ public class ProcessResult {
 
     private ProcessResult(String errorMessage, ProcessorExecutionException e) {
         this.succeeded = false;
-        this.error = Optional.of(new Error(errorMessage, e == null ? Optional.empty() : Optional.of(e)));
+        this.error = Optional.of(new Error(errorMessage, Optional.ofNullable(e)));
     }
 
     public boolean isSucceeded() {

@@ -15,7 +15,7 @@ public class ExecutionStep {
     public ExecutionStep(String processorName, Processor processor, List<Processor> onFailureProcessors) {
         this.processorName = processorName;
         this.processor = processor;
-        this.onFailureProcessors = onFailureProcessors == null ? Optional.empty() : Optional.of(onFailureProcessors);
+        this.onFailureProcessors = Optional.ofNullable(onFailureProcessors);
     }
 
     public String getProcessorName() {

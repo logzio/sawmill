@@ -26,7 +26,7 @@ public class RenameFieldProcessor implements Processor {
     @Override
     public ProcessResult process(Doc doc) {
         if (!doc.hasField(from)) {
-            return ProcessResult.failure(String.format("failed to rename field [%s] to [%s]", from, to));
+            return ProcessResult.failure(String.format("failed to rename field [%s] to [%s], couldn't find field", from, to));
         }
         Object fieldValue = doc.getField(from);
         doc.removeField(from);
