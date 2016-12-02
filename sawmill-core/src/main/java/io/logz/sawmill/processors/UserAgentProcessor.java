@@ -120,12 +120,12 @@ public class UserAgentProcessor implements Processor {
             try {
                 uaParser = new CachingParser(Resources.getResource("regexes.yaml").openStream());
             } catch (IOException e) {
-                throw new RuntimeException();
+                throw new RuntimeException("failed to load regexes file from resources", e);
             }
         }
 
         @Override
-        public Processor create(String config) {
+        public UserAgentProcessor create(String config) {
             UserAgentProcessor.Configuration userAgentConfig = JsonUtils.fromJsonString(UserAgentProcessor.Configuration.class, config);
 
             return new UserAgentProcessor(userAgentConfig.getField(),

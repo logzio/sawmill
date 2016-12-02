@@ -15,3 +15,6 @@ target/
 
 # JMH
 jmh-result.*
+
+# Resources
+sawmill-core/src/main/resources/regexes.yaml
