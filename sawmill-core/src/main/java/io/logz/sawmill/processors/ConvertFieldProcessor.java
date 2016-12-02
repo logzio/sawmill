@@ -10,7 +10,6 @@ import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 @ProcessorProvider(type = ConvertFieldProcessor.TYPE, factory = ConvertFieldProcessor.Factory.class)
 public class ConvertFieldProcessor implements Processor {

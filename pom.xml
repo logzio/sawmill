@@ -47,6 +47,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>io.thekraken</groupId>
+                <artifactId>grok</artifactId>
+                <version>0.1.5</version>
+            </dependency>
+            <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>${commonsIO.version}</version>
