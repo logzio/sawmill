@@ -15,17 +15,17 @@ import java.time.format.DateTimeParseException;
 import java.time.format.SignStyle;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class DateProcessor implements Processor {
     private static final String TYPE = "date";
 
-    private static Map<String, DateTimeFormatter> dateTimePatternToFormatter;
+    private static ConcurrentMap<String, DateTimeFormatter> dateTimePatternToFormatter;
 
     static {
-        dateTimePatternToFormatter = new HashMap<>();
+        dateTimePatternToFormatter = new ConcurrentHashMap<>();
         dateTimePatternToFormatter.put("UNIX", new DateTimeFormatterBuilder()
                 .appendValue(ChronoField.INSTANT_SECONDS, 1, 19, SignStyle.NEVER)
                 .toFormatter());
@@ -49,10 +49,11 @@ public class DateProcessor implements Processor {
         this.timeZone = timeZone;
 
         formats.forEach(format -> {
-            if (!dateTimePatternToFormatter.containsKey(format)) {
-                dateTimePatternToFormatter.putIfAbsent(format, DateTimeFormatter.ofPattern(format));
+            try {
+                dateTimePatternToFormatter.computeIfAbsent(format, k -> DateTimeFormatter.ofPattern(format));
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException(String.format("failed to create date processor, format [%s] is not valid", format), e);
             }
-
             formatters.add(dateTimePatternToFormatter.get(format));
         });
     }
@@ -62,11 +63,16 @@ public class DateProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
-        Object value = doc.getField(this.field);
+        if (!doc.hasField(field)) {
+            return new ProcessResult(false, String.format("failed to process date, field in path [%s] is missing", field));
+        }
+
+        Object value = doc.getField(field);
         ZonedDateTime dateTime = null;
         for (DateTimeFormatter formatter : formatters) {
             try {
-                dateTime = LocalDateTime.parse(value.toString(), formatter).atZone(timeZone);
+                dateTime = ZonedDateTime.parse(value.toString(), formatter.withZone(timeZone));
+                break;
             } catch (DateTimeParseException e) {
                 // keep trying
             }
