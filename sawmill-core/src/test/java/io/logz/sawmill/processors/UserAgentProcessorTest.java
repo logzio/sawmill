@@ -18,7 +18,7 @@ public class UserAgentProcessorTest {
         Doc doc = createDoc(field, uaString);
 
         String config = "{ \"field\": \"" + field + "\" }";
-        UserAgentProcessor uaProceesor = (UserAgentProcessor) new UserAgentProcessor.Factory().create(config);
+        UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
 
         ProcessResult processResult = uaProceesor.process(doc);
 
