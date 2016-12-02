@@ -2,16 +2,11 @@ package io.logz.sawmill.processors;
 
 import com.google.common.io.Resources;
 import com.google.common.net.InetAddresses;
+import com.maxmind.db.CHMCache;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
-import com.maxmind.geoip2.record.City;
-import com.maxmind.geoip2.record.Continent;
-import com.maxmind.geoip2.record.Country;
-import com.maxmind.geoip2.record.Location;
-import com.maxmind.geoip2.record.Postal;
-import com.maxmind.geoip2.record.Subdivision;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
@@ -21,7 +16,10 @@ import io.logz.sawmill.utilities.JsonUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -35,22 +33,22 @@ public class GeoIpProcessor implements Processor {
     }
 
     private static void loadDatabaseReader() {
-        try {
-            InputStream inputStream = new GZIPInputStream(Resources.getResource("GeoLite2-City.mmdb.gz").openStream());
-            databaseReader = new DatabaseReader.Builder(inputStream).build();
-
+        try (InputStream inputStream = new GZIPInputStream(Resources.getResource("GeoLite2-City.mmdb.gz").openStream())) {
+            databaseReader = new DatabaseReader.Builder(inputStream).withCache(new CHMCache()).build();
         } catch (IOException e) {
             throw new RuntimeException("failed to load geoip database", e);
         }
 
     }
 
-    private final String source;
-    private final String target;
+    private final String sourceField;
+    private final String targetField;
+    private final List<Property> properties;
 
-    public GeoIpProcessor(String source, String target) {
-        this.source = source;
-        this.target = target;
+    public GeoIpProcessor(String sourceField, String targetField, List<Property> properties) {
+        this.sourceField = sourceField;
+        this.targetField = targetField;
+        this.properties = properties;
     }
 
     @Override
@@ -58,11 +56,11 @@ public class GeoIpProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
-        if (!doc.hasField(source)) {
-            return new ProcessResult(false, String.format("failed to get ip from [%s], field missing", source));
+        if (!doc.hasField(sourceField)) {
+            return new ProcessResult(false, String.format("failed to get ip from [%s], field missing", sourceField));
         }
 
-        String ip = doc.getField(source);
+        String ip = doc.getField(sourceField);
         InetAddress ipAddress = InetAddresses.forString(ip);
 
         Map<String, Object> geoIp;
@@ -76,7 +74,7 @@ public class GeoIpProcessor implements Processor {
         }
 
         if (geoIp != null) {
-            doc.addField(target, geoIp);
+            doc.addField(targetField, geoIp);
         }
 
         return new ProcessResult(true);
@@ -86,29 +84,9 @@ public class GeoIpProcessor implements Processor {
         CityResponse response = databaseReader.city(ipAddress);
 
         Map<String, Object> geoIp = new HashMap<>();
-        Country country = response.getCountry();
-        geoIp.put("country_name", country.getName());
-        geoIp.put("country_iso_code", country.getIsoCode());
-
-        Continent continent = response.getContinent();
-        geoIp.put("continent_code", continent.getCode());
-
-        Subdivision subdivision = response.getMostSpecificSubdivision();
-        geoIp.put("region_name", subdivision.getIsoCode());
-        geoIp.put("real_region_name", subdivision.getName());
-
-        City city = response.getCity();
-        geoIp.put("city_name", city.getName());
-
-        Location location = response.getLocation();
-        geoIp.put("latitude", location.getLatitude());
-        geoIp.put("longitude", location.getLongitude());
-        geoIp.put("timezone", location.getTimeZone());
-
-        Postal postal = response.getPostal();
-        geoIp.put("postal_code", postal.getCode());
-
-        geoIp.put("ip", ipAddress.getHostAddress());
+        for (Property property : properties) {
+            geoIp.put(property.toString(), property.getValue(response));
+        }
 
         return geoIp;
     }
@@ -119,27 +97,111 @@ public class GeoIpProcessor implements Processor {
         }
 
         @Override
-        public Processor create(String config) {
+        public GeoIpProcessor create(String config) {
             GeoIpProcessor.Configuration geoIpConfig = JsonUtils.fromJsonString(GeoIpProcessor.Configuration.class, config);
 
-            return new GeoIpProcessor(geoIpConfig.getSource(),
-                    geoIpConfig.getTarget() != null ? geoIpConfig.getTarget() : "geoip");
+            return new GeoIpProcessor(geoIpConfig.getSourceField(),
+                    geoIpConfig.getTargetField() != null ? geoIpConfig.getTargetField() : "geoip",
+                    geoIpConfig.getProperties() != null ? geoIpConfig.getProperties() : Property.ALL_PROPERTIES);
         }
     }
 
     public static class Configuration implements Processor.Configuration {
-        private String source;
-        private String target;
+        private String sourceField;
+        private String targetField;
+        private List<Property> properties;
 
         public Configuration() { }
 
-        public Configuration(String source, String target) {
-            this.source = source;
-            this.target = target;
+        public Configuration(String sourceField, String targetField) {
+            this.sourceField = sourceField;
+            this.targetField = targetField;
         }
 
-        public String getSource() { return source; }
+        public String getSourceField() { return sourceField; }
 
-        public String getTarget() { return target; }
+        public String getTargetField() { return targetField; }
+
+        public List<Property> getProperties() {
+            return properties;
+        }
+    }
+
+    public enum Property {
+        IP {
+            @Override
+            public String getValue(CityResponse response) {
+                return response.getTraits().getIpAddress();
+            }
+        },
+        COUNTRY_NAME {
+            @Override
+            public String getValue(CityResponse response) {
+                return response.getCountry().getName();
+            }
+        },
+        COUNTRY_ISO_CODE {
+            @Override
+            public String getValue(CityResponse response) {
+                return response.getCountry().getIsoCode();
+            }
+        },
+        CONTINENT_CODE {
+            @Override
+            public String getValue(CityResponse response) {
+                return response.getContinent().getCode();
+            }
+        },
+        REGION_NAME {
+            @Override
+            public String getValue(CityResponse response) {
+                return response.getLeastSpecificSubdivision().getIsoCode();
+            }
+        },
+        REAL_REGION_NAME {
+            @Override
+            public String getValue(CityResponse response) {
+                return response.getLeastSpecificSubdivision().getName();
+            }
+        },
+        CITY_NAME {
+            @Override
+            public String getValue(CityResponse response) {
+                return response.getCity().getName();
+            }
+        },
+        LATITUDE {
+            @Override
+            public Double getValue(CityResponse response) {
+                return response.getLocation().getLatitude();
+            }
+        },
+        LONGITUDE {
+            @Override
+            public Object getValue(CityResponse response) {
+                return response.getLocation().getLongitude();
+            }
+        },
+        TIMEZONE {
+            @Override
+            public Object getValue(CityResponse response) {
+                return response.getLocation().getTimeZone();
+            }
+        },
+        POSTAL_CODE {
+            @Override
+            public Object getValue(CityResponse response) {
+                return response.getPostal().getCode();
+            }
+        };
+
+        public static List<Property> ALL_PROPERTIES = new ArrayList<>(EnumSet.allOf(Property.class));
+
+        @Override
+        public String toString() {
+            return this.name().toLowerCase();
+        }
+
+        public abstract Object getValue(CityResponse response);
     }
 }
