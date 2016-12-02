@@ -69,16 +69,20 @@ public class Pipeline {
         private ExecutionStep extractExecutionStep(ProcessorDefinition processorDefinition) {
             Processor processor = extractProcessor(processorDefinition);
 
-            List<Processor> onFailureProcessors = null;
+            List<OnFailureExecutionStep> onFailureProcessors = null;
             if (CollectionUtils.isNotEmpty(processorDefinition.getOnFailure())) {
                 onFailureProcessors = processorDefinition.getOnFailure().stream()
-                        .map(this::extractProcessor)
+                        .map(this::extractOnFailureExecutionStep)
                         .collect(Collectors.toList());
             }
 
             return new ExecutionStep(processorDefinition.getName(),
                     processor,
                     onFailureProcessors);
+        }
+
+        private OnFailureExecutionStep extractOnFailureExecutionStep(ProcessorDefinition processorDefinition) {
+            return new OnFailureExecutionStep(processorDefinition.getName(), extractProcessor(processorDefinition));
         }
 
         private Processor extractProcessor(ProcessorDefinition definition) {

@@ -5,16 +5,13 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.utilities.JsonUtils;
 
+import java.util.Map;
+
 public class TestProcessor implements Processor {
     public final String value;
 
     public TestProcessor(String value) {
         this.value = value;
-    }
-
-    @Override
-    public String getType() {
-        return "test";
     }
 
     @Override
@@ -29,8 +26,8 @@ public class TestProcessor implements Processor {
         }
 
         @Override
-        public Processor create(String config) {
-            Configuration testConfiguration = JsonUtils.fromJsonString(Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            Configuration testConfiguration = JsonUtils.fromJsonMap(Configuration.class, config);
 
             return new TestProcessor(testConfiguration.getValue());
         }

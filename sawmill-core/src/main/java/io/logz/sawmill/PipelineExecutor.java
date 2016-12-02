@@ -23,7 +23,7 @@ public class PipelineExecutor {
 
 
     public ExecutionResult execute(Pipeline pipeline, Doc doc) {
-        PipelineStopwatch pipelineStopwatch = new PipelineStopwatch(NANOSECONDS).start();
+        PipelineStopwatch pipelineStopwatch = new PipelineStopwatch().start();
 
         long executionIdentifier = watchdog.startedExecution(new ExecutionContext(doc, pipeline.getId(), System.currentTimeMillis()));
 
@@ -55,7 +55,7 @@ public class PipelineExecutor {
                     throw new PipelineExecutionException(pipeline.getName(), e);
                 }
             }
-            logger.trace("pipeline {} executed successfully, took {}ms", pipeline.getId(), pipelineStopwatch.pipelineElapsed());
+            logger.trace("pipeline {} executed successfully, took {}ns", pipeline.getId(), pipelineStopwatch.pipelineElapsed());
         }
         finally {
             pipelineStopwatch.stop();
@@ -68,7 +68,7 @@ public class PipelineExecutor {
     }
 
     private ProcessResult executeProcessor(Doc doc, Processor processor, PipelineStopwatch pipelineStopwatch, String pipelineId, String processorName) {
-        pipelineStopwatch.reset();
+        pipelineStopwatch.startProcessor();
         ProcessResult processResult = processor.process(doc);
         long processorTook = pipelineStopwatch.processorElapsed();
 
@@ -82,24 +82,23 @@ public class PipelineExecutor {
         return processResult;
     }
 
-    private void executeOnFailure(Doc doc, List<Processor> onFailureProcessors, PipelineStopwatch pipelineStopwatch, String pipelineId, String processorName) {
-        for (Processor processor : onFailureProcessors) {
-            executeProcessor(doc, processor, pipelineStopwatch, pipelineId, processorName + "-" + processor.getType());
+    private void executeOnFailure(Doc doc, List<OnFailureExecutionStep> onFailureProcessors, PipelineStopwatch pipelineStopwatch, String pipelineId, String processorName) {
+        for (OnFailureExecutionStep executionStep : onFailureProcessors) {
+            executeProcessor(doc, executionStep.getProcessor(), pipelineStopwatch, pipelineId, executionStep.getProcessorName());
         }
     }
 
-    private class PipelineStopwatch {
+    private static class PipelineStopwatch {
         private Stopwatch stopwatch;
-        private long timeElapsed;
-        private TimeUnit timeUnit;
+        private long processorStartElapsedTime;
+        private TimeUnit timeUnit = NANOSECONDS;
 
-        public PipelineStopwatch(TimeUnit timeUnit) {
-            this.timeUnit = timeUnit;
+        public PipelineStopwatch() {
         }
 
         public PipelineStopwatch start() {
             stopwatch = Stopwatch.createStarted();
-            timeElapsed = 0;
+            processorStartElapsedTime = 0;
             return this;
         }
 
@@ -108,11 +107,11 @@ public class PipelineExecutor {
         }
 
         public long processorElapsed() {
-            return stopwatch.elapsed(timeUnit) - timeElapsed;
+            return stopwatch.elapsed(timeUnit) - processorStartElapsedTime;
         }
 
-        public void reset() {
-            timeElapsed = stopwatch.elapsed(timeUnit);
+        public void startProcessor() {
+            processorStartElapsedTime = stopwatch.elapsed(timeUnit);
         }
 
         public void stop() {

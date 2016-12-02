@@ -59,7 +59,8 @@ public class PipelineExecutorTest {
 
     @Test
     public void testPipelineExecutionWithOnErrorProcessors() {
-        Pipeline pipeline = createPipeline(createExecutionStep(createFailAlwaysProcessor(), Arrays.asList(createAddFieldProcessor("newField", "Hello"))));
+        Pipeline pipeline = createPipeline(createExecutionStep(createFailAlwaysProcessor(),
+                Arrays.asList(createOnFailureExecutionStep(createAddFieldProcessor("newField", "Hello"), "addField2"))));
         Doc doc = createDoc("id", "add", "message", "hola");
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
@@ -70,8 +71,12 @@ public class PipelineExecutorTest {
         assertThat(pipelineExecutorMetrics.totalDocsSucceededProcessing()).isEqualTo(1);
     }
 
-    private ExecutionStep createExecutionStep(Processor failAlwaysProcessor, List<Processor> processors) {
-        return new ExecutionStep("fail1", failAlwaysProcessor, processors);
+    private OnFailureExecutionStep createOnFailureExecutionStep(Processor processor, String name) {
+        return new OnFailureExecutionStep(name, processor);
+    }
+
+    private ExecutionStep createExecutionStep(Processor processor, List<OnFailureExecutionStep> onFailureExecutionSteps) {
+        return new ExecutionStep("fail1", processor, onFailureExecutionSteps);
     }
 
     @Test
@@ -133,64 +138,30 @@ public class PipelineExecutorTest {
     }
 
     private Processor createSleepProcessor(long millis) {
-        return new Processor() {
-            @Override
-            public ProcessResult process(Doc doc) {
+        return (Doc doc) -> {
                 try {
                     Thread.sleep(millis);
                 } catch (InterruptedException e) {
 
                 }
                 return ProcessResult.success();
-            }
-
-            @Override
-            public String getType() {
-                return "sleep";
-            }
-        };
+            };
     }
 
     private Processor createAddFieldProcessor(String k, String v) {
-        return new Processor() {
-            @Override
-            public ProcessResult process(Doc doc) {
+        return (Doc doc) -> {
                 doc.addField(k, v);
                 return ProcessResult.success();
-            }
-
-            @Override
-            public String getType() {
-                return "add";
-            }
-        };
+            };
     }
 
     private Processor createUnexpectedFailAlwaysProcessor() {
-        return new Processor() {
-            @Override
-            public ProcessResult process(Doc doc) {
+        return (Doc doc) -> {
                 throw new RuntimeException("test failure");
-            }
-
-            @Override
-            public String getType() {
-                return "failBad";
-            }
-        };
+            };
     }
 
     private Processor createFailAlwaysProcessor() {
-        return new Processor() {
-            @Override
-            public ProcessResult process(Doc doc) {
-                return ProcessResult.failure("test failure");
-            }
-
-            @Override
-            public String getType() {
-                return "fail";
-            }
-        };
+        return (Doc doc) -> ProcessResult.failure("test failure");
     }
 }

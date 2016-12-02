@@ -9,7 +9,7 @@ import java.util.Map;
 public class ProcessorDefinition {
     private String type;
     private String name;
-    private String config;
+    private Map<String,Object> config;
     private List<ProcessorDefinition> onFailure;
 
     public ProcessorDefinition() { }
@@ -22,16 +22,11 @@ public class ProcessorDefinition {
         return name;
     }
 
-    public String getConfig() {
+    public Map<String, Object> getConfig() {
         return config;
     }
 
     public List<ProcessorDefinition> getOnFailure() {
         return onFailure;
-    }
-
-    @JsonSetter
-    private void setConfig(Map config) {
-        this.config = JsonUtils.toJsonString(config);
     }
 }
