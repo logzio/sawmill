@@ -16,10 +16,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-@ProcessorProvider(type = UserAgentProcessor.TYPE, factory = UserAgentProcessor.Factory.class)
+@ProcessorProvider(type = "userAgent", factory = UserAgentProcessor.Factory.class)
 public class UserAgentProcessor implements Processor {
-    public static final String TYPE = "userAgent";
-
     private final String field;
     private final String targetField;
     private final Parser uaParser;
@@ -28,11 +26,6 @@ public class UserAgentProcessor implements Processor {
         this.field = field;
         this.targetField = targetField;
         this.uaParser = uaParser;
-    }
-
-    @Override
-    public String getType() {
-        return TYPE;
     }
 
     @Override
@@ -125,8 +118,8 @@ public class UserAgentProcessor implements Processor {
         }
 
         @Override
-        public UserAgentProcessor create(String config) {
-            UserAgentProcessor.Configuration userAgentConfig = JsonUtils.fromJsonString(UserAgentProcessor.Configuration.class, config);
+        public UserAgentProcessor create(Map<String,Object> config) {
+            UserAgentProcessor.Configuration userAgentConfig = JsonUtils.fromJsonMap(UserAgentProcessor.Configuration.class, config);
 
             return new UserAgentProcessor(userAgentConfig.getField(),
                     userAgentConfig.getTargetField() != null ? userAgentConfig.getTargetField() : "user_agent",

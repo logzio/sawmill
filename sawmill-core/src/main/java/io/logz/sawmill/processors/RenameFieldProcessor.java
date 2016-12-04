@@ -6,10 +6,10 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
-@ProcessorProvider(type = RenameFieldProcessor.TYPE, factory = RenameFieldProcessor.Factory.class)
-public class RenameFieldProcessor implements Processor {
-    public static final String TYPE = "rename";
+import java.util.Map;
 
+@ProcessorProvider(type = "rename", factory = RenameFieldProcessor.Factory.class)
+public class RenameFieldProcessor implements Processor {
     private final String from;
     private final String to;
 
@@ -19,14 +19,9 @@ public class RenameFieldProcessor implements Processor {
     }
 
     @Override
-    public String getType() {
-        return TYPE;
-    }
-
-    @Override
     public ProcessResult process(Doc doc) {
         if (!doc.hasField(from)) {
-            return ProcessResult.failure(String.format("failed to rename field [%s] to [%s]", from, to));
+            return ProcessResult.failure(String.format("failed to rename field [%s] to [%s], couldn't find field", from, to));
         }
         Object fieldValue = doc.getField(from);
         doc.removeField(from);
@@ -40,8 +35,8 @@ public class RenameFieldProcessor implements Processor {
         }
 
         @Override
-        public Processor create(String config) {
-            RenameFieldProcessor.Configuration renameFieldConfig = JsonUtils.fromJsonString(RenameFieldProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            RenameFieldProcessor.Configuration renameFieldConfig = JsonUtils.fromJsonMap(RenameFieldProcessor.Configuration.class, config);
 
             return new RenameFieldProcessor(renameFieldConfig.getFrom(), renameFieldConfig.getTo());
         }

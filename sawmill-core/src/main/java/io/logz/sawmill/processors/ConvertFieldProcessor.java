@@ -9,13 +9,13 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.JsonUtils;
 
+import java.util.Map;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-@ProcessorProvider(type = ConvertFieldProcessor.TYPE, factory = ConvertFieldProcessor.Factory.class)
+@ProcessorProvider(type = "convert", factory = ConvertFieldProcessor.Factory.class)
 public class ConvertFieldProcessor implements Processor {
-    public static final String TYPE = "convert";
-
     private final String path;
     private final FieldType fieldType;
 
@@ -23,11 +23,6 @@ public class ConvertFieldProcessor implements Processor {
         checkNotNull(fieldType);
         this.path = path;
         this.fieldType = fieldType;
-    }
-
-    @Override
-    public String getType() {
-        return TYPE;
     }
 
     public FieldType getFieldType() {
@@ -41,7 +36,7 @@ public class ConvertFieldProcessor implements Processor {
         }
         Object beforeCast = doc.getField(path);
 
-        Object afterCast = fieldType.parse(beforeCast);
+        Object afterCast = fieldType.convertFrom(beforeCast);
 
         if (afterCast == null) {
             return failureResult(beforeCast);
@@ -65,8 +60,8 @@ public class ConvertFieldProcessor implements Processor {
         }
 
         @Override
-        public Processor create(String config) {
-            ConvertFieldProcessor.Configuration convertFieldConfig = JsonUtils.fromJsonString(ConvertFieldProcessor.Configuration.class, config);
+        public ConvertFieldProcessor create(Map<String,Object> config) {
+            ConvertFieldProcessor.Configuration convertFieldConfig = JsonUtils.fromJsonMap(ConvertFieldProcessor.Configuration.class, config);
 
             if (convertFieldConfig.getType() == null) {
                 throw new ProcessorParseException("failed to parse convert processor, could not resolve field type");
@@ -95,25 +90,25 @@ public class ConvertFieldProcessor implements Processor {
     public enum FieldType {
         LONG {
             @Override
-            public Object parse(Object value) {
+            public Object convertFrom(Object value) {
                 return Longs.tryParse(value.toString());
             }
         },
         DOUBLE {
             @Override
-            public Object parse(Object value) {
+            public Object convertFrom(Object value) {
                 return Doubles.tryParse(value.toString());
             }
         },
         STRING {
             @Override
-            public Object parse(Object value) {
+            public Object convertFrom(Object value) {
                 return value.toString();
             }
         },
         BOOLEAN {
             @Override
-            public Object parse(Object value) {
+            public Object convertFrom(Object value) {
                 if (value.toString().matches("^(t|true|yes|y|1)$")) {
                     return true;
                 } else if (value.toString().matches("^(f|false|no|n|0)$")) {
@@ -129,6 +124,6 @@ public class ConvertFieldProcessor implements Processor {
             return this.name().toLowerCase();
         }
 
-        public abstract Object parse(Object value);
+        public abstract Object convertFrom(Object value);
     }
 }

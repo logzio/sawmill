@@ -1,12 +1,12 @@
 package io.logz.sawmill;
 
+import java.util.Map;
+
 public interface Processor {
     ProcessResult process(Doc doc);
 
-    String getType();
-
     interface Factory {
-        Processor create(String config);
+        Processor create(Map<String,Object> config);
     }
 
     interface Configuration {

@@ -37,8 +37,8 @@ public class ProcessorFactoriesLoader {
             try {
                 ProcessorProvider annotation = processor.getAnnotation(ProcessorProvider.class);
                 String typeName = annotation.type();
-                Class typeFactory = annotation.factory();
-                processorFactoryRegistry.register(typeName, (Processor.Factory) typeFactory.getConstructor().newInstance());
+                Class<? extends Processor.Factory> typeFactory = annotation.factory();
+                processorFactoryRegistry.register(typeName, typeFactory.getConstructor().newInstance());
                 logger.info("{} processor factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
                 processorsLoaded++;
             } catch (Exception e) {

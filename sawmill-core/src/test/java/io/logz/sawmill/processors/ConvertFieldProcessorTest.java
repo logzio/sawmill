@@ -3,15 +3,20 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConvertFieldProcessorTest {
     @Test
     public void testFactory() {
-        String config = "{ \"path\": \"fieldName\", \"type\": \"long\" }";
+        Map<String,Object> config = new HashMap<>();
+        config.put("path", "fieldName");
+        config.put("type", "long");
 
-        ConvertFieldProcessor convertFieldProcessor = (ConvertFieldProcessor) new ConvertFieldProcessor.Factory().create(config);
+        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor.Factory().create(config);
 
         assertThat(convertFieldProcessor.getFieldType()).isEqualTo(ConvertFieldProcessor.FieldType.LONG);
     }
