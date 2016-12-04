@@ -61,11 +61,11 @@ public class SawmillBenchmarkOptions implements Serializable {
 
     public static class JmhOptions implements Options {
         private Integer iterations;
-        private TimeValue timeout;
-        private TimeValue runTime;
+        private String timeout;
+        private String runTime;
         private Integer batchSize;
         private Integer warmupIterations;
-        private TimeValue warmupTime;
+        private String warmupTime;
         private Integer warmupBatchSize;
         private List<Mode> benchMode = new ArrayList<Mode>();
         private Integer threads;
@@ -171,7 +171,7 @@ public class SawmillBenchmarkOptions implements Serializable {
 
         @Override
         public Optional<TimeValue> getWarmupTime() {
-            return Optional.eitherOf(warmupTime);
+            return Optional.eitherOf(TimeValue.valueOf(warmupTime));
         }
 
         @Override
@@ -196,7 +196,7 @@ public class SawmillBenchmarkOptions implements Serializable {
 
         @Override
         public Optional<TimeValue> getMeasurementTime() {
-            return Optional.eitherOf(runTime);
+            return Optional.eitherOf(TimeValue.valueOf(runTime));
         }
 
         @Override
@@ -261,7 +261,7 @@ public class SawmillBenchmarkOptions implements Serializable {
 
         @Override
         public Optional<TimeValue> getTimeout() {
-            return Optional.eitherOf(timeout);
+            return Optional.eitherOf(TimeValue.valueOf(timeout));
         }
 
         public Integer getIterations() {
@@ -269,7 +269,7 @@ public class SawmillBenchmarkOptions implements Serializable {
         }
 
         public TimeValue getRunTime() {
-            return runTime;
+            return TimeValue.valueOf(runTime);
         }
 
         public Integer getBatchSize() {
