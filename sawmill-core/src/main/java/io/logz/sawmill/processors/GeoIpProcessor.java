@@ -11,6 +11,7 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
+import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.io.IOException;
@@ -23,9 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
+@ProcessorProvider(type = "geoIp", factory = GeoIpProcessor.Factory.class)
 public class GeoIpProcessor implements Processor {
-    private static final String TYPE = "geoIp";
-
     private static DatabaseReader databaseReader;
 
     static {
@@ -52,12 +52,9 @@ public class GeoIpProcessor implements Processor {
     }
 
     @Override
-    public String getType() { return TYPE; }
-
-    @Override
     public ProcessResult process(Doc doc) {
         if (!doc.hasField(sourceField)) {
-            return new ProcessResult(false, String.format("failed to get ip from [%s], field missing", sourceField));
+            return ProcessResult.failure(String.format("failed to get ip from [%s], field missing", sourceField));
         }
 
         String ip = doc.getField(sourceField);
@@ -70,14 +67,15 @@ public class GeoIpProcessor implements Processor {
         } catch (AddressNotFoundException e) {
             geoIp = null;
         } catch (Exception e) {
-            return new ProcessResult(false, String.format("failed to fetch geoIp for [%s], errorMsg [%s]", ip, e.getMessage()));
+            return ProcessResult.failure(String.format("failed to fetch geoIp for [%s]", ip),
+                    new ProcessorExecutionException("geoIp", e));
         }
 
         if (geoIp != null) {
             doc.addField(targetField, geoIp);
         }
 
-        return new ProcessResult(true);
+        return ProcessResult.success();
     }
 
     private Map<String, Object> extractGeoIp(InetAddress ipAddress) throws GeoIp2Exception, IOException {
@@ -91,14 +89,13 @@ public class GeoIpProcessor implements Processor {
         return geoIp;
     }
 
-    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public GeoIpProcessor create(String config) {
-            GeoIpProcessor.Configuration geoIpConfig = JsonUtils.fromJsonString(GeoIpProcessor.Configuration.class, config);
+        public GeoIpProcessor create(Map<String,Object> config) {
+            GeoIpProcessor.Configuration geoIpConfig = JsonUtils.fromJsonMap(Configuration.class, config);
 
             return new GeoIpProcessor(geoIpConfig.getSourceField(),
                     geoIpConfig.getTargetField() != null ? geoIpConfig.getTargetField() : "geoip",

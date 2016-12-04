@@ -17,7 +17,7 @@ public class AddAndRemoveTagProcessorTest {
         Doc doc = createDoc("tags", "value");
 
         // Tests no exception thrown in case of none tags
-        assertThat(removeTagProcessor.process(doc).isSucceeded()).isFalse();
+        assertThat(removeTagProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThat(addTagProcessor.process(doc).isSucceeded()).isTrue();
 

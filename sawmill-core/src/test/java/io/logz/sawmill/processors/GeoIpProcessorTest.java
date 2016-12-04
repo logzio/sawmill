@@ -4,8 +4,11 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
+import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,7 +19,9 @@ public class GeoIpProcessorTest {
         String source = "ipString";
 
 
-        String config = "{ \"sourceField\": \"" + source + "\", \"properties\": [\"ip\",\"country_name\",\"country_iso_code\",\"city_name\"]}";
+        Map<String,Object> config = new HashMap<>();
+        config.put("sourceField", source);
+        config.put("properties", Arrays.asList("ip", "country_name", "country_iso_code", "city_name"));
         GeoIpProcessor geoIpProcessor = new GeoIpProcessor.Factory().create(config);
 
         Doc doc = createDoc(source, ip);
@@ -38,7 +43,7 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, GeoIpProcessor.Property.ALL_PROPERTIES);
+        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES);
 
         Doc doc = createDoc(source, ip);
 
@@ -56,7 +61,7 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, GeoIpProcessor.Property.ALL_PROPERTIES);
+        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES);
 
         Doc doc = createDoc(source, ip);
 

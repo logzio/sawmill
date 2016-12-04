@@ -1,27 +1,32 @@
 package io.logz.sawmill;
 
 import java.util.List;
+import java.util.Optional;
 
 public class ExecutionStep {
-    private final String name;
+    private final String processorName;
     private final Processor processor;
-    private final List<Processor> onFailureProcessors;
+    private final Optional<List<OnFailureExecutionStep>> onFailureExecutionSteps;
 
-    public ExecutionStep(String name, Processor processor, List<Processor> onFailureProcessors) {
-        this.name = name;
-        this.processor = processor;
-        this.onFailureProcessors = onFailureProcessors;
+    public ExecutionStep(String processorName, Processor processor) {
+        this(processorName, processor, null);
     }
 
-    public String getName() {
-        return name;
+    public ExecutionStep(String processorName, Processor processor, List<OnFailureExecutionStep> onFailureExecutionSteps) {
+        this.processorName = processorName;
+        this.processor = processor;
+        this.onFailureExecutionSteps = Optional.ofNullable(onFailureExecutionSteps);
+    }
+
+    public String getProcessorName() {
+        return processorName;
     }
 
     public Processor getProcessor() {
         return processor;
     }
 
-    public List<Processor> getOnFailureProcessors() {
-        return onFailureProcessors;
+    public Optional<List<OnFailureExecutionStep>> getOnFailureExecutionSteps() {
+        return onFailureExecutionSteps;
     }
 }

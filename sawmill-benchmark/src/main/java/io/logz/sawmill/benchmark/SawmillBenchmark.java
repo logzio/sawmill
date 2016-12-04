@@ -75,7 +75,7 @@ public class SawmillBenchmark {
 
     private void setupSawmill() {
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
-        ProcessorFactoriesLoader.getInstance().loadAnnotatedProcesses(processorFactoryRegistry);
+        ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
         pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
         watchdog = new PipelineExecutionTimeWatchdog(thresholdTimeMs, pipelineExecutorMetrics, context -> { });
         pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);

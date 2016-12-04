@@ -14,23 +14,18 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     private final ConcurrentMap<String, ProcessorMetrics> processorsMetrics = new ConcurrentHashMap<>();
 
     @Managed
-    @Override
     public long totalDocsProcessed() { return succeeded.longValue() + failed.longValue() + overtime.longValue(); }
 
     @Managed
-    @Override
     public long totalDocsSucceededProcessing() { return succeeded.longValue(); }
 
     @Managed
-    @Override
     public long totalDocsFailedProcessing() { return failed.longValue(); }
 
     @Managed
-    @Override
     public long totalDocsOvertimeProcessing() { return overtime.longValue(); }
 
     @Managed
-    @Override
     public long totalDocsFailedOnUnexpectedError() {
         return unexpectedFailure.longValue();
     }
@@ -51,18 +46,18 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     public void processedDocSuccessfully(String pipelineId, Doc doc, long timeTookNs) { succeeded.increment(); }
 
     @Override
-    public void processorFailed(String pipelineId, String processorType, Doc doc) { failed.increment(); }
+    public void processorFailed(String pipelineId, String processorName, Doc doc) { failed.increment(); }
 
     @Override
     public void overtimeProcessingDoc(String pipelineId, Doc doc) { overtime.increment(); }
 
     @Override
-    public void processorFinished(String processorType, long timeTookNs) {
-        processorsMetrics.computeIfAbsent(processorType, k -> new ProcessorMetrics()).addEvent(timeTookNs);
+    public void processorFinished(String pipelineId, String processorName, long timeTookNs) {
+        processorsMetrics.computeIfAbsent(processorName, k -> new ProcessorMetrics()).addEvent(timeTookNs);
     }
 
     @Override
-    public void processorFailedOnUnexpectedError(String pipelineId, String processorType, Doc doc, Exception e) {
+    public void processorFailedOnUnexpectedError(String pipelineId, String processorName, Doc doc, Exception e) {
         unexpectedFailure.increment();
     }
 

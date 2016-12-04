@@ -6,18 +6,21 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
+import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.JsonUtils;
 
+import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+@ProcessorProvider(type = "convert", factory = ConvertFieldProcessor.Factory.class)
 public class ConvertFieldProcessor implements Processor {
-    private static final String TYPE = "convertField";
-
     private final String path;
     private final FieldType fieldType;
 
     public ConvertFieldProcessor(String path, FieldType fieldType) {
-        checkState(fieldType != null, "convert fieldType cannot be empty");
+        checkNotNull(fieldType);
         this.path = path;
         this.fieldType = fieldType;
     }
@@ -27,34 +30,13 @@ public class ConvertFieldProcessor implements Processor {
     }
 
     @Override
-    public String getType() { return TYPE; }
-
-    @Override
     public ProcessResult process(Doc doc) {
-        Object afterCast = null;
-        Object beforeCast = doc.getField(path);
-        switch (fieldType) {
-            case LONG: {
-                afterCast = Longs.tryParse(beforeCast.toString());
-                break;
-            }
-            case DOUBLE: {
-                afterCast = Doubles.tryParse(beforeCast.toString());
-                break;
-            }
-            case BOOLEAN: {
-                if (beforeCast.toString().matches("^(t|true|yes|y|1)$")) {
-                    afterCast = true;
-                } else if (beforeCast.toString().matches("^(f|false|no|n|0)$")) {
-                    afterCast = false;
-                }
-                break;
-            }
-            case STRING: {
-                afterCast = beforeCast.toString();
-                break;
-            }
+        if (!doc.hasField(path)) {
+            return ProcessResult.failure("failed to convert field in path [%s], field is missing");
         }
+        Object beforeCast = doc.getField(path);
+
+        Object afterCast = fieldType.convertFrom(beforeCast);
 
         if (afterCast == null) {
             return failureResult(beforeCast);
@@ -63,24 +45,27 @@ public class ConvertFieldProcessor implements Processor {
         boolean succeeded = doc.removeField(path);
         if (succeeded) {
             doc.addField(path, afterCast);
-            return new ProcessResult(true);
+            return ProcessResult.success();
         } else {
             return failureResult(beforeCast);
         }
     }
 
     private ProcessResult failureResult(Object beforeCastValue) {
-        return new ProcessResult(false, String.format("failed to convert field in path [%s] to %s, unknown value [%s]", path, fieldType, beforeCastValue));
+        return ProcessResult.failure(String.format("failed to convert field in path [%s] to %s, value [%s]", path, fieldType, beforeCastValue));
     }
 
-    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
-            ConvertFieldProcessor.Configuration convertFieldConfig = JsonUtils.fromJsonString(ConvertFieldProcessor.Configuration.class, config);
+        public ConvertFieldProcessor create(Map<String,Object> config) {
+            ConvertFieldProcessor.Configuration convertFieldConfig = JsonUtils.fromJsonMap(ConvertFieldProcessor.Configuration.class, config);
+
+            if (convertFieldConfig.getType() == null) {
+                throw new ProcessorParseException("failed to parse convert processor, could not resolve field type");
+            }
 
             return new ConvertFieldProcessor(convertFieldConfig.getPath(), convertFieldConfig.getType());
         }
@@ -103,14 +88,42 @@ public class ConvertFieldProcessor implements Processor {
     }
 
     public enum FieldType {
-        LONG,
-        DOUBLE,
-        STRING,
-        BOOLEAN;
+        LONG {
+            @Override
+            public Object convertFrom(Object value) {
+                return Longs.tryParse(value.toString());
+            }
+        },
+        DOUBLE {
+            @Override
+            public Object convertFrom(Object value) {
+                return Doubles.tryParse(value.toString());
+            }
+        },
+        STRING {
+            @Override
+            public Object convertFrom(Object value) {
+                return value.toString();
+            }
+        },
+        BOOLEAN {
+            @Override
+            public Object convertFrom(Object value) {
+                if (value.toString().matches("^(t|true|yes|y|1)$")) {
+                    return true;
+                } else if (value.toString().matches("^(f|false|no|n|0)$")) {
+                    return false;
+                } else {
+                    return null;
+                }
+            }
+        };
 
         @Override
         public String toString() {
             return this.name().toLowerCase();
         }
+
+        public abstract Object convertFrom(Object value);
     }
 }

@@ -7,10 +7,10 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.List;
+import java.util.Map;
 
+@ProcessorProvider(type = "addTag", factory = AddTagProcessor.Factory.class)
 public class AddTagProcessor implements Processor {
-    private static final String TYPE = "addTag";
-
     private final List<String> tags;
 
     public AddTagProcessor(List<String> tags) {
@@ -18,22 +18,18 @@ public class AddTagProcessor implements Processor {
     }
 
     @Override
-    public String getType() { return TYPE; }
-
-    @Override
     public ProcessResult process(Doc doc) {
         doc.appendList("tags", tags);
-        return new ProcessResult(true);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
-            AddTagProcessor.Configuration addTagConfig = JsonUtils.fromJsonString(AddTagProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            AddTagProcessor.Configuration addTagConfig = JsonUtils.fromJsonMap(AddTagProcessor.Configuration.class, config);
 
             return new AddTagProcessor(addTagConfig.getTags());
         }

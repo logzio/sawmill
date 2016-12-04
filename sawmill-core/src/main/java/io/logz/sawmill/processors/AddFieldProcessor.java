@@ -6,9 +6,10 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
-public class AddFieldProcessor implements Processor {
-    private static final String TYPE = "addField";
+import java.util.Map;
 
+@ProcessorProvider(type = "addField", factory = AddFieldProcessor.Factory.class)
+public class AddFieldProcessor implements Processor {
     private final String path;
     private final Object value;
 
@@ -18,22 +19,18 @@ public class AddFieldProcessor implements Processor {
     }
 
     @Override
-    public String getType() { return TYPE; }
-
-    @Override
     public ProcessResult process(Doc doc) {
         doc.addField(path, value);
-        return new ProcessResult(true);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
-            AddFieldProcessor.Configuration addFieldConfig = JsonUtils.fromJsonString(AddFieldProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            AddFieldProcessor.Configuration addFieldConfig = JsonUtils.fromJsonMap(AddFieldProcessor.Configuration.class, config);
 
             return new AddFieldProcessor(addFieldConfig.getPath(), addFieldConfig.getValue());
         }

@@ -6,9 +6,10 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
-public class RemoveFieldProcessor implements Processor {
-    private static final String TYPE = "removeField";
+import java.util.Map;
 
+@ProcessorProvider(type = "removeField", factory = RemoveFieldProcessor.Factory.class)
+public class RemoveFieldProcessor implements Processor {
     private final String path;
 
     public RemoveFieldProcessor(String path) {
@@ -16,22 +17,18 @@ public class RemoveFieldProcessor implements Processor {
     }
 
     @Override
-    public String getType() { return TYPE; }
-
-    @Override
     public ProcessResult process(Doc doc) {
-        boolean succeeded = doc.removeField(path);
-        return succeeded ? new ProcessResult(true) : new ProcessResult(false, String.format("failed to remove field in path [%s]", path));
+        doc.removeField(path);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
-            RemoveFieldProcessor.Configuration removeFieldConfig = JsonUtils.fromJsonString(RemoveFieldProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            RemoveFieldProcessor.Configuration removeFieldConfig = JsonUtils.fromJsonMap(RemoveFieldProcessor.Configuration.class, config);
 
             return new RemoveFieldProcessor(removeFieldConfig.getPath());
         }
