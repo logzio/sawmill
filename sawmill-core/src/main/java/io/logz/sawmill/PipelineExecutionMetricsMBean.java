@@ -53,7 +53,7 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
 
     @Override
     public void processorFinished(String pipelineId, String processorName, long timeTookNs) {
-        processorsMetrics.computeIfAbsent(pipelineId + "." + processorName, k -> new ProcessorMetrics()).addEvent(timeTookNs);
+        processorsMetrics.computeIfAbsent(processorName, k -> new ProcessorMetrics()).addEvent(timeTookNs);
     }
 
     @Override

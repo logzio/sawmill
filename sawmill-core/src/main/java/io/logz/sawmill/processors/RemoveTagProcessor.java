@@ -7,20 +7,14 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.List;
+import java.util.Map;
 
-@ProcessorProvider(type = RemoveTagProcessor.TYPE, factory = RemoveTagProcessor.Factory.class)
+@ProcessorProvider(type = "removeTag", factory = RemoveTagProcessor.Factory.class)
 public class RemoveTagProcessor implements Processor {
-    public static final String TYPE = "removeTag";
-
     private final List<String> tags;
 
     public RemoveTagProcessor(List<String> tags) {
         this.tags = tags;
-    }
-
-    @Override
-    public String getType() {
-        return TYPE;
     }
 
     @Override
@@ -34,8 +28,8 @@ public class RemoveTagProcessor implements Processor {
         }
 
         @Override
-        public Processor create(String config) {
-            RemoveTagProcessor.Configuration removeTagConfig = JsonUtils.fromJsonString(RemoveTagProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            RemoveTagProcessor.Configuration removeTagConfig = JsonUtils.fromJsonMap(RemoveTagProcessor.Configuration.class, config);
 
             return new RemoveTagProcessor(removeTagConfig.getTags());
         }

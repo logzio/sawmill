@@ -19,10 +19,8 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@ProcessorProvider(type = GrokProcessor.TYPE, factory = GrokProcessor.Factory.class)
+@ProcessorProvider(type = "grok", factory = GrokProcessor.Factory.class)
 public class GrokProcessor implements Processor {
-    public static final String TYPE = "grok";
-
     private final String field;
     private final Grok grok;
 
@@ -37,11 +35,6 @@ public class GrokProcessor implements Processor {
         } catch (GrokException e) {
             throw new RuntimeException(String.format("failed to compile grok pattern [%s]", matchPattern), e);
         }
-    }
-
-    @Override
-    public String getType() {
-        return TYPE;
     }
 
     @Override
@@ -102,8 +95,8 @@ public class GrokProcessor implements Processor {
         }
 
         @Override
-        public GrokProcessor create(String config) {
-            GrokProcessor.Configuration grokConfig = JsonUtils.fromJsonString(GrokProcessor.Configuration.class, config);
+        public GrokProcessor create(Map<String,Object> config) {
+            GrokProcessor.Configuration grokConfig = JsonUtils.fromJsonMap(GrokProcessor.Configuration.class, config);
 
             return new GrokProcessor(grokConfig.getField(), grokConfig.getPattern(), patternsBank);
         }

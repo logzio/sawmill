@@ -4,6 +4,9 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,7 +19,9 @@ public class GrokProcessorTest {
 
         Doc doc = createDoc(field, log);
 
-        String config = "{ \"field\": \"" + field + "\", \"pattern\": \"" + pattern + "\"}";
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("pattern", pattern);
         GrokProcessor grokProcessor = new GrokProcessor.Factory().create(config);
 
         ProcessResult processResult = grokProcessor.process(doc);

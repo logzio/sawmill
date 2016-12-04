@@ -9,12 +9,12 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.JsonUtils;
 
+import java.util.Map;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
-@ProcessorProvider(type = ConvertFieldProcessor.TYPE, factory = ConvertFieldProcessor.Factory.class)
+@ProcessorProvider(type = "convert", factory = ConvertFieldProcessor.Factory.class)
 public class ConvertFieldProcessor implements Processor {
-    public static final String TYPE = "convert";
-
     private final String path;
     private final FieldType fieldType;
 
@@ -22,11 +22,6 @@ public class ConvertFieldProcessor implements Processor {
         checkNotNull(fieldType);
         this.path = path;
         this.fieldType = fieldType;
-    }
-
-    @Override
-    public String getType() {
-        return TYPE;
     }
 
     public FieldType getFieldType() {
@@ -64,11 +59,11 @@ public class ConvertFieldProcessor implements Processor {
         }
 
         @Override
-        public Processor create(String config) {
-            ConvertFieldProcessor.Configuration convertFieldConfig = JsonUtils.fromJsonString(ConvertFieldProcessor.Configuration.class, config);
+        public ConvertFieldProcessor create(Map<String,Object> config) {
+            ConvertFieldProcessor.Configuration convertFieldConfig = JsonUtils.fromJsonMap(ConvertFieldProcessor.Configuration.class, config);
 
             if (convertFieldConfig.getType() == null) {
-                throw new ProcessorParseException("failed to convertFrom convert processor, could not resolve field type");
+                throw new ProcessorParseException("failed to parse convert processor, could not resolve field type");
             }
 
             return new ConvertFieldProcessor(convertFieldConfig.getPath(), convertFieldConfig.getType());
