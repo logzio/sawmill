@@ -3,8 +3,11 @@ package io.logz.sawmill.utilities;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -19,6 +22,7 @@ public class JsonUtils {
         mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
         mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
+        mapper.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL);
     }
 
     public static <T> T fromJsonString(Class<T> type, String json) {
@@ -28,6 +32,19 @@ public class JsonUtils {
 
         try {
             return mapper.readValue(json, type);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("failed to deserialize object type="+type+" from json="+json, e);
+        }
+    }
+
+    public static <T> T fromJsonMap(Class<T> type, Map json) {
+        if (MapUtils.isEmpty(json)) {
+            throw new RuntimeException("json is either null or empty (json = "+json+")");
+        }
+
+        try {
+            return mapper.convertValue(json, type);
         }
         catch (Exception e) {
             throw new RuntimeException("failed to deserialize object type="+type+" from json="+json, e);

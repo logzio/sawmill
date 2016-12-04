@@ -6,44 +6,65 @@ import java.util.Optional;
 
 public class ExecutionResult {
     private final boolean succeeded;
-    private final String errorMessage;
-    private final String processorType;
-    private final String processorName;
-    private final Optional<PipelineExecutionException> exception;
+    private final Optional<Error> error;
 
-    public ExecutionResult(boolean succeeded) {
-        this(succeeded, "", "", "");
+    private static ExecutionResult executionSucceeded = new ExecutionResult();
+
+    private ExecutionResult() {
+        this.succeeded = true;
+        this.error = Optional.empty();
     }
 
-    public ExecutionResult(boolean succeeded, String errorMessage, String processorType, String processorName) {
-        this(succeeded, errorMessage, processorType, processorName, Optional.empty());
+    private ExecutionResult(String errorMessage, String failedProcessorName) {
+        this(errorMessage, failedProcessorName, null);
     }
 
-    public ExecutionResult(boolean succeeded, String errorMessage, String processorType, String processorName, Optional<PipelineExecutionException> e) {
-        this.succeeded = succeeded;
-        this.errorMessage = errorMessage;
-        this.processorType = processorType;
-        this.processorName = processorName;
-        this.exception = e;
+    private ExecutionResult(String errorMessage, String failedProcessorName, PipelineExecutionException e) {
+        this.succeeded = false;
+        this.error = Optional.of(new Error(errorMessage, failedProcessorName, Optional.ofNullable(e)));
+    }
+
+    public static ExecutionResult success() {
+        return executionSucceeded;
+    }
+
+    public static ExecutionResult failure(String errorMessage, String failedProcessorName) {
+        return new ExecutionResult(errorMessage, failedProcessorName);
+    }
+
+    public static ExecutionResult failure(String errorMessage, String failedProcessorName, PipelineExecutionException e) {
+        return new ExecutionResult(errorMessage, failedProcessorName, e);
     }
 
     public boolean isSucceeded() {
         return succeeded;
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
+    public Optional<Error> getError() {
+        return error;
     }
 
-    public String getProcessorType() {
-        return processorType;
-    }
+    public static class Error {
+        private final String message;
+        private final String failedProcessorName;
+        private final Optional<PipelineExecutionException> exception;
 
-    public String getProcessorName() {
-        return processorName;
-    }
+        public Error(String message, String failedProcessorName, Optional<PipelineExecutionException> exception) {
+            this.message = message;
+            this.failedProcessorName = failedProcessorName;
+            this.exception = exception;
+        }
 
-    public Optional<PipelineExecutionException> getException() {
-        return exception;
+        public String getMessage() {
+            return message;
+        }
+
+        public String getFailedProcessorName() {
+            return failedProcessorName;
+        }
+
+        public Optional<PipelineExecutionException> getException() {
+            return exception;
+        }
     }
 }

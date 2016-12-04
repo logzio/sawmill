@@ -7,10 +7,10 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.List;
+import java.util.Map;
 
+@ProcessorProvider(type = "removeTag", factory = RemoveTagProcessor.Factory.class)
 public class RemoveTagProcessor implements Processor {
-    private static final String TYPE = "removeTag";
-
     private final List<String> tags;
 
     public RemoveTagProcessor(List<String> tags) {
@@ -18,22 +18,18 @@ public class RemoveTagProcessor implements Processor {
     }
 
     @Override
-    public String getType() { return TYPE; }
-
-    @Override
     public ProcessResult process(Doc doc) {
-        boolean succeeded = doc.removeFromList("tags", tags);
-        return succeeded ? new ProcessResult(true) : new ProcessResult(false, String.format("failed to remove tags [%s]", tags));
+        doc.removeFromList("tags", tags);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
-            RemoveTagProcessor.Configuration removeTagConfig = JsonUtils.fromJsonString(RemoveTagProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            RemoveTagProcessor.Configuration removeTagConfig = JsonUtils.fromJsonMap(RemoveTagProcessor.Configuration.class, config);
 
             return new RemoveTagProcessor(removeTagConfig.getTags());
         }

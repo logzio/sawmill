@@ -33,6 +33,6 @@ public class AddAndRemoveFieldProcessorTest {
 
         Doc doc = createDoc("field", "value");
 
-        assertThat(removeFieldProcessor.process(doc).isSucceeded()).isFalse();
+        assertThat(removeFieldProcessor.process(doc).isSucceeded()).isTrue();
     }
 }

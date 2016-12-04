@@ -5,9 +5,9 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.utilities.JsonUtils;
 
-public class TestProcessor implements Processor {
-    public static final String NAME = "test";
+import java.util.Map;
 
+public class TestProcessor implements Processor {
     public final String value;
 
     public TestProcessor(String value) {
@@ -19,9 +19,6 @@ public class TestProcessor implements Processor {
         return null;
     }
 
-    @Override
-    public String getType() { return NAME; }
-
     public String getValue() { return value; }
 
     public static class Factory implements Processor.Factory {
@@ -29,8 +26,8 @@ public class TestProcessor implements Processor {
         }
 
         @Override
-        public Processor create(String config) {
-            Configuration testConfiguration = JsonUtils.fromJsonString(Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            Configuration testConfiguration = JsonUtils.fromJsonMap(Configuration.class, config);
 
             return new TestProcessor(testConfiguration.getValue());
         }

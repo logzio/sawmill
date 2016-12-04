@@ -27,7 +27,7 @@ public class ProcessorFactoriesLoader {
         return instance;
     }
 
-    public void loadAnnotatedProcesses(ProcessorFactoryRegistry processorFactoryRegistry) {
+    public void loadAnnotatedProcessors(ProcessorFactoryRegistry processorFactoryRegistry) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         long timeElapsed = 0;
 
@@ -35,8 +35,10 @@ public class ProcessorFactoriesLoader {
         Set<Class<?>> processors =  reflections.getTypesAnnotatedWith(ProcessorProvider.class);
         for (Class<?> processor : processors) {
             try {
-                String typeName = processor.getAnnotation(ProcessorProvider.class).name();
-                processorFactoryRegistry.register(typeName, (Processor.Factory) processor.getConstructor().newInstance());
+                ProcessorProvider annotation = processor.getAnnotation(ProcessorProvider.class);
+                String typeName = annotation.type();
+                Class<? extends Processor.Factory> typeFactory = annotation.factory();
+                processorFactoryRegistry.register(typeName, typeFactory.getConstructor().newInstance());
                 logger.info("{} processor factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
                 processorsLoaded++;
             } catch (Exception e) {

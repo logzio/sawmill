@@ -16,12 +16,12 @@ import java.time.format.SignStyle;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+@ProcessorProvider(type = "date", factory = DateProcessor.Factory.class)
 public class DateProcessor implements Processor {
-    private static final String TYPE = "date";
-
     private static ConcurrentMap<String, DateTimeFormatter> dateTimePatternToFormatter;
 
     static {
@@ -59,12 +59,9 @@ public class DateProcessor implements Processor {
     }
 
     @Override
-    public String getType() { return TYPE; }
-
-    @Override
     public ProcessResult process(Doc doc) {
         if (!doc.hasField(field)) {
-            return new ProcessResult(false, String.format("failed to process date, field in path [%s] is missing", field));
+            return ProcessResult.failure(String.format("failed to process date, field in path [%s] is missing", field));
         }
 
         Object value = doc.getField(field);
@@ -79,23 +76,21 @@ public class DateProcessor implements Processor {
         }
 
         if (dateTime == null) {
-            return new ProcessResult(false,
-                    String.format("failed to parse date in path [%s], [%s] is not one of the formats [%s]", field, value, formats));
+            return ProcessResult.failure(String.format("failed to parse date in path [%s], [%s] is not one of the formats [%s]", field, value, formats));
         }
 
         doc.addField(targetField, dateTime);
 
-        return new ProcessResult(true);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = TYPE)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
-            DateProcessor.Configuration dateConfig = JsonUtils.fromJsonString(DateProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            DateProcessor.Configuration dateConfig = JsonUtils.fromJsonMap(Configuration.class, config);
 
             return new DateProcessor(dateConfig.getField(),
                     dateConfig.getTargetField() != null ? dateConfig.getTargetField() : "@timestamp",
