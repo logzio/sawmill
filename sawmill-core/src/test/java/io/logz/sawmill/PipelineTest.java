@@ -46,7 +46,7 @@ public class PipelineTest {
         assertThat(executionStep.getProcessorName()).isEqualTo("test1");
         assertThat(processor.getValue()).isEqualTo("message");
         assertThat(pipeline.isIgnoreFailure()).isTrue();
-        assertThat(executionStep.getOnFailureProcessors().get().size()).isEqualTo(1);
+        assertThat(executionStep.getOnFailureExecutionSteps().get().size()).isEqualTo(1);
     }
 
     @Test

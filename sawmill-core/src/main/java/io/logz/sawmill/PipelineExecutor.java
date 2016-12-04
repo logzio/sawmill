@@ -39,7 +39,7 @@ public class PipelineExecutor {
                              continue;
                          }
 
-                         if (!executionStep.getOnFailureProcessors().isPresent()) {
+                         if (!executionStep.getOnFailureExecutionSteps().isPresent()) {
                              ProcessResult.Error error = processResult.getError().get();
                              return ExecutionResult.failure(error.getMessage(),
                                      executionStep.getProcessorName(),
@@ -47,7 +47,7 @@ public class PipelineExecutor {
                                              new PipelineExecutionException(pipeline.getName(), error.getException().get()) :
                                              null);
                          } else {
-                             executeOnFailure(doc, executionStep.getOnFailureProcessors().get(), pipelineStopwatch, pipeline.getId(), executionStep.getProcessorName());
+                             executeOnFailure(doc, executionStep.getOnFailureExecutionSteps().get(), pipelineStopwatch, pipeline.getId(), executionStep.getProcessorName());
                          }
                      }
                 } catch (RuntimeException e) {
@@ -82,8 +82,8 @@ public class PipelineExecutor {
         return processResult;
     }
 
-    private void executeOnFailure(Doc doc, List<OnFailureExecutionStep> onFailureProcessors, PipelineStopwatch pipelineStopwatch, String pipelineId, String processorName) {
-        for (OnFailureExecutionStep executionStep : onFailureProcessors) {
+    private void executeOnFailure(Doc doc, List<OnFailureExecutionStep> onFailureExecutionSteps, PipelineStopwatch pipelineStopwatch, String pipelineId, String processorName) {
+        for (OnFailureExecutionStep executionStep : onFailureExecutionSteps) {
             executeProcessor(doc, executionStep.getProcessor(), pipelineStopwatch, pipelineId, executionStep.getProcessorName());
         }
     }
