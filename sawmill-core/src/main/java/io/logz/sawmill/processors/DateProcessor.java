@@ -6,7 +6,6 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 @ProcessorProvider(type = "date", factory = DateProcessor.Factory.class)
 public class DateProcessor implements Processor {
@@ -79,7 +80,7 @@ public class DateProcessor implements Processor {
             return ProcessResult.failure(String.format("failed to parse date in path [%s], [%s] is not one of the formats [%s]", field, value, formats));
         }
 
-        doc.addField(targetField, dateTime);
+        doc.addField(targetField, dateTime.format(ISO_DATE_TIME));
 
         return ProcessResult.success();
     }
@@ -102,7 +103,21 @@ public class DateProcessor implements Processor {
     public static class Configuration implements Processor.Configuration {
         private String field;
         private String targetField;
+
+        /**
+         * The format of the date string.
+         * The format in this String is documented in https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html.
+         * Example:
+         *  "yyyy MM dd"
+         */
         private List<String> formats;
+
+        /**
+         * The time zone
+         * The zone in this String is documented in https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
+         * Example:
+         *  "UTC"
+         */
         private String timeZone;
 
         public Configuration() { }

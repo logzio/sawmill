@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DateProcessorTest {
@@ -26,7 +27,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX_MS"), zoneId);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((ZonedDateTime) doc.getField(targetField)).isEqualTo(zonedDateTime);
+        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(ISO_DATE_TIME));
     }
 
     @Test
@@ -40,7 +41,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX"), zoneId);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((ZonedDateTime) doc.getField(targetField)).isEqualTo(zonedDateTime);
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(ISO_DATE_TIME));
     }
 
     @Test
@@ -61,7 +62,7 @@ public class DateProcessorTest {
             ZonedDateTime expectedDateTime = LocalDateTime.parse(dateString, formatter).atZone(zoneId);
 
             assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-            assertThat((ZonedDateTime) doc.getField(targetField)).isEqualTo(expectedDateTime);
+            assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(ISO_DATE_TIME));
         });
     }
 }

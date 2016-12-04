@@ -1,8 +1,5 @@
 package io.logz.sawmill;
 
-import com.fasterxml.jackson.annotation.JsonSetter;
-import io.logz.sawmill.utilities.JsonUtils;
-
 import java.util.List;
 import java.util.Map;
 

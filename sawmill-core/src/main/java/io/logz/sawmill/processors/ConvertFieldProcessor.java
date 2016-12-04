@@ -12,7 +12,6 @@ import io.logz.sawmill.utilities.JsonUtils;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 @ProcessorProvider(type = "convert", factory = ConvertFieldProcessor.Factory.class)
 public class ConvertFieldProcessor implements Processor {

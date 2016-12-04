@@ -3,11 +3,9 @@ package io.logz.sawmill.utilities;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
