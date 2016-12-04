@@ -17,7 +17,7 @@ public class RenameFieldProcessorTest {
 
         RenameFieldProcessor renameFieldProcessor = new RenameFieldProcessor(fromField, nestedToField);
 
-        renameFieldProcessor.process(doc);
+        assertThat(renameFieldProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThat((String)doc.getField(nestedToField)).isEqualTo("value");
         assertThatThrownBy(() -> doc.getField(fromField)).isInstanceOf(IllegalStateException.class);
@@ -31,9 +31,8 @@ public class RenameFieldProcessorTest {
 
         RenameFieldProcessor renameFieldProcessor = new RenameFieldProcessor(fromField, toField);
 
-        renameFieldProcessor.process(doc);
+        assertThat(renameFieldProcessor.process(doc).isSucceeded()).isFalse();
 
         assertThatThrownBy(() -> doc.getField(toField)).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> doc.getField(fromField)).isInstanceOf(IllegalStateException.class);
     }
 }

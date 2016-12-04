@@ -3,9 +3,7 @@ package io.logz.sawmill;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -24,10 +22,10 @@ public class DocTest {
 
         assertThat((String) doc.getField(path)).isEqualTo(value);
 
-        doc.removeField(path);
+        assertThat(doc.removeField(path)).isTrue();
 
         assertThatThrownBy(() -> doc.getField(path)).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> doc.removeField(path)).isInstanceOf(IllegalStateException.class);
+        assertThat(doc.removeField(path)).isFalse();
     }
 
     @Test
@@ -37,7 +35,7 @@ public class DocTest {
         String path = "list";
         List<String> value = Arrays.asList("value1", "value2");
 
-        assertThatThrownBy(() -> doc.removeFromList(path,value)).isInstanceOf(IllegalStateException.class);
+        assertThat(doc.removeFromList(path,value)).isFalse();
 
         doc.appendList(path, value);
 
@@ -45,7 +43,7 @@ public class DocTest {
             assertThat(((List) doc.getField("list")).contains(item)).isTrue();
         }
 
-        doc.removeFromList(path, value);
+        assertThat(doc.removeFromList(path, value)).isTrue();
 
         for (String item : value) {
             assertThat(((List) doc.getField("list")).contains(item)).isFalse();

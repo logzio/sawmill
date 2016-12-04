@@ -3,17 +3,22 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConvertFieldProcessorTest {
     @Test
     public void testFactory() {
-        String config = "{ \"path\": \"fieldName\", \"type\": \"long\" }";
+        Map<String,Object> config = new HashMap<>();
+        config.put("path", "fieldName");
+        config.put("type", "long");
 
-        ConvertFieldProcessor convertFieldProcessor = (ConvertFieldProcessor) new ConvertFieldProcessor.Factory().create(config);
+        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor.Factory().create(config);
 
-        assertThat(convertFieldProcessor.getType()).isEqualTo(ConvertFieldProcessor.FieldType.LONG);
+        assertThat(convertFieldProcessor.getFieldType()).isEqualTo(ConvertFieldProcessor.FieldType.LONG);
     }
 
     @Test
@@ -25,7 +30,7 @@ public class ConvertFieldProcessorTest {
 
         Doc doc = createDoc(path, "yes");
 
-        convertFieldProcessor.process(doc);
+        assertThat(convertFieldProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThat((Boolean) doc.getField(path)).isTrue();
     }
@@ -39,7 +44,7 @@ public class ConvertFieldProcessorTest {
 
         Doc doc = createDoc(path, "1.55");
 
-        convertFieldProcessor.process(doc);
+        assertThat(convertFieldProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThat((Double) doc.getField(path)).isEqualTo(1.55d);
     }
@@ -53,7 +58,7 @@ public class ConvertFieldProcessorTest {
 
         Doc doc = createDoc(path, "12345");
 
-        convertFieldProcessor.process(doc);
+        assertThat(convertFieldProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThat((Long) doc.getField(path)).isEqualTo(12345l);
     }

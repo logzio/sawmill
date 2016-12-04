@@ -1,19 +1,16 @@
 package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 
+@ProcessorProvider(type = "removeTag", factory = RemoveTagProcessor.Factory.class)
 public class RemoveTagProcessor implements Processor {
-    private static final String NAME = "removeTag";
-    private static final Logger logger = LoggerFactory.getLogger(RemoveTagProcessor.class);
-
-
     private final List<String> tags;
 
     public RemoveTagProcessor(List<String> tags) {
@@ -21,25 +18,18 @@ public class RemoveTagProcessor implements Processor {
     }
 
     @Override
-    public String getName() { return NAME; }
-
-    @Override
-    public void process(Doc doc) {
-        try {
-            doc.removeFromList("tags", tags);
-        } catch (Exception e) {
-            logger.trace("failed to remove tags [{}]", tags, e);
-        }
+    public ProcessResult process(Doc doc) {
+        doc.removeFromList("tags", tags);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = NAME)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
-            RemoveTagProcessor.Configuration removeTagConfig = JsonUtils.fromJsonString(RemoveTagProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            RemoveTagProcessor.Configuration removeTagConfig = JsonUtils.fromJsonMap(RemoveTagProcessor.Configuration.class, config);
 
             return new RemoveTagProcessor(removeTagConfig.getTags());
         }

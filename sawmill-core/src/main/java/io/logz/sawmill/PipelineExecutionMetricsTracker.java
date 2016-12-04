@@ -1,25 +1,19 @@
 package io.logz.sawmill;
 
 public interface PipelineExecutionMetricsTracker {
-    long totalDocsProcessed();
+    float getAvgProcessorProcessingTime(String processorType);
 
-    long totalDocsSucceededProcessing();
+    long getMinProcessorProcessingTime(String processorType);
 
-    long totalDocsFailedProcessing();
-
-    long totalDocsOvertimeProcessing();
-
-    float getAvgProcessorProcessingTime(String processorName);
-
-    long getMinProcessorProcessingTime(String processorName);
-
-    long getMaxProcessorProcessingTime(String processorName);
+    long getMaxProcessorProcessingTime(String processorType);
 
     void processedDocSuccessfully(String pipelineId, Doc doc, long timeTookNs);
 
     void processorFailed(String pipelineId, String processorName, Doc doc);
 
+    void processorFailedOnUnexpectedError(String pipelineId, String processorName, Doc doc, Exception e);
+
     void overtimeProcessingDoc(String pipelineId, Doc doc);
 
-    void processorFinished(String processorName, long timeTookNs);
+    void processorFinished(String pipelineId, String processorName, long timeTookNs);
 }

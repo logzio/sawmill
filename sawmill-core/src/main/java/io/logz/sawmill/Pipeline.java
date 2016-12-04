@@ -5,9 +5,8 @@ import com.typesafe.config.ConfigRenderOptions;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -16,16 +15,18 @@ public class Pipeline {
     private final String id;
     private final String name;
     private final String description;
-    private final List<Processor> processors;
+    private final List<ExecutionStep> executionSteps;
+    private final boolean ignoreFailure;
 
-    public Pipeline(String id, String name, String description, List<Processor> processors) {
+    public Pipeline(String id, String name, String description, List<ExecutionStep> executionSteps, boolean ignoreFailure) {
         checkState(!id.isEmpty(), "id cannot be empty");
-        checkState(CollectionUtils.isNotEmpty(processors), "processors cannot be empty");
+        checkState(CollectionUtils.isNotEmpty(executionSteps), "executionSteps cannot be empty");
 
         this.id = id;
         this.name = name;
         this.description = description;
-        this.processors = processors;
+        this.executionSteps = executionSteps;
+        this.ignoreFailure = ignoreFailure;
     }
 
     public String getId() { return id; }
@@ -34,7 +35,11 @@ public class Pipeline {
 
     public String getDescription() { return description; }
 
-    public List<Processor> getProcessors() { return processors; }
+    public List<ExecutionStep> getExecutionSteps() { return executionSteps; }
+
+    public boolean isIgnoreFailure() {
+        return ignoreFailure;
+    }
 
     public static final class Factory {
 
@@ -42,39 +47,63 @@ public class Pipeline {
 
         public Factory() {
             this.processorFactoryRegistry = new ProcessorFactoryRegistry();
+            ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
         }
 
         public Factory(ProcessorFactoryRegistry processorFactoryRegistry) {
             this.processorFactoryRegistry = processorFactoryRegistry;
         }
 
-        public Pipeline create(Configuration config) {
-            List<Processor> processors = new ArrayList<>();
-
-            config.getProcessors().forEach(processorDefinition -> {
-                Processor.Factory factory = processorFactoryRegistry.get(processorDefinition.getName());
-                processors.add(factory.create(JsonUtils.toJsonString(processorDefinition.getConfig())));
-            });
+        public Pipeline create(Definition config) {
+            List<ExecutionStep> executionSteps = config.getProcessors().stream()
+                    .map(this::extractExecutionStep)
+                    .collect(Collectors.toList());
 
             return new Pipeline(config.getId(),
                     config.getName(),
                     config.getDescription(),
-                    processors);
+                    executionSteps,
+                    config.getIgnoreFailure());
+        }
+
+        private ExecutionStep extractExecutionStep(ProcessorDefinition processorDefinition) {
+            Processor processor = extractProcessor(processorDefinition);
+
+            List<OnFailureExecutionStep> onFailureProcessors = null;
+            if (CollectionUtils.isNotEmpty(processorDefinition.getOnFailure())) {
+                onFailureProcessors = processorDefinition.getOnFailure().stream()
+                        .map(this::extractOnFailureExecutionStep)
+                        .collect(Collectors.toList());
+            }
+
+            return new ExecutionStep(processorDefinition.getName(),
+                    processor,
+                    onFailureProcessors);
+        }
+
+        private OnFailureExecutionStep extractOnFailureExecutionStep(ProcessorDefinition processorDefinition) {
+            return new OnFailureExecutionStep(processorDefinition.getName(), extractProcessor(processorDefinition));
+        }
+
+        private Processor extractProcessor(ProcessorDefinition definition) {
+            Processor.Factory factory = processorFactoryRegistry.get(definition.getType());
+            return factory.create(definition.getConfig());
         }
 
         public Pipeline create(String config) {
             String configJson = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
-            return create(JsonUtils.fromJsonString(Pipeline.Configuration.class, configJson));
+            return create(JsonUtils.fromJsonString(Definition.class, configJson));
         }
     }
 
-    public static class Configuration {
+    public static class Definition {
         private String id;
         private String name;
         private String description;
         private List<ProcessorDefinition> processors;
+        private boolean ignoreFailure;
 
-        public Configuration() { }
+        public Definition() { }
 
         public String getId() {
             return id;
@@ -89,20 +118,9 @@ public class Pipeline {
         public List<ProcessorDefinition> getProcessors() {
             return processors;
         }
-    }
 
-    public static class ProcessorDefinition {
-        private String name;
-        private Map<String,Object> config;
-
-        public ProcessorDefinition() { }
-
-        public String getName() {
-            return name;
-        }
-
-        public Map<String,Object> getConfig() {
-            return config;
+        public boolean getIgnoreFailure() {
+            return ignoreFailure;
         }
     }
 }

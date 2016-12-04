@@ -1,15 +1,16 @@
 package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.List;
+import java.util.Map;
 
+@ProcessorProvider(type = "addTag", factory = AddTagProcessor.Factory.class)
 public class AddTagProcessor implements Processor {
-    private static final String NAME = "addTag";
-
     private final List<String> tags;
 
     public AddTagProcessor(List<String> tags) {
@@ -17,21 +18,18 @@ public class AddTagProcessor implements Processor {
     }
 
     @Override
-    public String getName() { return NAME; }
-
-    @Override
-    public void process(Doc doc) {
+    public ProcessResult process(Doc doc) {
         doc.appendList("tags", tags);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = NAME)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
-            AddTagProcessor.Configuration addTagConfig = JsonUtils.fromJsonString(AddTagProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            AddTagProcessor.Configuration addTagConfig = JsonUtils.fromJsonMap(AddTagProcessor.Configuration.class, config);
 
             return new AddTagProcessor(addTagConfig.getTags());
         }

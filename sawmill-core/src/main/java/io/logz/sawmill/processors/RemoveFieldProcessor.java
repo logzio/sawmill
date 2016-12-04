@@ -1,16 +1,15 @@
 package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
+@ProcessorProvider(type = "removeField", factory = RemoveFieldProcessor.Factory.class)
 public class RemoveFieldProcessor implements Processor {
-    public static final String NAME = "removeField";
-    private static final Logger logger = LoggerFactory.getLogger(RemoveFieldProcessor.class);
-
     private final String path;
 
     public RemoveFieldProcessor(String path) {
@@ -18,25 +17,18 @@ public class RemoveFieldProcessor implements Processor {
     }
 
     @Override
-    public String getName() { return NAME; }
-
-    @Override
-    public void process(Doc doc) {
-        try {
-            doc.removeField(path);
-        } catch (IllegalStateException e) {
-            logger.trace("failed to remove field in path [{}]", path, e);
-        }
+    public ProcessResult process(Doc doc) {
+        doc.removeField(path);
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = "removeField")
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
-            RemoveFieldProcessor.Configuration removeFieldConfig = JsonUtils.fromJsonString(RemoveFieldProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            RemoveFieldProcessor.Configuration removeFieldConfig = JsonUtils.fromJsonMap(RemoveFieldProcessor.Configuration.class, config);
 
             return new RemoveFieldProcessor(removeFieldConfig.getPath());
         }

@@ -10,35 +10,37 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     private final LongAdder succeeded = new LongAdder();
     private final LongAdder failed = new LongAdder();
     private final LongAdder overtime = new LongAdder();
+    private final LongAdder unexpectedFailure = new LongAdder();
     private final ConcurrentMap<String, ProcessorMetrics> processorsMetrics = new ConcurrentHashMap<>();
 
     @Managed
-    @Override
     public long totalDocsProcessed() { return succeeded.longValue() + failed.longValue() + overtime.longValue(); }
 
     @Managed
-    @Override
     public long totalDocsSucceededProcessing() { return succeeded.longValue(); }
 
     @Managed
-    @Override
     public long totalDocsFailedProcessing() { return failed.longValue(); }
 
     @Managed
-    @Override
     public long totalDocsOvertimeProcessing() { return overtime.longValue(); }
 
     @Managed
-    @Override
-    public float getAvgProcessorProcessingTime(String processorName) { return processorsMetrics.get(processorName).getAvgTime(); }
+    public long totalDocsFailedOnUnexpectedError() {
+        return unexpectedFailure.longValue();
+    }
 
     @Managed
     @Override
-    public long getMinProcessorProcessingTime(String processorName) { return processorsMetrics.get(processorName).getMinTime(); }
+    public float getAvgProcessorProcessingTime(String processorType) { return processorsMetrics.get(processorType).getAvgTime(); }
 
     @Managed
     @Override
-    public long getMaxProcessorProcessingTime(String processorName) { return processorsMetrics.get(processorName).getMaxTime(); }
+    public long getMinProcessorProcessingTime(String processorType) { return processorsMetrics.get(processorType).getMinTime(); }
+
+    @Managed
+    @Override
+    public long getMaxProcessorProcessingTime(String processorType) { return processorsMetrics.get(processorType).getMaxTime(); }
 
     @Override
     public void processedDocSuccessfully(String pipelineId, Doc doc, long timeTookNs) { succeeded.increment(); }
@@ -50,8 +52,13 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     public void overtimeProcessingDoc(String pipelineId, Doc doc) { overtime.increment(); }
 
     @Override
-    public void processorFinished(String processorName, long timeTookNs) {
+    public void processorFinished(String pipelineId, String processorName, long timeTookNs) {
         processorsMetrics.computeIfAbsent(processorName, k -> new ProcessorMetrics()).addEvent(timeTookNs);
+    }
+
+    @Override
+    public void processorFailedOnUnexpectedError(String pipelineId, String processorName, Doc doc, Exception e) {
+        unexpectedFailure.increment();
     }
 
     private class ProcessorMetrics {

@@ -7,6 +7,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,7 +19,7 @@ public class PipelineExecutorTest {
 
     public PipelineExecutor pipelineExecutor;
     public List<Doc> overtimeProcessingDocs;
-    public PipelineExecutionMetricsTracker pipelineExecutorMetrics;
+    public PipelineExecutionMetricsMBean pipelineExecutorMetrics;
 
     @Before
     public void init() {
@@ -32,23 +33,23 @@ public class PipelineExecutorTest {
     }
 
     @Test
-    public void testPipelineLongProcessingExecution() throws InterruptedException{
-        Pipeline pipeline = createPipeline(createSleepProcessor(1100));
+    public void testPipelineLongProcessingExecution() throws InterruptedException {
+        Pipeline pipeline = createPipeline(false, createSleepProcessor(1100));
         Doc doc = createDoc("id", "long", "message", "hola",
                 "type", "test");
 
-        pipelineExecutor.execute(pipeline, doc);
+        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
 
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
         assertThat(pipelineExecutorMetrics.totalDocsOvertimeProcessing()).isEqualTo(1);
     }
 
     @Test
-    public void testPipelineExecution() throws PipelineExecutionException {
-        Pipeline pipeline = createPipeline(createAddFieldProcessor("newField", "Hello"));
+    public void testPipelineExecution() {
+        Pipeline pipeline = createPipeline(false, createAddFieldProcessor("newField", "Hello"));
         Doc doc = createDoc("id", "add", "message", "hola");
 
-        pipelineExecutor.execute(pipeline, doc);
+        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
 
         assertNotNull(doc.getSource().get("newField"));
         assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
@@ -57,66 +58,110 @@ public class PipelineExecutorTest {
     }
 
     @Test
-    public void testPipelineExecutionFailure() throws PipelineExecutionException {
-        Pipeline pipeline = createPipeline(createFailAlwaysProcessor());
+    public void testPipelineExecutionWithOnErrorProcessors() {
+        Pipeline pipeline = createPipeline(createExecutionStep(createFailAlwaysProcessor(),
+                Arrays.asList(createOnFailureExecutionStep(createAddFieldProcessor("newField", "Hello"), "addField2"))));
+        Doc doc = createDoc("id", "add", "message", "hola");
+
+        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
+
+        assertNotNull(doc.getSource().get("newField"));
+        assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
+        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.totalDocsSucceededProcessing()).isEqualTo(1);
+    }
+
+    private OnFailureExecutionStep createOnFailureExecutionStep(Processor processor, String name) {
+        return new OnFailureExecutionStep(name, processor);
+    }
+
+    private ExecutionStep createExecutionStep(Processor processor, List<OnFailureExecutionStep> onFailureExecutionSteps) {
+        return new ExecutionStep("fail1", processor, onFailureExecutionSteps);
+    }
+
+    @Test
+    public void testPipelineExecutionFailure() {
+        Pipeline pipeline = createPipeline(false, createFailAlwaysProcessor());
+        Doc doc = createDoc("id", "fail", "message", "hola",
+                "type", "test");
+
+        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isFalse();
+        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.totalDocsFailedProcessing()).isEqualTo(1);
+    }
+
+    @Test
+    public void testPipelineExecutionIgnoreFailure() {
+        Pipeline pipeline = createPipeline(true, createFailAlwaysProcessor());
+        Doc doc = createDoc("id", "fail", "message", "hola",
+                "type", "test");
+
+        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
+        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.totalDocsSucceededProcessing()).isEqualTo(1);
+    }
+
+    @Test
+    public void testPipelineExecutionUnexpectedFailure() {
+        Pipeline pipeline = createPipeline(false, createUnexpectedFailAlwaysProcessor());
         Doc doc = createDoc("id", "fail", "message", "hola",
                 "type", "test");
 
         assertThatThrownBy(() -> pipelineExecutor.execute(pipeline, doc)).isInstanceOf(PipelineExecutionException.class);
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
-        assertThat(pipelineExecutorMetrics.totalDocsFailedProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.totalDocsFailedOnUnexpectedError()).isEqualTo(1);
     }
 
-    private Pipeline createPipeline(Processor... processors) {
+    private Pipeline createPipeline(ExecutionStep... steps) {
         String id = "abc";
         String name = "test";
         String description = "test";
-        return new Pipeline(id, name, description, Arrays.asList(processors));
+        return new Pipeline(id,
+                name,
+                description,
+                Arrays.asList(steps),
+                false);
+    }
+
+    private Pipeline createPipeline(boolean ignoreFailure, Processor... processors) {
+        String id = "abc";
+        String name = "test";
+        String description = "test";
+        List<ExecutionStep> executionSteps = (List<ExecutionStep>) Arrays.asList(processors).stream()
+                .map(processor -> new ExecutionStep(processor.toString() + "1", processor, null))
+                .collect(Collectors.toList());
+        return new Pipeline(id,
+                name,
+                description,
+                executionSteps,
+                ignoreFailure);
     }
 
     private Processor createSleepProcessor(long millis) {
-        return new Processor() {
-            @Override
-            public void process(Doc log) {
+        return (Doc doc) -> {
                 try {
                     Thread.sleep(millis);
                 } catch (InterruptedException e) {
 
                 }
-            }
-
-            @Override
-            public String getName() {
-                return  "sleep";
-            }
-        };
+                return ProcessResult.success();
+            };
     }
 
     private Processor createAddFieldProcessor(String k, String v) {
-        return new Processor() {
-            @Override
-            public void process(Doc doc) {
+        return (Doc doc) -> {
                 doc.addField(k, v);
-            }
+                return ProcessResult.success();
+            };
+    }
 
-            @Override
-            public String getName() {
-                return  "addField";
-            }
-        };
+    private Processor createUnexpectedFailAlwaysProcessor() {
+        return (Doc doc) -> {
+                throw new RuntimeException("test failure");
+            };
     }
 
     private Processor createFailAlwaysProcessor() {
-        return new Processor() {
-            @Override
-            public void process(Doc doc) {
-                throw new RuntimeException("test failure");
-            }
-
-            @Override
-            public String getName() {
-                return  "fail";
-            }
-        };
+        return (Doc doc) -> ProcessResult.failure("test failure");
     }
 }

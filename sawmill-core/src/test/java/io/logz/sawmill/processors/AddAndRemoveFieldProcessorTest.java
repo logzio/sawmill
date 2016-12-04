@@ -17,15 +17,22 @@ public class AddAndRemoveFieldProcessorTest {
 
         Doc doc = createDoc("field", "value");
 
-        // Tests no exception thrown in case of missing field
-        removeFieldProcessor.process(doc);
-
-        addFieldProcessor.process(doc);
+        assertThat(addFieldProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThat((String) doc.getField(path)).isEqualTo("shalom");
 
-        removeFieldProcessor.process(doc);
+        assertThat(removeFieldProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThatThrownBy(() ->  doc.getField(path)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    public void testRemoveNonExistsField() {
+        String path = "message.hola.hello";
+        RemoveFieldProcessor removeFieldProcessor = new RemoveFieldProcessor(path);
+
+        Doc doc = createDoc("field", "value");
+
+        assertThat(removeFieldProcessor.process(doc).isSucceeded()).isTrue();
     }
 }

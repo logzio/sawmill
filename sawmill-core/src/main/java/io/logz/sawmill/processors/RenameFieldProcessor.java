@@ -1,16 +1,15 @@
 package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
+@ProcessorProvider(type = "rename", factory = RenameFieldProcessor.Factory.class)
 public class RenameFieldProcessor implements Processor {
-    public static final String NAME = "renameField";
-    private static final Logger logger = LoggerFactory.getLogger(RenameFieldProcessor.class);
-
     private final String from;
     private final String to;
 
@@ -20,27 +19,24 @@ public class RenameFieldProcessor implements Processor {
     }
 
     @Override
-    public String getName() { return NAME; }
-
-    @Override
-    public void process(Doc doc) {
-        try {
-            Object fieldValue = doc.getField(from);
-            doc.removeField(from);
-            doc.addField(to, fieldValue);
-        } catch (Exception e) {
-            logger.trace("failed to rename field [{}] to [{}]", from, to, e);
+    public ProcessResult process(Doc doc) {
+        if (!doc.hasField(from)) {
+            return ProcessResult.failure(String.format("failed to rename field [%s] to [%s], couldn't find field", from, to));
         }
+        Object fieldValue = doc.getField(from);
+        doc.removeField(from);
+        doc.addField(to, fieldValue);
+
+        return ProcessResult.success();
     }
 
-    @ProcessorProvider(name = NAME)
     public static class Factory implements Processor.Factory {
         public Factory() {
         }
 
         @Override
-        public Processor create(String config) {
-            RenameFieldProcessor.Configuration renameFieldConfig = JsonUtils.fromJsonString(RenameFieldProcessor.Configuration.class, config);
+        public Processor create(Map<String,Object> config) {
+            RenameFieldProcessor.Configuration renameFieldConfig = JsonUtils.fromJsonMap(RenameFieldProcessor.Configuration.class, config);
 
             return new RenameFieldProcessor(renameFieldConfig.getFrom(), renameFieldConfig.getTo());
         }
