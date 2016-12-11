@@ -1,19 +1,24 @@
 package io.logz.sawmill.processors;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
+import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.JsonUtils;
 import io.thekraken.grok.api.Grok;
 import io.thekraken.grok.api.Match;
 import io.thekraken.grok.api.exception.GrokException;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -23,23 +28,29 @@ import java.util.regex.Pattern;
 public class GrokProcessor implements Processor {
     private final String field;
     private final Grok grok;
+    private final List<String> overwrite;
+    private final boolean ignoreMissing;
 
-    public GrokProcessor(String field, String matchPattern, Map<String, String> patternsBank) {
+    public GrokProcessor(String field, String matchPatterns, Map<String, String> patternsBank, List<String> overwrite, boolean ignoreMissing) {
         this.field = field;
+        this.overwrite = overwrite != null ? overwrite : Collections.EMPTY_LIST;
+        this.ignoreMissing = ignoreMissing;
 
         this.grok = new Grok();
         grok.getPatterns().putAll(patternsBank);
 
         try {
-            grok.compile(matchPattern);
+            grok.compile(matchPatterns);
         } catch (GrokException e) {
-            throw new RuntimeException(String.format("failed to compile grok pattern [%s]", matchPattern), e);
+            throw new RuntimeException(String.format("failed to compile grok pattern [%s]", matchPatterns), e);
         }
     }
 
     @Override
     public ProcessResult process(Doc doc) {
         if (!doc.hasField(field)) {
+            if (ignoreMissing) return ProcessResult.success();
+
             return ProcessResult.failure(String.format("failed to grok field in path [%s], field is missing", field));
         }
 
@@ -49,7 +60,13 @@ public class GrokProcessor implements Processor {
 
         matches.entrySet().stream()
                 .filter((e) -> Objects.nonNull(e.getValue()))
-                .forEach((e) -> doc.addField(e.getKey(), e.getValue()));
+                .forEach((e) -> {
+                    if (overwrite.contains(e.getKey()) || !doc.hasField(e.getKey())) {
+                        doc.addField(e.getKey(), e.getValue());
+                    } else {
+                        doc.appendList(e.getKey(), e.getValue());
+                    }
+                });
 
         return ProcessResult.success();
     }
@@ -61,64 +78,103 @@ public class GrokProcessor implements Processor {
     }
 
     public static class Factory implements Processor.Factory {
-        private Map<String,String> patternsBank;
+        private final ImmutableMap<String,String> patternsBank;
 
         public Factory() {
-            this(Resources.getResource("patterns").getFile());
+            this(Resources.getResource("grok/patterns").getFile());
         }
 
         public Factory(String dirPath) {
-            this.patternsBank = new HashMap<>();
             File patternsDirectory = new File(dirPath);
-            loadPatterns(patternsDirectory);
+            this.patternsBank = loadPatterns(patternsDirectory);
         }
 
-        private void loadPatterns(File dir) {
+        private ImmutableMap<String,String> loadPatterns(File dir) {
+            Map<String,String> map = new HashMap<>();
             String[] patternFiles = dir.list();
 
             Pattern pattern = Pattern.compile("^([A-z0-9_]+)\\s+(.*)$");
 
             for (String patternFileName : patternFiles) {
                 try (BufferedReader br = new BufferedReader(new FileReader(dir.getPath() + "/" + patternFileName))){
-                String line;
+                    String line;
 
-                while ((line = br.readLine()) != null) {
-                    Matcher m = pattern.matcher(line);
-                    if (m.matches()) {
-                        patternsBank.put(m.group(1), m.group(2));
+                    while ((line = br.readLine()) != null) {
+                        Matcher m = pattern.matcher(line);
+                        if (m.matches()) {
+                            map.putIfAbsent(m.group(1), m.group(2));
+                        }
                     }
-                }
                 } catch (Exception e) {
                     throw new RuntimeException(String.format("failed to load pattern file [%s]", patternFileName), e);
                 }
             }
+
+            return ImmutableMap.copyOf(map);
         }
 
         @Override
         public GrokProcessor create(Map<String,Object> config) {
             GrokProcessor.Configuration grokConfig = JsonUtils.fromJsonMap(GrokProcessor.Configuration.class, config);
 
-            return new GrokProcessor(grokConfig.getField(), grokConfig.getPattern(), patternsBank);
+            if (CollectionUtils.isEmpty(grokConfig.getPatterns())) {
+                throw new ProcessorParseException("cannot create grok without any pattern");
+            }
+
+            return new GrokProcessor(grokConfig.getField(),
+                    combinePatterns(grokConfig.getPatterns()),
+                    patternsBank,
+                    grokConfig.getOverwrite(),
+                    grokConfig.getIgnoreMissing() != null ? grokConfig.getIgnoreMissing() : true);
+        }
+
+        private String combinePatterns(List<String> patterns) {
+            String combinedPattern;
+            if (patterns.size() > 1) {
+                combinedPattern = patterns.stream().reduce("", (prefix, value) -> {
+                    if (prefix.equals("")) {
+                        return "(?:" + value + ")";
+                    } else {
+                        return prefix + "|" + "(?:" + value + ")";
+                    }
+                });
+            } else {
+                combinedPattern = patterns.get(0);
+            }
+
+            return combinedPattern;
         }
     }
 
     public static class Configuration implements Processor.Configuration {
         private String field;
-        private String pattern;
+        private List<String> patterns;
+        private List<String> overwrite;
+        private Boolean ignoreMissing;
 
         public Configuration() { }
 
-        public Configuration(String field, String pattern) {
+        public Configuration(String field, List<String> patterns, List<String> overwrite, boolean ignoreMissing) {
             this.field = field;
-            this.pattern = pattern;
+            this.patterns = patterns;
+            this.overwrite = overwrite;
+            this.ignoreMissing = ignoreMissing;
         }
 
         public String getField() {
             return field;
         }
 
-        public String getPattern() {
-            return pattern;
+        public List<String> getPatterns() {
+            return patterns;
+        }
+
+        public List<String> getOverwrite() {
+            return overwrite;
+        }
+
+        public Boolean getIgnoreMissing() {
+            return ignoreMissing;
         }
     }
 }
