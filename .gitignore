@@ -15,6 +15,3 @@ target/
 
 # JMH
 jmh-result.*
-
-# Resources
-sawmill-core/src/main/resources/GeoLite2-City.mmdb.gz
