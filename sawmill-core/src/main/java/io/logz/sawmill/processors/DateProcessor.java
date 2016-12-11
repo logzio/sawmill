@@ -6,13 +6,11 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
-import java.time.format.SignStyle;
-import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,18 +21,7 @@ import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 @ProcessorProvider(type = "date", factory = DateProcessor.Factory.class)
 public class DateProcessor implements Processor {
-    private static ConcurrentMap<String, DateTimeFormatter> dateTimePatternToFormatter;
-
-    static {
-        dateTimePatternToFormatter = new ConcurrentHashMap<>();
-        dateTimePatternToFormatter.put("UNIX", new DateTimeFormatterBuilder()
-                .appendValue(ChronoField.INSTANT_SECONDS, 1, 19, SignStyle.NEVER)
-                .toFormatter());
-        dateTimePatternToFormatter.put("UNIX_MS", new DateTimeFormatterBuilder()
-                .appendValue(ChronoField.INSTANT_SECONDS, 1, 19, SignStyle.NEVER)
-                .appendValue(ChronoField.MILLI_OF_SECOND, 3)
-                .toFormatter());
-    }
+    private static ConcurrentMap<String, DateTimeFormatter> dateTimePatternToFormatter = new ConcurrentHashMap<>();
 
     private final String field;
     private final String targetField;
@@ -50,6 +37,7 @@ public class DateProcessor implements Processor {
         this.timeZone = timeZone;
 
         formats.forEach(format -> {
+            if (format.toUpperCase().startsWith("UNIX")) return;
             try {
                 dateTimePatternToFormatter.computeIfAbsent(format, k -> DateTimeFormatter.ofPattern(format));
             } catch (IllegalArgumentException e) {
@@ -67,12 +55,25 @@ public class DateProcessor implements Processor {
 
         Object value = doc.getField(field);
         ZonedDateTime dateTime = null;
-        for (DateTimeFormatter formatter : formatters) {
-            try {
-                dateTime = ZonedDateTime.parse(value.toString(), formatter.withZone(timeZone));
-                break;
-            } catch (DateTimeParseException e) {
-                // keep trying
+
+        if (value instanceof Long) {
+            long unixTimestamp = (Long) value;
+            Instant instant;
+            if (formats.contains("UNIX_MS")) {
+                instant = Instant.ofEpochMilli(unixTimestamp);
+            } else {
+                instant = Instant.ofEpochSecond(unixTimestamp);
+            }
+
+            dateTime = ZonedDateTime.ofInstant(instant, timeZone);
+        } else if (value instanceof String) {
+            for (DateTimeFormatter formatter : formatters) {
+                try {
+                    dateTime = ZonedDateTime.parse(value.toString(), formatter.withZone(timeZone));
+                    break;
+                } catch (DateTimeParseException e) {
+                    // keep trying
+                }
             }
         }
 

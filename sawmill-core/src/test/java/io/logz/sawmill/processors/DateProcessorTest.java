@@ -1,5 +1,6 @@
 package io.logz.sawmill.processors;
 
+import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import org.junit.Test;
 
@@ -64,5 +65,21 @@ public class DateProcessorTest {
             assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
             assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(ISO_DATE_TIME));
         });
+    }
+
+    @Test
+    public void testParseInvalidObjects() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("UTC");
+        Doc docWithMap = createDoc(field, ImmutableMap.of("its", "a", "map", "should", "not", "work"));
+
+        DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX_MS"), zoneId);
+
+        assertThat(dateProcessor.process(docWithMap).isSucceeded()).isFalse();
+
+        Doc docWithList = createDoc(field, Arrays.asList("its", "a", "list", "should", "not", "work"));
+
+        assertThat(dateProcessor.process(docWithList).isSucceeded()).isFalse();
     }
 }
