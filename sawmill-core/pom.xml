@@ -21,14 +21,18 @@
                 <executions>
                     <execution>
                         <id>download-files</id>
-                        <phase>generate-resources</phase>
+                        <phase>process-resources</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
                         <configuration>
                             <tasks>
                                 <get src="https://raw.githubusercontent.com/ua-parser/uap-core/0dabfd35a465e1c7dd5b07c273d4b693d46ee387/regexes.yaml"
-                                     dest="${project.basedir}/src/main/resources/regexes.yaml"
+                                     dest="${project.build.outputDirectory}/regexes.yaml"
+                                     verbose="false"
+                                     usetimestamp="true" />
+                                <get src="http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
+                                     dest="${project.build.outputDirectory}/GeoLite2-City.mmdb.gz"
                                      verbose="false"
                                      usetimestamp="true"/>
                             </tasks>
@@ -43,6 +47,10 @@
         <dependency>
             <groupId>ua_parser</groupId>
             <artifactId>ua-parser</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.maxmind.geoip2</groupId>
+            <artifactId>geoip2</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
