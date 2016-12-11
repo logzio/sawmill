@@ -1,8 +1,5 @@
 package io.logz.sawmill;
 
-import java.util.List;
-import java.util.Optional;
-
 public class OnFailureExecutionStep {
     private final String processorName;
     private final Processor processor;
