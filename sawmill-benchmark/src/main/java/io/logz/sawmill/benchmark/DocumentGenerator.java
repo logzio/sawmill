@@ -21,10 +21,10 @@ import java.util.stream.IntStream;
 public class DocumentGenerator {
     public static final int MAX_FIELDS_AMOUNT = 20;
     public static final int MAX_STRING_FIELD = 100;
-    public static final List<String> RESPONSE = Arrays.asList("200", "404", "500", "301");
-    public static final List<String> VERB = Arrays.asList("GET", "POST", "DELETE", "PUT");
-    public static final List<String> RESOURCE = Arrays.asList("/list","/wp-content","/wp-admin","/explore","/search/tag/list","/app/main/posts","/posts/posts/explore");
-    public static final List<String> USER_AGENT = Arrays.asList("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:46.0) Gecko/20100101 Firefox/46.0");
+    public static final List<String> responses = Arrays.asList("200", "404", "500", "301");
+    public static final List<String> methods = Arrays.asList("GET", "POST", "DELETE", "PUT");
+    public static final List<String> resources = Arrays.asList("list","content","admin","explore","search","tag","list","app","main","posts");
+    public static final List<String> userAgents = Arrays.asList("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:46.0) Gecko/20100101 Firefox/46.0");
 
     public static Random random = new Random();
     public static Faker faker = new Faker();
@@ -60,16 +60,20 @@ public class DocumentGenerator {
         Map<String,Object> map = new HashMap<>();
         String datetime = ZonedDateTime.now().minusSeconds(random.nextInt(3000)).format(DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss Z"));
         String ip = faker.internet().ipV4Address();
-        String verb = VERB.get(random.nextInt(VERB.size()));
-        String response = RESPONSE.get(random.nextInt(RESPONSE.size()));
-        String resource = RESOURCE.get(random.nextInt(RESOURCE.size()));
-        String ua = USER_AGENT.get(random.nextInt(USER_AGENT.size()));
+        String method = getRandomItemFromList(methods);
+        String response = getRandomItemFromList(responses);
+        String resource = "/" + String.join("/", resources.subList(random.nextInt(5), 4 + random.nextInt(5)));
+        String ua = getRandomItemFromList(userAgents);
         String bytes = String.valueOf(random.nextInt(5000));
         String referrer = faker.internet().url();
 
         map.put("message",
-                String.format("%s - - [%s] \"%s %s HTTP/1.1\" %s %s \"%s\" \"%s\"",ip, datetime, verb, resource, response, bytes, referrer, ua));
+                String.format("%s - - [%s] \"%s %s HTTP/1.1\" %s %s \"%s\" \"%s\"",ip, datetime, method, resource, response, bytes, referrer, ua));
         return map;
+    }
+
+    private static String getRandomItemFromList(List<String> list) {
+        return list.get(random.nextInt(list.size()));
     }
 
     private static Map<String,Object> generateRandomJsonDoc(int size, int nestingDepth) {
