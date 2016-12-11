@@ -170,7 +170,7 @@ public class SawmillBenchmarkOptions implements Serializable {
 
         @Override
         public Optional<TimeValue> getWarmupTime() {
-            return Optional.eitherOf(TimeValue.valueOf(warmupTime));
+            return Optional.eitherOf(warmupTime != null ? TimeValue.valueOf(warmupTime) : null);
         }
 
         @Override
@@ -195,7 +195,7 @@ public class SawmillBenchmarkOptions implements Serializable {
 
         @Override
         public Optional<TimeValue> getMeasurementTime() {
-            return Optional.eitherOf(TimeValue.valueOf(runTime));
+            return Optional.eitherOf(runTime != null ? TimeValue.valueOf(runTime) : null);
         }
 
         @Override
@@ -260,7 +260,7 @@ public class SawmillBenchmarkOptions implements Serializable {
 
         @Override
         public Optional<TimeValue> getTimeout() {
-            return Optional.eitherOf(TimeValue.valueOf(timeout));
+            return Optional.eitherOf(timeout != null ? TimeValue.valueOf(timeout) : null);
         }
 
         public Integer getIterations() {
@@ -268,7 +268,7 @@ public class SawmillBenchmarkOptions implements Serializable {
         }
 
         public TimeValue getRunTime() {
-            return TimeValue.valueOf(runTime);
+            return runTime != null ? TimeValue.valueOf(runTime) : null;
         }
 
         public Integer getBatchSize() {
