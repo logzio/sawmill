@@ -16,6 +16,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,23 +28,41 @@ import java.util.regex.Pattern;
 @ProcessorProvider(type = "grok", factory = GrokProcessor.Factory.class)
 public class GrokProcessor implements Processor {
     private final String field;
-    private final Grok grok;
+    private final List<String> expressions;
+    private final List<Grok> groks;
     private final List<String> overwrite;
     private final boolean ignoreMissing;
 
-    public GrokProcessor(String field, String matchPatterns, Map<String, String> patternsBank, List<String> overwrite, boolean ignoreMissing) {
+    public GrokProcessor(String field, List<String> matchExpressions, Map<String, String> patternsBank, List<String> overwrite, boolean ignoreMissing) {
         this.field = field;
+        this.expressions = matchExpressions;
         this.overwrite = overwrite != null ? overwrite : Collections.EMPTY_LIST;
         this.ignoreMissing = ignoreMissing;
 
-        this.grok = new Grok();
-        grok.getPatterns().putAll(patternsBank);
+        this.groks = new ArrayList<>();
 
-        try {
-            grok.compile(matchPatterns);
-        } catch (GrokException e) {
-            throw new RuntimeException(String.format("failed to compile grok pattern [%s]", matchPatterns), e);
+        compileExpressions(matchExpressions, patternsBank);
+
+        if (groks.size() == 0) {
+            throw new RuntimeException(String.format("failed to create grok processor, unknown expressions [%s]", expressions));
         }
+    }
+
+    private void compileExpressions(List<String> matchExpressions, Map<String, String> patternsBank) {
+        matchExpressions.forEach(expression -> {
+            Grok grok = new Grok();
+
+            grok.getPatterns().putAll(patternsBank);
+
+            try {
+                grok.compile(expression);
+                if (!grok.getNamedRegex().equals("(?<name0>null)")) {
+                    this.groks.add(grok);
+                }
+            } catch (GrokException e) {
+                throw new RuntimeException(String.format("failed to compile grok pattern [%s]", expression), e);
+            }
+        });
     }
 
     @Override
@@ -57,6 +76,10 @@ public class GrokProcessor implements Processor {
         String value = doc.getField(field);
 
         Map<String, Object> matches = getMatches(value);
+
+        if (matches == null) {
+            return ProcessResult.failure(String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", value, field, expressions));
+        }
 
         matches.entrySet().stream()
                 .filter((e) -> Objects.nonNull(e.getValue()))
@@ -72,9 +95,14 @@ public class GrokProcessor implements Processor {
     }
 
     private Map<String, Object> getMatches(String value) {
-        Match match = grok.match(value);
-        match.captures();
-        return match.toMap();
+        for (Grok grok : groks) {
+            Match match = grok.match(value);
+            match.captures();
+            if (match.toMap().size() > 0) {
+                return match.toMap();
+            }
+        }
+        return null;
     }
 
     public static class Factory implements Processor.Factory {
@@ -122,27 +150,10 @@ public class GrokProcessor implements Processor {
             }
 
             return new GrokProcessor(grokConfig.getField(),
-                    combinePatterns(grokConfig.getPatterns()),
+                    grokConfig.getPatterns(),
                     patternsBank,
                     grokConfig.getOverwrite(),
                     grokConfig.getIgnoreMissing() != null ? grokConfig.getIgnoreMissing() : true);
-        }
-
-        private String combinePatterns(List<String> patterns) {
-            String combinedPattern;
-            if (patterns.size() > 1) {
-                combinedPattern = patterns.stream().reduce("", (prefix, value) -> {
-                    if (prefix.equals("")) {
-                        return "(?:" + value + ")";
-                    } else {
-                        return prefix + "|" + "(?:" + value + ")";
-                    }
-                });
-            } else {
-                combinedPattern = patterns.get(0);
-            }
-
-            return combinedPattern;
         }
     }
 

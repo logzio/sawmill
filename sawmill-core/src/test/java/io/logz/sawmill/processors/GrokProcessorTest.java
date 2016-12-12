@@ -24,7 +24,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testGrokWithoutOverwrite() {
+    public void testSeveralExpressionsWithoutOverwrite() {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}", "%{SYSLOGBASE}");
         String log = "112.169.19.192 - - [06/Mar/2013:01:36:30 +0900] \"GET / HTTP/1.1\" 200 44346 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22\"";
@@ -51,10 +51,13 @@ public class GrokProcessorTest {
         ProcessResult processResult2 = grokProcessor.process(doc2);
         assertThat(processResult2.isSucceeded()).isTrue();
         assertThat((String)doc2.getField("timestamp")).isEqualTo("Mar 12 12:27:00");
+        assertThat((String)doc2.getField("logsource")).isEqualTo("server3");
+        assertThat((String)doc2.getField("pid")).isEqualTo("32172");
+        assertThat((String)doc2.getField("program")).isEqualTo("named");
     }
 
     @Test
-    public void testGrokWithOverwrite() {
+    public void testOverwrite() {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}");
         String log = "112.169.19.192 - - [06/Mar/2013:01:36:30 +0900] \"GET / HTTP/1.1\" 200 44346 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22\"";
@@ -78,7 +81,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testGrokWithIgnoreMissing() {
+    public void testIgnoreMissing() {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}");
 
@@ -95,7 +98,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testGrokWithoutIgnoreMissing() {
+    public void testWithoutIgnoreMissing() {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}");
 
@@ -113,10 +116,19 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testGrokWithoutPatterns() {
+    public void testConfigWithoutPatterns() {
         Map<String,Object> config = new HashMap<>();
         config.put("field", "someField");
 
         assertThatThrownBy(() -> factory.create(config)).isInstanceOf(ProcessorParseException.class);
+    }
+
+    @Test
+    public void testWithNonExistsPattern() {
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", "someField");
+        config.put("patterns", Arrays.asList("%{NONEXISTSPATTERN}"));
+
+        assertThatThrownBy(() -> factory.create(config)).isInstanceOf(RuntimeException.class);
     }
 }
