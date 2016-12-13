@@ -44,6 +44,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.thekraken</groupId>
+            <artifactId>grok</artifactId>
+        </dependency>
+        <dependency>
             <groupId>ua_parser</groupId>
             <artifactId>ua-parser</artifactId>
         </dependency>
