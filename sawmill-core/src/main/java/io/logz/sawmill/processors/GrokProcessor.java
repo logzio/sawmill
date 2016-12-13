@@ -12,6 +12,7 @@ import io.thekraken.grok.api.Grok;
 import io.thekraken.grok.api.Match;
 import io.thekraken.grok.api.exception.GrokException;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,10 +43,6 @@ public class GrokProcessor implements Processor {
         this.groks = new ArrayList<>();
 
         compileExpressions(matchExpressions, patternsBank);
-
-        if (groks.size() == 0) {
-            throw new RuntimeException(String.format("failed to create grok processor, unknown expressions [%s]", expressions));
-        }
     }
 
     private void compileExpressions(List<String> matchExpressions, Map<String, String> patternsBank) {
@@ -56,9 +53,11 @@ public class GrokProcessor implements Processor {
 
             try {
                 grok.compile(expression);
-                if (!grok.getNamedRegex().equals("(?<name0>null)")) {
-                    this.groks.add(grok);
+                if (grok.getNamedRegex().equals("(?<name0>null)")) {
+                    throw new RuntimeException(String.format("failed to create grok processor, unknown expressions [%s]", expressions));
                 }
+
+                this.groks.add(grok);
             } catch (GrokException e) {
                 throw new RuntimeException(String.format("failed to compile grok pattern [%s]", expression), e);
             }
@@ -77,7 +76,7 @@ public class GrokProcessor implements Processor {
 
         Map<String, Object> matches = getMatches(value);
 
-        if (matches == null) {
+        if (MapUtils.isEmpty(matches)) {
             return ProcessResult.failure(String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", value, field, expressions));
         }
 
@@ -95,14 +94,15 @@ public class GrokProcessor implements Processor {
     }
 
     private Map<String, Object> getMatches(String value) {
-        for (Grok grok : groks) {
-            Match match = grok.match(value);
+        for (int i=0; i< groks.size(); i++) {
+            Match match = groks.get(i).match(value);
             match.captures();
             if (match.toMap().size() > 0) {
+                Collections.swap(groks, 0, i);
                 return match.toMap();
             }
         }
-        return null;
+        return Collections.EMPTY_MAP;
     }
 
     public static class Factory implements Processor.Factory {

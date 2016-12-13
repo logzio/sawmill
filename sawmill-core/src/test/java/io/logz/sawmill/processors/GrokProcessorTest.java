@@ -16,6 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class GrokProcessorTest {
+    public static final String SYS_LOG_SAMPLE = "Mar 12 12:27:00 server3 named[32172]: lame server resolving 'jakarta5.wasantara.net.id' (in 'wasantara.net.id'?): 202.159.65.171#53";
+    public static final String APACHE_LOG_SAMPLE = "112.169.19.192 - - [06/Mar/2013:01:36:30 +0900] \"GET / HTTP/1.1\" 200 44346 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22\"";
     public static GrokProcessor.Factory factory;
 
     @BeforeClass
@@ -24,13 +26,11 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testSeveralExpressionsWithoutOverwrite() {
+    public void testSeveralExpressions() {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}", "%{SYSLOGBASE}");
-        String log = "112.169.19.192 - - [06/Mar/2013:01:36:30 +0900] \"GET / HTTP/1.1\" 200 44346 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22\"";
-        String log2 = "Mar 12 12:27:00 server3 named[32172]: lame server resolving 'jakarta5.wasantara.net.id' (in 'wasantara.net.id'?): 202.159.65.171#53";
 
-        Doc doc = createDoc(field, log, "verb", "POST");
+        Doc doc = createDoc(field, APACHE_LOG_SAMPLE);
 
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
@@ -38,17 +38,15 @@ public class GrokProcessorTest {
         GrokProcessor grokProcessor = factory.create(config);
 
         ProcessResult processResult = grokProcessor.process(doc);
+        assertApacheLog(doc, processResult);
 
-        assertThat(processResult.isSucceeded()).isTrue();
-        assertThat((String)doc.getField("timestamp")).isEqualTo("06/Mar/2013:01:36:30 +0900");
-        assertThat((List<String>)doc.getField("verb")).isEqualTo(Arrays.asList("POST", "GET"));
-        assertThat((String)doc.getField("response")).isEqualTo("200");
-        assertThat((String)doc.getField("HOSTNAME")).isEqualTo("112.169.19.192");
-        assertThat((String)doc.getField("agent")).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22");
-
-        Doc doc2 = createDoc(field, log2);
+        Doc doc2 = createDoc(field, SYS_LOG_SAMPLE);
 
         ProcessResult processResult2 = grokProcessor.process(doc2);
+        assertSysLog(doc2, processResult2);
+    }
+
+    private void assertSysLog(Doc doc2, ProcessResult processResult2) {
         assertThat(processResult2.isSucceeded()).isTrue();
         assertThat((String)doc2.getField("timestamp")).isEqualTo("Mar 12 12:27:00");
         assertThat((String)doc2.getField("logsource")).isEqualTo("server3");
@@ -56,13 +54,21 @@ public class GrokProcessorTest {
         assertThat((String)doc2.getField("program")).isEqualTo("named");
     }
 
+    private void assertApacheLog(Doc doc, ProcessResult processResult) {
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat((String)doc.getField("timestamp")).isEqualTo("06/Mar/2013:01:36:30 +0900");
+        assertThat((String)doc.getField("response")).isEqualTo("200");
+        assertThat((String)doc.getField("verb")).isEqualTo("GET");
+        assertThat((String)doc.getField("HOSTNAME")).isEqualTo("112.169.19.192");
+        assertThat((String)doc.getField("agent")).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22");
+    }
+
     @Test
     public void testOverwrite() {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}");
-        String log = "112.169.19.192 - - [06/Mar/2013:01:36:30 +0900] \"GET / HTTP/1.1\" 200 44346 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22\"";
 
-        Doc doc = createDoc(field, log, "verb", "POST");
+        Doc doc = createDoc(field, APACHE_LOG_SAMPLE, "verb", "POST");
 
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
@@ -72,12 +78,25 @@ public class GrokProcessorTest {
 
         ProcessResult processResult = grokProcessor.process(doc);
 
+        assertApacheLog(doc, processResult);
+    }
+
+    @Test
+    public void testWithoutOverwrite() {
+        String field = "message";
+        List<String> patterns = Arrays.asList("%{WORD:verb}");
+
+        Doc doc = createDoc(field, "GET", "verb", "POST");
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", patterns);
+        GrokProcessor grokProcessor = factory.create(config);
+
+        ProcessResult processResult = grokProcessor.process(doc);
+
         assertThat(processResult.isSucceeded()).isTrue();
-        assertThat((String)doc.getField("timestamp")).isEqualTo("06/Mar/2013:01:36:30 +0900");
-        assertThat((String)doc.getField("verb")).isEqualTo("GET");
-        assertThat((String)doc.getField("response")).isEqualTo("200");
-        assertThat((String)doc.getField("HOSTNAME")).isEqualTo("112.169.19.192");
-        assertThat((String)doc.getField("agent")).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22");
+        assertThat((List)doc.getField("verb")).isEqualTo(Arrays.asList("POST", "GET"));
     }
 
     @Test
