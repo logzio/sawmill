@@ -6,6 +6,7 @@ import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -54,12 +55,21 @@ public class Pipeline {
             this.processorFactoryRegistry = processorFactoryRegistry;
         }
 
-        public Pipeline create(Definition config) {
+        public Pipeline create(String config) {
+            return create(UUID.randomUUID().toString(), config);
+        }
+
+        public Pipeline create(String id, String config) {
+            String configJson = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
+            return create(id, JsonUtils.fromJsonString(Definition.class, configJson));
+        }
+
+        private Pipeline create(String id, Definition config) {
             List<ExecutionStep> executionSteps = config.getProcessors().stream()
                     .map(this::extractExecutionStep)
                     .collect(Collectors.toList());
 
-            return new Pipeline(config.getId(),
+            return new Pipeline(id,
                     config.getName(),
                     config.getDescription(),
                     executionSteps,
@@ -89,25 +99,15 @@ public class Pipeline {
             Processor.Factory factory = processorFactoryRegistry.get(definition.getType());
             return factory.create(definition.getConfig());
         }
-
-        public Pipeline create(String config) {
-            String configJson = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
-            return create(JsonUtils.fromJsonString(Definition.class, configJson));
-        }
     }
 
     public static class Definition {
-        private String id;
         private String name;
         private String description;
         private List<ProcessorDefinition> processors;
         private boolean ignoreFailure;
 
         public Definition() { }
-
-        public String getId() {
-            return id;
-        }
 
         public String getName() { return name; }
 

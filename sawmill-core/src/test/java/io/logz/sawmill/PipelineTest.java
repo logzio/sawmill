@@ -3,14 +3,15 @@ package io.logz.sawmill;
 import io.logz.sawmill.processors.TestProcessor;
 import org.junit.Test;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class PipelineTest {
 
     @Test
-    public void testFactoryCreationWithJson() {
+    public void testFactoryCreationJson() {
         String configJson = "{" +
-                    "\"id\": \"abc\"," +
                     "\"name\": \"test pipeline\"," +
                     "\"description\": \"this is pipeline configuration\"," +
                     "\"processors\": [{" +
@@ -35,9 +36,12 @@ public class PipelineTest {
         processorFactoryRegistry.register("test", new TestProcessor.Factory());
         ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
         Pipeline.Factory factory = new Pipeline.Factory(processorFactoryRegistry);
-        Pipeline pipeline = factory.create(configJson);
 
-        assertThat(pipeline.getId()).isEqualTo("abc");
+        String id = "abc";
+
+        Pipeline pipeline = factory.create(id, configJson);
+
+        assertThat(pipeline.getId()).isEqualTo(id);
         assertThat(pipeline.getName()).isEqualTo("test pipeline");
         assertThat(pipeline.getDescription()).isEqualTo("this is pipeline configuration");
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
@@ -50,15 +54,14 @@ public class PipelineTest {
     }
 
     @Test
-    public void testFactoryCreationWithHocon() {
-        String configHocon = "id : abc, name : hocon, description : this is hocon, processors: [{type:test, name:test1, config.value:message}]";
+    public void testFactoryCreationHoconWithoutId() {
+        String configHocon = "name : hocon, description : this is hocon, processors: [{type:test, name:test1, config.value:message}]";
 
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
         processorFactoryRegistry.register("test", new TestProcessor.Factory());
         Pipeline.Factory factory = new Pipeline.Factory(processorFactoryRegistry);
         Pipeline pipeline = factory.create(configHocon);
 
-        assertThat(pipeline.getId()).isEqualTo("abc");
         assertThat(pipeline.getDescription()).isEqualTo("this is hocon");
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
         ExecutionStep executionStep = pipeline.getExecutionSteps().get(0);

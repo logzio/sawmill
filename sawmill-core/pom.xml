@@ -10,13 +10,50 @@
     <parent>
         <artifactId>sawmill</artifactId>
         <groupId>io.logz.sawmill</groupId>
-        <version>0.1.1-SNAPSHOT</version>
+        <version>0.1.3-SNAPSHOT</version>
     </parent>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>download-files</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <!--User Agent processor regexes file (download from github by commit id)-->
+                                <get src="https://raw.githubusercontent.com/ua-parser/uap-core/0dabfd35a465e1c7dd5b07c273d4b693d46ee387/regexes.yaml"
+                                     dest="${project.build.outputDirectory}/regexes.yaml" />
+                                <!--GeoIp processor DB file (download from maxmind)-->
+                                <get src="http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
+                                     dest="${project.build.outputDirectory}/GeoLite2-City.mmdb.gz"
+                                     usetimestamp="true"/>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
             <groupId>io.thekraken</groupId>
             <artifactId>grok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ua_parser</groupId>
+            <artifactId>ua-parser</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.maxmind.geoip2</groupId>
+            <artifactId>geoip2</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
