@@ -28,7 +28,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX_MS"), zoneId);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(ISO_DATE_TIME));
+        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
     }
 
     @Test
@@ -42,7 +42,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX"), zoneId);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(ISO_DATE_TIME));
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
     }
 
     @Test
@@ -63,7 +63,7 @@ public class DateProcessorTest {
             ZonedDateTime expectedDateTime = LocalDateTime.parse(dateString, formatter).atZone(zoneId);
 
             assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-            assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(ISO_DATE_TIME));
+            assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.elasticPrintFormat));
         });
     }
 
