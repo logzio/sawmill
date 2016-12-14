@@ -109,7 +109,7 @@ public class GrokProcessor implements Processor {
         private final ImmutableMap<String,String> patternsBank;
 
         public Factory() {
-            this(Resources.getResource("grok/patterns").getFile());
+            this.patternsBank = loadPatterns(new File(getClass().getClassLoader().getResource("grok/patterns").getFile()));
         }
 
         public Factory(String dirPath) {
