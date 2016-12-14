@@ -21,6 +21,7 @@ import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 @ProcessorProvider(type = "date", factory = DateProcessor.Factory.class)
 public class DateProcessor implements Processor {
+    public static final DateTimeFormatter elasticPrintFormat = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss Z");
     private static ConcurrentMap<String, DateTimeFormatter> dateTimePatternToFormatter = new ConcurrentHashMap<>();
 
     private final String field;
@@ -81,7 +82,7 @@ public class DateProcessor implements Processor {
             return ProcessResult.failure(String.format("failed to parse date in path [%s], [%s] is not one of the formats [%s]", field, value, formats));
         }
 
-        doc.addField(targetField, dateTime.format(ISO_DATE_TIME));
+        doc.addField(targetField, dateTime.format(elasticPrintFormat));
 
         return ProcessResult.success();
     }
