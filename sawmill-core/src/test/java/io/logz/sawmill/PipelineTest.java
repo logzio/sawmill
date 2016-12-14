@@ -3,8 +3,6 @@ package io.logz.sawmill;
 import io.logz.sawmill.processors.TestProcessor;
 import org.junit.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class PipelineTest {
