@@ -48,7 +48,7 @@ public class DocumentGenerator {
 
                     lines.add(JsonUtils.toJsonString(map));
                 }
-                FileUtils.writeLines(file, "UTF-8", lines, "\r");
+                FileUtils.writeLines(file, "UTF-8", lines);
             } catch (IOException e) {
                 throw new RuntimeException("failed to generate docs", e);
             }
