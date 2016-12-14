@@ -10,7 +10,7 @@
     <parent>
         <artifactId>sawmill</artifactId>
         <groupId>io.logz.sawmill</groupId>
-        <version>0.1.4-SNAPSHOT</version>
+        <version>0.1.5-SNAPSHOT</version>
     </parent>
 
     <build>
