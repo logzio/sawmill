@@ -1,7 +1,6 @@
 package io.logz.sawmill.processors;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Resources;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
@@ -16,15 +15,17 @@ import org.apache.commons.collections4.MapUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @ProcessorProvider(type = "grok", factory = GrokProcessor.Factory.class)
 public class GrokProcessor implements Processor {
@@ -106,39 +107,65 @@ public class GrokProcessor implements Processor {
     }
 
     public static class Factory implements Processor.Factory {
-        private final ImmutableMap<String,String> patternsBank;
+        private static final String[] PATTERN_NAMES = new String[] {
+                "gpfs", "grok-patterns", "haproxy",
+                "java", "linux-syslog", "mcollective", "mcollective-patterns", "mongodb", "nagios",
+                "postgresql", "redis", "ruby", "SYSLOG5424BASEOLDER"
+        };
+
+        private final Map<String,String> patternsBank;
 
         public Factory() {
-            this.patternsBank = loadPatterns(new File(getClass().getClassLoader().getResource("grok/patterns").getFile()));
+            this.patternsBank = loadBuiltinPatterns();
         }
 
         public Factory(String dirPath) {
             File patternsDirectory = new File(dirPath);
-            this.patternsBank = loadPatterns(patternsDirectory);
+            this.patternsBank = loadExternalPatterns(patternsDirectory);
         }
 
-        private ImmutableMap<String,String> loadPatterns(File dir) {
-            Map<String,String> map = new HashMap<>();
+        public Map<String, String> loadBuiltinPatterns() {
+            Map<String, String> builtinPatterns = new HashMap<>();
+            for (String pattern : PATTERN_NAMES) {
+                try(InputStream is = getClass().getResourceAsStream("/grok/patterns/" + pattern)) {
+                    loadPatterns(builtinPatterns, is);
+                } catch (Exception e) {
+                    throw new RuntimeException(String.format("failed to load pattern file [%s]", pattern), e);
+                }
+            }
+            return Collections.unmodifiableMap(builtinPatterns);
+        }
+
+        private Map<String,String> loadExternalPatterns(File dir) {
+            Map<String,String> externalPatterns = new HashMap<>();
             String[] patternFiles = dir.list();
 
-            Pattern pattern = Pattern.compile("^([A-z0-9_]+)\\s+(.*)$");
-
             for (String patternFileName : patternFiles) {
-                try (BufferedReader br = new BufferedReader(new FileReader(dir.getPath() + "/" + patternFileName))){
-                    String line;
-
-                    while ((line = br.readLine()) != null) {
-                        Matcher m = pattern.matcher(line);
-                        if (m.matches()) {
-                            map.putIfAbsent(m.group(1), m.group(2));
-                        }
-                    }
+                try (FileInputStream is = new FileInputStream(dir.getPath() + "/" + patternFileName)){
+                    loadPatterns(externalPatterns, is);
                 } catch (Exception e) {
                     throw new RuntimeException(String.format("failed to load pattern file [%s]", patternFileName), e);
                 }
             }
 
-            return ImmutableMap.copyOf(map);
+            return Collections.unmodifiableMap(externalPatterns);
+        }
+
+        private void loadPatterns(Map<String, String> patternBank, InputStream inputStream) throws IOException {
+            String line;
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                while ((line = br.readLine()) != null) {
+                    String trimmedLine = line.replaceAll("^\\s+", "");
+                    if (trimmedLine.startsWith("#") || trimmedLine.length() == 0) {
+                        continue;
+                    }
+
+                    String[] parts = trimmedLine.split("\\s+", 2);
+                    if (parts.length == 2) {
+                        patternBank.put(parts[0], parts[1]);
+                    }
+                }
+            }
         }
 
         @Override
