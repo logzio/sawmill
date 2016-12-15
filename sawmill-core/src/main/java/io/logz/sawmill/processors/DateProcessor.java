@@ -21,7 +21,7 @@ import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
 @ProcessorProvider(type = "date", factory = DateProcessor.Factory.class)
 public class DateProcessor implements Processor {
-    public static final DateTimeFormatter elasticPrintFormat = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss Z");
+    public static final DateTimeFormatter elasticPrintFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
     private static ConcurrentMap<String, DateTimeFormatter> dateTimePatternToFormatter = new ConcurrentHashMap<>();
 
     private final String field;
