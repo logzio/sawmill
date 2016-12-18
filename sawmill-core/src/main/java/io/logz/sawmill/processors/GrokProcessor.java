@@ -97,10 +97,10 @@ public class GrokProcessor implements Processor {
         for (int i=0; i< groks.size(); i++) {
             Match match = groks.get(i).match(value);
             match.captures();
-            if (match.toMap().size() > 0) {
-                // Put first the grok that matched
-                if (i > 0) Collections.swap(groks, 0, i);
-                return match.toMap();
+            Map<String, Object> map = match.toMap();
+            if (map.size() > 0) {
+                if (i > 0) Collections.swap(groks, 0, i); // Use the grok that matched first
+                return map;
             }
         }
         return Collections.EMPTY_MAP;
