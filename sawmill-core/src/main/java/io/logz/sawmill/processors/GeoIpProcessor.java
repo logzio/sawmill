@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -137,7 +138,7 @@ public class GeoIpProcessor implements Processor {
                 return response.getCountry().getName();
             }
         },
-        COUNTRY_ISO_CODE {
+        COUNTRY_CODE2 {
             @Override
             public String getValue(CityResponse response) {
                 return response.getCountry().getIsoCode();
@@ -189,6 +190,18 @@ public class GeoIpProcessor implements Processor {
             @Override
             public Object getValue(CityResponse response) {
                 return response.getPostal().getCode();
+            }
+        },
+        LOCATION {
+            @Override
+            public Object getValue(CityResponse response) {
+                return Arrays.asList(response.getLocation().getLongitude(),response.getLocation().getLatitude());
+            }
+        },
+        DMA_CODE {
+            @Override
+            public Object getValue(CityResponse response) {
+                return response.getLocation().getMetroCode();
             }
         };
 

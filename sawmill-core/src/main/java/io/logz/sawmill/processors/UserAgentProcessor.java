@@ -58,7 +58,13 @@ public class UserAgentProcessor implements Processor {
             userAgent.put("device", "Other");
         }
 
-        doc.addField(targetField, userAgent);
+        if (targetField != null) {
+            doc.addField(targetField, userAgent);
+        } else {
+            userAgent.entrySet().forEach(property -> {
+                doc.addField(property.getKey(), property.getValue());
+            });
+        }
 
         return ProcessResult.success();
     }
@@ -122,7 +128,7 @@ public class UserAgentProcessor implements Processor {
             UserAgentProcessor.Configuration userAgentConfig = JsonUtils.fromJsonMap(UserAgentProcessor.Configuration.class, config);
 
             return new UserAgentProcessor(userAgentConfig.getField(),
-                    userAgentConfig.getTargetField() != null ? userAgentConfig.getTargetField() : "user_agent",
+                    userAgentConfig.getTargetField(),
                     uaParser);
         }
     }

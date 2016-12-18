@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
-import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DateProcessorTest {

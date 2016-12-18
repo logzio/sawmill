@@ -1,6 +1,5 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
@@ -53,7 +52,7 @@ public class GrokProcessor implements Processor {
             grok.getPatterns().putAll(patternsBank);
 
             try {
-                grok.compile(expression);
+                grok.compile(expression, true);
                 if (grok.getNamedRegex().equals("(?<name0>null)")) {
                     throw new RuntimeException(String.format("failed to create grok processor, unknown expressions [%s]", expressions));
                 }
@@ -98,9 +97,10 @@ public class GrokProcessor implements Processor {
         for (int i=0; i< groks.size(); i++) {
             Match match = groks.get(i).match(value);
             match.captures();
-            if (match.toMap().size() > 0) {
-                Collections.swap(groks, 0, i);
-                return match.toMap();
+            Map<String, Object> map = match.toMap();
+            if (map.size() > 0) {
+                if (i > 0) Collections.swap(groks, 0, i); // Use the grok that matched first
+                return map;
             }
         }
         return Collections.EMPTY_MAP;
