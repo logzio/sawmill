@@ -1,6 +1,5 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.google.common.net.InetAddresses;
 import com.maxmind.db.CHMCache;
