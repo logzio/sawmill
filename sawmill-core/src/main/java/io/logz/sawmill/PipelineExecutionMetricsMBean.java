@@ -14,19 +14,19 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     private final ConcurrentMap<String, ProcessorMetrics> processorsMetrics = new ConcurrentHashMap<>();
 
     @Managed
-    public long totalDocsProcessed() { return succeeded.longValue() + failed.longValue() + overtime.longValue(); }
+    public long getTotalDocsProcessed() { return succeeded.longValue() + failed.longValue() + overtime.longValue(); }
 
     @Managed
-    public long totalDocsSucceededProcessing() { return succeeded.longValue(); }
+    public long getTotalDocsSucceededProcessing() { return succeeded.longValue(); }
 
     @Managed
-    public long totalDocsFailedProcessing() { return failed.longValue(); }
+    public long getTotalDocsFailedProcessing() { return failed.longValue(); }
 
     @Managed
-    public long totalDocsOvertimeProcessing() { return overtime.longValue(); }
+    public long getTotalDocsOvertimeProcessing() { return overtime.longValue(); }
 
     @Managed
-    public long totalDocsFailedOnUnexpectedError() {
+    public long getTotalDocsFailedOnUnexpectedError() {
         return unexpectedFailure.longValue();
     }
 
