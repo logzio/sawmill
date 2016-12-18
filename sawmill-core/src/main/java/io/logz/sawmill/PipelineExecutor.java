@@ -40,6 +40,7 @@ public class PipelineExecutor {
                          }
 
                          if (!executionStep.getOnFailureExecutionSteps().isPresent()) {
+                             pipelineExecutionMetricsTracker.pipelineFailed(pipeline.getId(), doc);
                              ProcessResult.Error error = processResult.getError().get();
                              return ExecutionResult.failure(error.getMessage(),
                                      executionStep.getProcessorName(),
@@ -51,7 +52,7 @@ public class PipelineExecutor {
                          }
                      }
                 } catch (RuntimeException e) {
-                    pipelineExecutionMetricsTracker.processorFailedOnUnexpectedError(pipeline.getId(), executionStep.getProcessorName(), doc, e);
+                    pipelineExecutionMetricsTracker.pipelineFailedOnUnexpectedError(pipeline.getId(), executionStep.getProcessorName(), doc, e);
                     throw new PipelineExecutionException(pipeline.getName(), e);
                 }
             }
@@ -62,7 +63,7 @@ public class PipelineExecutor {
             watchdog.removeExecution(executionIdentifier);
         }
 
-        pipelineExecutionMetricsTracker.processedDocSuccessfully(pipeline.getId(), doc, pipelineStopwatch.pipelineElapsed());
+        pipelineExecutionMetricsTracker.pipelineFinishedSuccessfully(pipeline.getId(), doc, pipelineStopwatch.pipelineElapsed());
 
         return ExecutionResult.success();
     }
@@ -74,7 +75,7 @@ public class PipelineExecutor {
 
         if (processResult.isSucceeded()) {
             logger.trace("processor {} in pipeline {} executed successfully, took {}ns", processorName, pipelineId, processorTook);
-            pipelineExecutionMetricsTracker.processorFinished(pipelineId, processorName, processorTook);
+            pipelineExecutionMetricsTracker.processorFinishedSuccessfully(pipelineId, processorName, processorTook);
         } else {
             pipelineExecutionMetricsTracker.processorFailed(pipelineId, processorName, doc);
         }
