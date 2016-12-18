@@ -41,7 +41,7 @@ public class PipelineExecutorTest {
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
 
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
-        assertThat(pipelineExecutorMetrics.totalDocsOvertimeProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsOvertimeProcessing()).isEqualTo(1);
     }
 
     @Test
@@ -54,7 +54,7 @@ public class PipelineExecutorTest {
         assertNotNull(doc.getSource().get("newField"));
         assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
-        assertThat(pipelineExecutorMetrics.totalDocsSucceededProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
     }
 
     @Test
@@ -68,7 +68,7 @@ public class PipelineExecutorTest {
         assertNotNull(doc.getSource().get("newField"));
         assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
-        assertThat(pipelineExecutorMetrics.totalDocsSucceededProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
     }
 
     private OnFailureExecutionStep createOnFailureExecutionStep(Processor processor, String name) {
@@ -87,7 +87,7 @@ public class PipelineExecutorTest {
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isFalse();
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
-        assertThat(pipelineExecutorMetrics.totalDocsFailedProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(1);
     }
 
     @Test
@@ -98,7 +98,7 @@ public class PipelineExecutorTest {
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
-        assertThat(pipelineExecutorMetrics.totalDocsSucceededProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
     }
 
     @Test
@@ -109,7 +109,7 @@ public class PipelineExecutorTest {
 
         assertThatThrownBy(() -> pipelineExecutor.execute(pipeline, doc)).isInstanceOf(PipelineExecutionException.class);
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
-        assertThat(pipelineExecutorMetrics.totalDocsFailedOnUnexpectedError()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsFailedOnUnexpectedError()).isEqualTo(1);
     }
 
     private Pipeline createPipeline(ExecutionStep... steps) {
