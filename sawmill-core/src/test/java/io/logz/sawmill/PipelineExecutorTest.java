@@ -68,6 +68,7 @@ public class PipelineExecutorTest {
         assertNotNull(doc.getSource().get("newField"));
         assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(0);
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
     }
 
@@ -92,12 +93,15 @@ public class PipelineExecutorTest {
 
     @Test
     public void testPipelineExecutionIgnoreFailure() {
-        Pipeline pipeline = createPipeline(true, createFailAlwaysProcessor());
+        Processor failAlwaysProcessor = createFailAlwaysProcessor();
+        Pipeline pipeline = createPipeline(true, failAlwaysProcessor);
         Doc doc = createDoc("id", "fail", "message", "hola",
                 "type", "test");
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(0);
+        assertThat(pipelineExecutorMetrics.getProcessingFailedCount(failAlwaysProcessor.toString() + "1")).isEqualTo(1);
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
     }
 
