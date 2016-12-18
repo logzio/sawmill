@@ -21,7 +21,7 @@ public class GeoIpProcessorTest {
 
         Map<String,Object> config = new HashMap<>();
         config.put("sourceField", source);
-        config.put("properties", Arrays.asList("ip", "country_name", "country_iso_code", "city_name"));
+        config.put("properties", Arrays.asList("ip", "country_name", "country_code2", "city_name"));
         GeoIpProcessor geoIpProcessor = new GeoIpProcessor.Factory().create(config);
 
         Doc doc = createDoc(source, ip);

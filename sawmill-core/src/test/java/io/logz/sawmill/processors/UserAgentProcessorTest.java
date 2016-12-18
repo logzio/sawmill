@@ -20,6 +20,7 @@ public class UserAgentProcessorTest {
 
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
+        config.put("targetField", targetField);
         UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
 
         ProcessResult processResult = uaProceesor.process(doc);
@@ -52,6 +53,7 @@ public class UserAgentProcessorTest {
 
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
+        config.put("targetField", targetField);
         UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
 
         ProcessResult processResult = uaProceesor.process(doc);
