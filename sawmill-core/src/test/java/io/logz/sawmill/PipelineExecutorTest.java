@@ -7,7 +7,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,7 +33,7 @@ public class PipelineExecutorTest {
 
     @Test
     public void testPipelineLongProcessingExecution() throws InterruptedException {
-        Pipeline pipeline = createPipeline(false, createSleepProcessor(1100));
+        Pipeline pipeline = createPipeline(false, createSleepExecutionStep(1100));
         Doc doc = createDoc("id", "long", "message", "hola",
                 "type", "test");
 
@@ -46,7 +45,7 @@ public class PipelineExecutorTest {
 
     @Test
     public void testPipelineExecution() {
-        Pipeline pipeline = createPipeline(false, createAddFieldProcessor("newField", "Hello"));
+        Pipeline pipeline = createPipeline(false, createAddFieldExecutionStep("newField", "Hello"));
         Doc doc = createDoc("id", "add", "message", "hola");
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
@@ -59,8 +58,7 @@ public class PipelineExecutorTest {
 
     @Test
     public void testPipelineExecutionWithOnErrorProcessors() {
-        Pipeline pipeline = createPipeline(createExecutionStep(createFailAlwaysProcessor(),
-                Arrays.asList(createOnFailureExecutionStep(createAddFieldProcessor("newField", "Hello"), "addField2"))));
+        Pipeline pipeline = createPipeline(createFailAlwaysExecutionStep(Arrays.asList(createOnFailureExecutionStep(createAddFieldProcessor("newField", "Hello"), "addField2"))));
         Doc doc = createDoc("id", "add", "message", "hola");
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
@@ -68,20 +66,13 @@ public class PipelineExecutorTest {
         assertNotNull(doc.getSource().get("newField"));
         assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(0);
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
-    }
-
-    private OnFailureExecutionStep createOnFailureExecutionStep(Processor processor, String name) {
-        return new OnFailureExecutionStep(name, processor);
-    }
-
-    private ExecutionStep createExecutionStep(Processor processor, List<OnFailureExecutionStep> onFailureExecutionSteps) {
-        return new ExecutionStep("fail1", processor, onFailureExecutionSteps);
     }
 
     @Test
     public void testPipelineExecutionFailure() {
-        Pipeline pipeline = createPipeline(false, createFailAlwaysProcessor());
+        Pipeline pipeline = createPipeline(false, createFailAlwaysExecutionStep(null));
         Doc doc = createDoc("id", "fail", "message", "hola",
                 "type", "test");
 
@@ -92,18 +83,20 @@ public class PipelineExecutorTest {
 
     @Test
     public void testPipelineExecutionIgnoreFailure() {
-        Pipeline pipeline = createPipeline(true, createFailAlwaysProcessor());
+        Pipeline pipeline = createPipeline(true, createFailAlwaysExecutionStep(null));
         Doc doc = createDoc("id", "fail", "message", "hola",
                 "type", "test");
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(0);
+        assertThat(pipelineExecutorMetrics.getProcessingFailedCount("fail1")).isEqualTo(1);
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
     }
 
     @Test
     public void testPipelineExecutionUnexpectedFailure() {
-        Pipeline pipeline = createPipeline(false, createUnexpectedFailAlwaysProcessor());
+        Pipeline pipeline = createPipeline(false, createUnexpectedFailAlwaysExecutionStep());
         Doc doc = createDoc("id", "fail", "message", "hola",
                 "type", "test");
 
@@ -113,6 +106,10 @@ public class PipelineExecutorTest {
     }
 
     private Pipeline createPipeline(ExecutionStep... steps) {
+        return createPipeline(false, steps);
+    }
+
+    private Pipeline createPipeline(boolean ignoreFailure, ExecutionStep... steps) {
         String id = "abc";
         String name = "test";
         String description = "test";
@@ -120,32 +117,26 @@ public class PipelineExecutorTest {
                 name,
                 description,
                 Arrays.asList(steps),
-                false);
-    }
-
-    private Pipeline createPipeline(boolean ignoreFailure, Processor... processors) {
-        String id = "abc";
-        String name = "test";
-        String description = "test";
-        List<ExecutionStep> executionSteps = (List<ExecutionStep>) Arrays.asList(processors).stream()
-                .map(processor -> new ExecutionStep(processor.toString() + "1", processor, null))
-                .collect(Collectors.toList());
-        return new Pipeline(id,
-                name,
-                description,
-                executionSteps,
                 ignoreFailure);
     }
 
-    private Processor createSleepProcessor(long millis) {
-        return (Doc doc) -> {
+    private OnFailureExecutionStep createOnFailureExecutionStep(Processor processor, String name) {
+        return new OnFailureExecutionStep(name, processor);
+    }
+
+    private ExecutionStep createSleepExecutionStep(long millis) {
+        return new ExecutionStep("sleep1", (Doc doc) -> {
                 try {
                     Thread.sleep(millis);
                 } catch (InterruptedException e) {
 
                 }
                 return ProcessResult.success();
-            };
+            });
+    }
+
+    private ExecutionStep createAddFieldExecutionStep(String k, String v) {
+        return new ExecutionStep("add1", createAddFieldProcessor(k, v));
     }
 
     private Processor createAddFieldProcessor(String k, String v) {
@@ -155,13 +146,13 @@ public class PipelineExecutorTest {
             };
     }
 
-    private Processor createUnexpectedFailAlwaysProcessor() {
-        return (Doc doc) -> {
+    private ExecutionStep createUnexpectedFailAlwaysExecutionStep() {
+        return new ExecutionStep("failHard1", (Doc doc) -> {
                 throw new RuntimeException("test failure");
-            };
+            });
     }
 
-    private Processor createFailAlwaysProcessor() {
-        return (Doc doc) -> ProcessResult.failure("test failure");
+    private ExecutionStep createFailAlwaysExecutionStep(List<OnFailureExecutionStep> onFailureExecutionSteps) {
+        return new ExecutionStep("fail1", (Doc doc) -> ProcessResult.failure("test failure"), onFailureExecutionSteps);
     }
 }
