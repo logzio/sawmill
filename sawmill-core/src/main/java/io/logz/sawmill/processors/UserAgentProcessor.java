@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @ProcessorProvider(type = "userAgent", factory = UserAgentProcessor.Factory.class)
 public class UserAgentProcessor implements Processor {
     private final String field;
@@ -23,7 +25,7 @@ public class UserAgentProcessor implements Processor {
     private final Parser uaParser;
 
     public UserAgentProcessor(String field, String targetField, Parser uaParser) {
-        this.field = field;
+        this.field = checkNotNull(field, "field cannot be null");
         this.targetField = targetField;
         this.uaParser = uaParser;
     }

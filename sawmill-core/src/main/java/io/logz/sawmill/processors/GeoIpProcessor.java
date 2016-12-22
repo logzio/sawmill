@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @ProcessorProvider(type = "geoIp", factory = GeoIpProcessor.Factory.class)
 public class GeoIpProcessor implements Processor {
     private static DatabaseReader databaseReader;
@@ -47,7 +49,7 @@ public class GeoIpProcessor implements Processor {
     private final List<Property> properties;
 
     public GeoIpProcessor(String sourceField, String targetField, List<Property> properties) {
-        this.sourceField = sourceField;
+        this.sourceField = checkNotNull(sourceField, "source field cannot be null");
         this.targetField = targetField;
         this.properties = properties;
     }
@@ -59,6 +61,9 @@ public class GeoIpProcessor implements Processor {
         }
 
         String ip = doc.getField(sourceField);
+        if (!InetAddresses.isInetAddress(ip)) {
+            return ProcessResult.failure(String.format("failed to process geoIp, source field [%s] in path [%s] is not a valid IP string", ip, sourceField));
+        }
         InetAddress ipAddress = InetAddresses.forString(ip);
 
         Map<String, Object> geoIp;
@@ -84,7 +89,11 @@ public class GeoIpProcessor implements Processor {
 
         Map<String, Object> geoIp = new HashMap<>();
         for (Property property : properties) {
-            geoIp.put(property.toString(), property.getValue(response));
+            Object propertyValue = property.getValue(response);
+
+            if (propertyValue != null) {
+                geoIp.put(property.toString(), propertyValue);
+            }
         }
 
         return geoIp;

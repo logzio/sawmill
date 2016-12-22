@@ -19,9 +19,8 @@ public class ConvertFieldProcessor implements Processor {
     private final FieldType fieldType;
 
     public ConvertFieldProcessor(String path, FieldType fieldType) {
-        checkNotNull(fieldType);
-        this.path = path;
-        this.fieldType = fieldType;
+        this.path = checkNotNull(path, "path cannot be null");
+        this.fieldType = checkNotNull(fieldType, "field type cannot be null");
     }
 
     public FieldType getFieldType() {

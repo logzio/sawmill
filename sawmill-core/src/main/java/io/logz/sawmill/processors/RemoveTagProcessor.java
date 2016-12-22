@@ -5,15 +5,19 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkState;
 
 @ProcessorProvider(type = "removeTag", factory = RemoveTagProcessor.Factory.class)
 public class RemoveTagProcessor implements Processor {
     private final List<String> tags;
 
     public RemoveTagProcessor(List<String> tags) {
+        checkState(CollectionUtils.isEmpty(tags), "tags cannot be empty");
         this.tags = tags;
     }
 

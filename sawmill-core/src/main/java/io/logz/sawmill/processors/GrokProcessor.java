@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @ProcessorProvider(type = "grok", factory = GrokProcessor.Factory.class)
 public class GrokProcessor implements Processor {
     private final String field;
@@ -35,7 +37,7 @@ public class GrokProcessor implements Processor {
     private final boolean ignoreMissing;
 
     public GrokProcessor(String field, List<String> matchExpressions, Map<String, String> patternsBank, List<String> overwrite, boolean ignoreMissing) {
-        this.field = field;
+        this.field = checkNotNull(field, "field cannot be null");
         this.expressions = matchExpressions;
         this.overwrite = overwrite != null ? overwrite : Collections.EMPTY_LIST;
         this.ignoreMissing = ignoreMissing;
