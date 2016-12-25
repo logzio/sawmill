@@ -105,7 +105,7 @@ public class Pipeline {
         private String name;
         private String description;
         private List<ProcessorDefinition> processors;
-        private boolean ignoreFailure;
+        private boolean ignoreFailure = true;
 
         public Definition() { }
 

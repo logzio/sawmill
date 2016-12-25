@@ -27,7 +27,7 @@ public class PipelineTest {
                             "}" +
                         "}]" +
                     "}]," +
-                    "\"ignoreFailure\": \"true\"" +
+                    "\"ignoreFailure\": \"false\"" +
                 "}";
 
         ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
@@ -47,7 +47,7 @@ public class PipelineTest {
         TestProcessor processor = (TestProcessor) executionStep.getProcessor();
         assertThat(executionStep.getProcessorName()).isEqualTo("test1");
         assertThat(processor.getValue()).isEqualTo("message");
-        assertThat(pipeline.isIgnoreFailure()).isTrue();
+        assertThat(pipeline.isIgnoreFailure()).isFalse();
         assertThat(executionStep.getOnFailureExecutionSteps().get().size()).isEqualTo(1);
     }
 
@@ -62,6 +62,7 @@ public class PipelineTest {
 
         assertThat(pipeline.getDescription()).isEqualTo("this is hocon");
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
+        assertThat(pipeline.isIgnoreFailure()).isTrue();
         ExecutionStep executionStep = pipeline.getExecutionSteps().get(0);
         Processor processor = executionStep.getProcessor();
         assertThat(executionStep.getProcessorName()).isEqualTo("test1");
