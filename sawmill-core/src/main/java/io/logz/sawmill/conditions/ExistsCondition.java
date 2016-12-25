@@ -30,7 +30,7 @@ public class ExistsCondition implements Condition {
 
         @Override
         public Condition create(Map<String, Object> config, ConditionParser conditionParser) {
-            ExistsCondition.Configuration existsCondition = JsonUtils.fromJsonMap(ExistsCondition.Configuration.class, (Map) config);
+            ExistsCondition.Configuration existsCondition = JsonUtils.fromJsonMap(ExistsCondition.Configuration.class, config);
 
             return new ExistsCondition(existsCondition.getField());
         }

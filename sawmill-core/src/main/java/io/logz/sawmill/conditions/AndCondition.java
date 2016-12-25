@@ -5,6 +5,7 @@ import io.logz.sawmill.parser.ConditionParser;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.annotations.ConditionProvider;
 import io.logz.sawmill.parser.ConditionDefinition;
+import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -37,11 +38,23 @@ public class AndCondition implements Condition {
 
         @Override
         public Condition create(Map<String, Object> config, ConditionParser conditionParser) {
-            List<ConditionDefinition> conditionConfigList = (List<ConditionDefinition>) config.get("conditions");
+            Configuration configuration = JsonUtils.fromJsonMap(Configuration.class, config);
+            List<ConditionDefinition> conditionDefinitions = configuration.getConditions();
 
-            List<Condition> conditions = conditionConfigList.stream().map(conditionParser::parse).collect(Collectors.toList());
+            List<Condition> conditions = conditionDefinitions.stream().map(conditionParser::parse).collect(Collectors.toList());
 
             return new AndCondition(conditions);
+        }
+    }
+
+    public static class Configuration {
+        private List<ConditionDefinition> conditions;
+
+        public Configuration() {
+        }
+
+        public List<ConditionDefinition> getConditions() {
+            return conditions;
         }
     }
 }

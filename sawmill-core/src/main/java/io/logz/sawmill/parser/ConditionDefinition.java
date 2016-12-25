@@ -9,6 +9,8 @@ public class ConditionDefinition {
     private String type;
     private Map<String, Object> config;
 
+    public ConditionDefinition() {}
+
     public ConditionDefinition(String type, Map<String, Object> config) {
         this.type = type;
         this.config = config;

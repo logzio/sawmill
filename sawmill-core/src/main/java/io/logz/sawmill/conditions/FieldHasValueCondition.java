@@ -38,7 +38,7 @@ public class FieldHasValueCondition implements Condition {
 
         @Override
         public Condition create(Map<String, Object> config, ConditionParser conditionParser) {
-            FieldHasValueCondition.Configuration fieldHasValueConfig = JsonUtils.fromJsonMap(FieldHasValueCondition.Configuration.class, (Map) config);
+            FieldHasValueCondition.Configuration fieldHasValueConfig = JsonUtils.fromJsonMap(FieldHasValueCondition.Configuration.class, config);
             return new FieldHasValueCondition(fieldHasValueConfig.getField(), fieldHasValueConfig.getPossibleValues());
         }
     }
