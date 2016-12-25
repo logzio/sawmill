@@ -1,11 +1,13 @@
 package io.logz.sawmill;
 
+import io.logz.sawmill.conditions.ExistsCondition;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
@@ -25,9 +27,7 @@ public class PipelineExecutorTest {
         overtimeProcessingDocs = new ArrayList<>();
         pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
         PipelineExecutionTimeWatchdog watchdog = new PipelineExecutionTimeWatchdog(THRESHOLD_TIME_MS, pipelineExecutorMetrics,
-                context -> {
-                    overtimeProcessingDocs.add(context.getDoc());
-                });
+                context -> overtimeProcessingDocs.add(context.getDoc()));
         pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
     }
 
@@ -105,6 +105,29 @@ public class PipelineExecutorTest {
         assertThat(pipelineExecutorMetrics.getTotalDocsFailedOnUnexpectedError()).isEqualTo(1);
     }
 
+    @Test
+    public void testConditionalExecutionStep() {
+        String fieldExists = "fieldExists";
+        String fieldToAdd = "fieldToAdd";
+        String valueOnTrue = "valueOnTrue";
+        String valueOnFalse = "valueOnFalse";
+        Pipeline pipeline = createPipeline(false, createConditionalExecutionStep(
+                createExistsCondition(fieldExists),
+                createAddFieldExecutionStep(fieldToAdd, valueOnTrue),
+                createAddFieldExecutionStep(fieldToAdd, valueOnFalse)));
+
+        Doc doc1 = createDoc(fieldExists, "value");
+        assertThat(pipelineExecutor.execute(pipeline, doc1).isSucceeded()).isTrue();
+        String value1 = doc1.getField(fieldToAdd);
+        assertThat(value1).isEqualTo(valueOnTrue);
+
+        Doc doc2 = createDoc("otherField", "value");
+        assertThat(pipelineExecutor.execute(pipeline, doc2).isSucceeded()).isTrue();
+        String value2 = doc2.getField(fieldToAdd);
+        assertThat(value2).isEqualTo(valueOnFalse);
+        assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(2);
+    }
+
     private Pipeline createPipeline(ExecutionStep... steps) {
         return createPipeline(false, steps);
     }
@@ -124,8 +147,8 @@ public class PipelineExecutorTest {
         return new OnFailureExecutionStep(name, processor);
     }
 
-    private ExecutionStep createSleepExecutionStep(long millis) {
-        return new ExecutionStep("sleep1", (Doc doc) -> {
+    private ProcessorExecutionStep createSleepExecutionStep(long millis) {
+        return new ProcessorExecutionStep("sleep1", (Doc doc) -> {
                 try {
                     Thread.sleep(millis);
                 } catch (InterruptedException e) {
@@ -135,8 +158,8 @@ public class PipelineExecutorTest {
             });
     }
 
-    private ExecutionStep createAddFieldExecutionStep(String k, String v) {
-        return new ExecutionStep("add1", createAddFieldProcessor(k, v));
+    private ProcessorExecutionStep createAddFieldExecutionStep(String k, String v) {
+        return new ProcessorExecutionStep("add1", createAddFieldProcessor(k, v));
     }
 
     private Processor createAddFieldProcessor(String k, String v) {
@@ -146,13 +169,21 @@ public class PipelineExecutorTest {
             };
     }
 
-    private ExecutionStep createUnexpectedFailAlwaysExecutionStep() {
-        return new ExecutionStep("failHard1", (Doc doc) -> {
+    private ProcessorExecutionStep createUnexpectedFailAlwaysExecutionStep() {
+        return new ProcessorExecutionStep("failHard1", (Doc doc) -> {
                 throw new RuntimeException("test failure");
             });
     }
 
-    private ExecutionStep createFailAlwaysExecutionStep(List<OnFailureExecutionStep> onFailureExecutionSteps) {
-        return new ExecutionStep("fail1", (Doc doc) -> ProcessResult.failure("test failure"), onFailureExecutionSteps);
+    private ProcessorExecutionStep createFailAlwaysExecutionStep(List<OnFailureExecutionStep> onFailureExecutionSteps) {
+        return new ProcessorExecutionStep("fail1", (Doc doc) -> ProcessResult.failure("test failure"), onFailureExecutionSteps);
+    }
+
+    private ConditionalExecutionStep createConditionalExecutionStep(Condition condition, ExecutionStep onTrue, ExecutionStep onFalse) {
+        return new ConditionalExecutionStep(condition, Collections.singletonList(onTrue), Collections.singletonList(onFalse));
+    }
+
+    private Condition createExistsCondition(String field) {
+        return new ExistsCondition(field);
     }
 }

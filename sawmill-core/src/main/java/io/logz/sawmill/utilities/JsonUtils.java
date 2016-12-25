@@ -1,5 +1,6 @@
 package io.logz.sawmill.utilities;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -33,6 +34,19 @@ public class JsonUtils {
         }
         catch (Exception e) {
             throw new RuntimeException("failed to deserialize object type="+type+" from json="+json, e);
+        }
+    }
+
+    public static <T> T fromJsonString(TypeReference<T> typeReference, String json) {
+        if (json == null || json.isEmpty()) {
+            throw new RuntimeException("json is either null or empty (json = "+json+")");
+        }
+
+        try {
+            return mapper.readValue(json, typeReference);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("failed to deserialize object type="+typeReference.getType()+" from json="+json, e);
         }
     }
 
