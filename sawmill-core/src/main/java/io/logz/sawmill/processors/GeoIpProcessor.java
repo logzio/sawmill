@@ -29,6 +29,7 @@ import java.util.zip.GZIPInputStream;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
+import static java.util.Collections.EMPTY_LIST;
 
 @ProcessorProvider(type = "geoIp", factory = GeoIpProcessor.Factory.class)
 public class GeoIpProcessor implements Processor {
@@ -50,12 +51,14 @@ public class GeoIpProcessor implements Processor {
     private final String sourceField;
     private final String targetField;
     private final List<Property> properties;
+    private final List<String> tagsOnSuccess;
 
-    public GeoIpProcessor(String sourceField, String targetField, List<Property> properties) {
+    public GeoIpProcessor(String sourceField, String targetField, List<Property> properties, List<String> tagsOnSuccess) {
         checkState(CollectionUtils.isNotEmpty(properties), "properties cannot be empty");
         this.sourceField = checkNotNull(sourceField, "source field cannot be null");
         this.targetField = checkNotNull(targetField, "target field cannot be null");
         this.properties = properties;
+        this.tagsOnSuccess = tagsOnSuccess != null ? tagsOnSuccess : EMPTY_LIST;
     }
 
     @Override
@@ -83,6 +86,7 @@ public class GeoIpProcessor implements Processor {
 
         if (geoIp != null) {
             doc.addField(targetField, geoIp);
+            doc.appendList("tags", tagsOnSuccess);
         }
 
         return ProcessResult.success();
@@ -113,7 +117,8 @@ public class GeoIpProcessor implements Processor {
 
             return new GeoIpProcessor(geoIpConfig.getSourceField(),
                     geoIpConfig.getTargetField(),
-                    geoIpConfig.getProperties());
+                    geoIpConfig.getProperties(),
+                    geoIpConfig.getTagsOnSuccess());
         }
     }
 
@@ -121,6 +126,7 @@ public class GeoIpProcessor implements Processor {
         private String sourceField;
         private String targetField = "geoip";
         private List<Property> properties = ALL_PROPERTIES;
+        private List<String> tagsOnSuccess = EMPTY_LIST;
 
         public Configuration() { }
 
@@ -129,12 +135,20 @@ public class GeoIpProcessor implements Processor {
             this.targetField = targetField;
         }
 
-        public String getSourceField() { return sourceField; }
+        public String getSourceField() {
+            return sourceField;
+        }
 
-        public String getTargetField() { return targetField; }
+        public String getTargetField() {
+            return targetField;
+        }
 
         public List<Property> getProperties() {
             return properties;
+        }
+
+        public List<String> getTagsOnSuccess() {
+            return tagsOnSuccess;
         }
     }
 
