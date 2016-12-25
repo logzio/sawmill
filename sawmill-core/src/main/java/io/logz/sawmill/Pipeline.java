@@ -73,7 +73,7 @@ public class Pipeline {
                     config.getName(),
                     config.getDescription(),
                     executionSteps,
-                    config.getIgnoreFailure() != null ? config.getIgnoreFailure() : true);
+                    config.getIgnoreFailure());
         }
 
         private ExecutionStep extractExecutionStep(ProcessorDefinition processorDefinition) {
@@ -105,7 +105,7 @@ public class Pipeline {
         private String name;
         private String description;
         private List<ProcessorDefinition> processors;
-        private Boolean ignoreFailure;
+        private boolean ignoreFailure = true;
 
         public Definition() { }
 
@@ -119,7 +119,7 @@ public class Pipeline {
             return processors;
         }
 
-        public Boolean getIgnoreFailure() {
+        public boolean getIgnoreFailure() {
             return ignoreFailure;
         }
     }
