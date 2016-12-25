@@ -27,7 +27,7 @@ public class UserAgentProcessor implements Processor {
     public UserAgentProcessor(String field, String targetField, Parser uaParser) {
         this.field = checkNotNull(field, "field cannot be null");
         this.targetField = targetField;
-        this.uaParser = uaParser;
+        this.uaParser = checkNotNull(uaParser);
     }
 
     @Override

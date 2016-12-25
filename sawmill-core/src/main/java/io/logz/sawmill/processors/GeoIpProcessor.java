@@ -13,6 +13,7 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +27,8 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
 
 @ProcessorProvider(type = "geoIp", factory = GeoIpProcessor.Factory.class)
 public class GeoIpProcessor implements Processor {
@@ -49,8 +52,9 @@ public class GeoIpProcessor implements Processor {
     private final List<Property> properties;
 
     public GeoIpProcessor(String sourceField, String targetField, List<Property> properties) {
+        checkState(CollectionUtils.isNotEmpty(properties), "properties cannot be empty");
         this.sourceField = checkNotNull(sourceField, "source field cannot be null");
-        this.targetField = targetField;
+        this.targetField = checkNotNull(targetField, "target field cannot be null");
         this.properties = properties;
     }
 
@@ -108,15 +112,15 @@ public class GeoIpProcessor implements Processor {
             GeoIpProcessor.Configuration geoIpConfig = JsonUtils.fromJsonMap(Configuration.class, config);
 
             return new GeoIpProcessor(geoIpConfig.getSourceField(),
-                    geoIpConfig.getTargetField() != null ? geoIpConfig.getTargetField() : "geoip",
-                    geoIpConfig.getProperties() != null ? geoIpConfig.getProperties() : Property.ALL_PROPERTIES);
+                    geoIpConfig.getTargetField(),
+                    geoIpConfig.getProperties());
         }
     }
 
     public static class Configuration implements Processor.Configuration {
         private String sourceField;
-        private String targetField;
-        private List<Property> properties;
+        private String targetField = "geoip";
+        private List<Property> properties = ALL_PROPERTIES;
 
         public Configuration() { }
 

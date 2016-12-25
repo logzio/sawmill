@@ -20,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 @ProcessorProvider(type = "date", factory = DateProcessor.Factory.class)
 public class DateProcessor implements Processor {
@@ -33,8 +34,9 @@ public class DateProcessor implements Processor {
     private final ZoneId timeZone;
 
     public DateProcessor(String field, String targetField, List<String> formats, ZoneId timeZone) {
+        checkState(CollectionUtils.isNotEmpty(formats), "formats cannot be empty");
         this.field = checkNotNull(field, "field cannot be null");
-        this.targetField = targetField;
+        this.targetField = checkNotNull(targetField, "target field cannot be null");
         this.formats = formats;
         this.timeZone = timeZone;
 
@@ -103,7 +105,7 @@ public class DateProcessor implements Processor {
             }
 
             return new DateProcessor(dateConfig.getField(),
-                    dateConfig.getTargetField() != null ? dateConfig.getTargetField() : "@timestamp",
+                    dateConfig.getTargetField(),
                     dateConfig.getFormats(),
                     ZoneId.of(dateConfig.getTimeZone()));
         }
@@ -111,7 +113,7 @@ public class DateProcessor implements Processor {
 
     public static class Configuration implements Processor.Configuration {
         private String field;
-        private String targetField;
+        private String targetField = "@timestamp";
 
         /**
          * The format of the date string.

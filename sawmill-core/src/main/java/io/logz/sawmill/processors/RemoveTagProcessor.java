@@ -17,7 +17,7 @@ public class RemoveTagProcessor implements Processor {
     private final List<String> tags;
 
     public RemoveTagProcessor(List<String> tags) {
-        checkState(CollectionUtils.isEmpty(tags), "tags cannot be empty");
+        checkState(CollectionUtils.isNotEmpty(tags), "tags cannot be empty");
         this.tags = tags;
     }
 
