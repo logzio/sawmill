@@ -6,6 +6,9 @@ import io.logz.sawmill.processors.TestProcessor;
 import org.junit.Before;
 import org.junit.Test;
 
+import static io.logz.sawmill.JsonUtils.createJson;
+import static io.logz.sawmill.JsonUtils.createList;
+import static io.logz.sawmill.JsonUtils.createMap;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class PipelineTest {
@@ -29,28 +32,26 @@ public class PipelineTest {
 
     @Test
     public void testFactoryCreationJson() {
-        String configJson = "{" +
-                "    \"name\": \"test pipeline\"," +
-                "    \"description\": \"this is pipeline configuration\"," +
-                "    \"executionSteps\": [{" +
-                "        \"test\": {" +
-                "            \"name\": \"test1\"," +
-                "            \"config\": {" +
-                "                \"value\": \"message\"" +
-                "            }," +
-                "            \"onFailure\": [{" +
-                "                \"addField\": {" +
-                "                    \"name\": \"addField1\"," +
-                "                    \"config\": {" +
-                "                        \"path\": \"path\"," +
-                "                        \"value\": \"sheker\"" +
-                "                    }" +
-                "                }" +
-                "            }]" +
-                "        }" +
-                "    }]," +
-                "    \"ignoreFailure\": true" +
-                "}";
+        String configJson = createJson(createMap(
+                "name", "test pipeline",
+                "description", "this is pipeline configuration",
+                "executionSteps", createList(createMap(
+                        "test", createMap(
+                                "name", "test1",
+                                "config", createMap("value", "message"),
+                                "onFailure", createList(createMap(
+                                        "addField", createMap(
+                                                "name", "on failure processor",
+                                                "config", createMap(
+                                                        "path", "field1",
+                                                        "value", "value1"
+                                                )
+                                        )
+                                ))
+                        )
+                )),
+                "ignoreFailure", false
+        ));
 
         String id = "abc";
         Pipeline pipeline = factory.create(id, configJson);
@@ -63,7 +64,7 @@ public class PipelineTest {
         TestProcessor processor = (TestProcessor) executionStep.getProcessor();
         assertThat(executionStep.getProcessorName()).isEqualTo("test1");
         assertThat(processor.getValue()).isEqualTo("message");
-        assertThat(pipeline.isIgnoreFailure()).isTrue();
+        assertThat(pipeline.isIgnoreFailure()).isFalse();
         assertThat(executionStep.getOnFailureExecutionSteps().get().size()).isEqualTo(1);
     }
 
@@ -95,7 +96,7 @@ public class PipelineTest {
     }
 
     @Test
-    public void testIf() {
+    public void testConditional() {
         String pipelineString = "{" +
                 "name: pipeline1," +
                 "description: description la la la," +
@@ -115,12 +116,6 @@ public class PipelineTest {
                 "            addTag: {" +
                 "                name: processor1," +
                 "                config.tags: [tag1, tag2]" +
-                "            }" +
-                "        }]," +
-                "        else: [{" +
-                "            addTag: {" +
-                "                name: processor2," +
-                "                config.tags: [tag3, tag4]" +
                 "            }" +
                 "        }]" +
                 "    }" +
@@ -146,8 +141,40 @@ public class PipelineTest {
 
         ProcessorExecutionStep onTrueExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnTrue().get(0);
         assertThat(onTrueExecutionStep.getProcessorName()).isEqualTo("processor1");
+        assertThat(conditionalExecutionStep.getOnFalse().size()).isEqualTo(0);
+    }
+
+    @Test
+    public void testConditionalElse() {
+        String pipelineString = "{" +
+                "name: pipeline1," +
+                "description: description la la la," +
+                "executionSteps: [{" +
+                "    if: {" +
+                "        condition: {" +
+                "            testCondition.value: message1" +
+                "        }," +
+                "        then: [{" +
+                "            addTag: {" +
+                "                name: processor1," +
+                "                config.tags: [tag1, tag2]" +
+                "            }" +
+                "        }]," +
+                "        else: [{" +
+                "            addTag: {" +
+                "                name: processor2," +
+                "                config.tags: [tag3, tag4]" +
+                "            }" +
+                "        }]" +
+                "    }" +
+                "}]" +
+                "}";
+
+        String id = "abc";
+        Pipeline pipeline = factory.create(id, pipelineString);
+        ConditionalExecutionStep conditionalExecutionStep = (ConditionalExecutionStep) pipeline.getExecutionSteps().get(0);
+
         ProcessorExecutionStep onFalseExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnFalse().get(0);
         assertThat(onFalseExecutionStep.getProcessorName()).isEqualTo("processor2");
-
     }
 }

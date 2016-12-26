@@ -91,18 +91,18 @@ public class ExecutionStepsParserTest {
     public void testParseConditionalExecutionStep() {
         ConditionDefinition conditionDefinition = createAndExistsConditionDefinition();
 
-        String onTrueName = RandomStringUtils.randomAlphanumeric(10);
-        List<ExecutionStepDefinition> onTrueExecutionStepDefinitions = Collections.singletonList(
-                createAddTagStepDefinition(onTrueName, null)
-        );
+        String onTrueProcessorName = RandomStringUtils.randomAlphanumeric(10);
 
-        String onFalseName = RandomStringUtils.randomAlphanumeric(10);
-        List<ExecutionStepDefinition> onFalseExecutionStepDefinition = Collections.singletonList(
-                createAddTagStepDefinition(onFalseName, null)
-        );
+        String onFalseProcessorName = RandomStringUtils.randomAlphanumeric(10);
 
         ConditionalExecutionStepDefinition conditionalExecutionStepDefinition =
-                new ConditionalExecutionStepDefinition(conditionDefinition, onTrueExecutionStepDefinitions, onFalseExecutionStepDefinition);
+                new ConditionalExecutionStepDefinition(conditionDefinition,
+                        Collections.singletonList(
+                                createAddTagStepDefinition(onTrueProcessorName, null)
+                        ),
+                        Collections.singletonList(
+                                createAddTagStepDefinition(onFalseProcessorName, null)
+                        ));
 
         List<ExecutionStepDefinition> conditionalExecutionStepDefinitions = Collections.singletonList(conditionalExecutionStepDefinition);
 
@@ -119,11 +119,11 @@ public class ExecutionStepsParserTest {
 
         ProcessorExecutionStep onTrueExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnTrue().get(0);
         assertThat(onTrueExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
-        assertThat(onTrueExecutionStep.getProcessorName()).isEqualTo(onTrueName);
+        assertThat(onTrueExecutionStep.getProcessorName()).isEqualTo(onTrueProcessorName);
 
         ProcessorExecutionStep onFalseExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnFalse().get(0);
         assertThat(onFalseExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
-        assertThat(onFalseExecutionStep.getProcessorName()).isEqualTo(onFalseName);
+        assertThat(onFalseExecutionStep.getProcessorName()).isEqualTo(onFalseProcessorName);
 
 
     }

@@ -8,14 +8,10 @@ import io.logz.sawmill.OnFailureExecutionStep;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.ProcessorExecutionStep;
 import io.logz.sawmill.ProcessorFactoryRegistry;
-import io.logz.sawmill.parser.ConditionParser;
-import io.logz.sawmill.parser.ConditionalExecutionStepDefinition;
-import io.logz.sawmill.parser.ExecutionStepDefinition;
-import io.logz.sawmill.parser.OnFailureExecutionStepDefinition;
-import io.logz.sawmill.parser.ProcessorDefinition;
-import io.logz.sawmill.parser.ProcessorExecutionStepDefinition;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -45,17 +41,21 @@ public class ExecutionStepsParser {
     }
 
     private ConditionalExecutionStep parseConditionalExecutionStep(ConditionalExecutionStepDefinition conditionalExecutionStepDefinition) {
-        Condition condition = conditionParser.parse(conditionalExecutionStepDefinition.getCondition());
-        List<ExecutionStep> onTrueExecutionSteps = parse(conditionalExecutionStepDefinition.getOnTrue());
-        List<ExecutionStep> onFalseExecutionSteps = parse(conditionalExecutionStepDefinition.getOnFalse());
+        Condition parsedCondition = conditionParser.parse(conditionalExecutionStepDefinition.getConditionDefinition());
+        List<ExecutionStep> parsedOnTrue = parse(conditionalExecutionStepDefinition.getOnTrue());
 
-        return new ConditionalExecutionStep(condition, onTrueExecutionSteps, onFalseExecutionSteps);
+        Optional<List<ExecutionStepDefinition>> optionalOnFalse = conditionalExecutionStepDefinition.getOnFalse();
+        List<ExecutionStep> parsedOnFalse = optionalOnFalse.isPresent() ? parse(optionalOnFalse.get()) : Collections.emptyList();
+
+        return new ConditionalExecutionStep(parsedCondition, parsedOnTrue, parsedOnFalse);
     }
 
     private ProcessorExecutionStep parseProcessorExecutionStep(ProcessorExecutionStepDefinition processorExecutionStepDefinition) {
         Processor processor = parseProcessor(processorExecutionStepDefinition.getProcessorDefinition());
         String processorName = processorExecutionStepDefinition.getName();
-        List<OnFailureExecutionStep> onFailureExecutionSteps = parseOnFailureExecutionSteps(processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList());
+        List<OnFailureExecutionStep> onFailureExecutionSteps =
+                parseOnFailureExecutionSteps(processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList());
+
         return new ProcessorExecutionStep(processorName, processor, onFailureExecutionSteps);
     }
 
@@ -64,9 +64,12 @@ public class ExecutionStepsParser {
         return factory.create(processorDefinition.getConfig());
     }
 
-    private List<OnFailureExecutionStep> parseOnFailureExecutionSteps(List<OnFailureExecutionStepDefinition> onFailureExecutionStepDefinitionList) {
-        if (onFailureExecutionStepDefinitionList == null) return null;
-        return onFailureExecutionStepDefinitionList.stream().map(this::parseOnFailureExecutionStep).collect(Collectors.toList());
+    private List<OnFailureExecutionStep> parseOnFailureExecutionSteps(Optional<List<OnFailureExecutionStepDefinition>> onFailureExecutionStepDefinitionList) {
+        if (!onFailureExecutionStepDefinitionList.isPresent()) return null;
+
+        List<OnFailureExecutionStep> onFailureExecutionSteps =
+                onFailureExecutionStepDefinitionList.get().stream().map(this::parseOnFailureExecutionStep).collect(Collectors.toList());
+        return onFailureExecutionSteps;
 
     }
 

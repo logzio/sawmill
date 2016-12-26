@@ -1,6 +1,7 @@
 package io.logz.sawmill.parser;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by naorguetta on 21/12/2016.
@@ -8,15 +9,15 @@ import java.util.List;
 public class ConditionalExecutionStepDefinition implements ExecutionStepDefinition {
     private ConditionDefinition condition;
     private List<ExecutionStepDefinition> onTrue;
-    private List<ExecutionStepDefinition> onFalse;
+    private Optional<List<ExecutionStepDefinition>> onFalse;
 
     public ConditionalExecutionStepDefinition(ConditionDefinition condition, List<ExecutionStepDefinition> onTrue, List<ExecutionStepDefinition> onFalse) {
         this.condition = condition;
         this.onTrue = onTrue;
-        this.onFalse = onFalse;
+        this.onFalse = Optional.ofNullable(onFalse);
     }
 
-    public ConditionDefinition getCondition() {
+    public ConditionDefinition getConditionDefinition() {
         return condition;
     }
 
@@ -24,7 +25,7 @@ public class ConditionalExecutionStepDefinition implements ExecutionStepDefiniti
         return onTrue;
     }
 
-    public List<ExecutionStepDefinition> getOnFalse() {
+    public Optional<List<ExecutionStepDefinition>> getOnFalse() {
         return onFalse;
     }
 }

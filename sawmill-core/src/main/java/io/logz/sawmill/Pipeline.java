@@ -6,6 +6,7 @@ import io.logz.sawmill.parser.PipelineDefinitionParser;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -75,8 +76,8 @@ public class Pipeline {
             String name = pipelineDefinition.getName();
             String description = pipelineDefinition.getDescription();
             List<ExecutionStep> executionSteps = executionStepsParser.parse(pipelineDefinition.getExecutionSteps());
-            Boolean ignoreFailureNullable = pipelineDefinition.isIgnoreFailure();
-            boolean ignoreFailure = ignoreFailureNullable == null || ignoreFailureNullable;
+            Optional<Boolean> ignoreFailureNullable = pipelineDefinition.isIgnoreFailure();
+            boolean ignoreFailure = ignoreFailureNullable.orElse(true);
 
             return new Pipeline(id, name, description, executionSteps, ignoreFailure);
         }

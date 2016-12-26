@@ -41,15 +41,16 @@ public class PipelineDefinitionParserTest {
         assertThat(pipelineDefinition.getName()).isEqualTo("json");
         assertThat(pipelineDefinition.getDescription()).isEqualTo("this is hocon");
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
-        assertThat(pipelineDefinition.isIgnoreFailure()).isNull();
+        assertThat(pipelineDefinition.isIgnoreFailure().isPresent()).isFalse();
 
-        ProcessorExecutionStepDefinition processorExecutionStepDefinition = (ProcessorExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
+        ProcessorExecutionStepDefinition processorExecutionStepDefinition =
+                (ProcessorExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
         assertThat(processorExecutionStepDefinition.getName()).isEqualTo("test1");
         ProcessorDefinition processorDefinition = processorExecutionStepDefinition.getProcessorDefinition();
         assertThat(processorDefinition.getType()).isEqualTo("test");
         assertThat(processorDefinition.getConfig().get("value")).isEqualTo("message");
 
-        assertThat(processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList()).isNull();
+        assertThat(processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList().isPresent()).isFalse();
     }
 
     @Test
@@ -70,7 +71,7 @@ public class PipelineDefinitionParserTest {
         assertThat(pipelineDefinition.getName()).isEqualTo("hocon");
         assertThat(pipelineDefinition.getDescription()).isEqualTo("this is hocon");
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
-        assertThat(pipelineDefinition.isIgnoreFailure()).isNull();
+        assertThat(pipelineDefinition.isIgnoreFailure().isPresent()).isFalse();
 
         ProcessorExecutionStepDefinition processorExecutionStepDefinition = (ProcessorExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
         assertThat(processorExecutionStepDefinition.getName()).isEqualTo("test1");
@@ -79,64 +80,62 @@ public class PipelineDefinitionParserTest {
         assertThat(processorDefinition.getType()).isEqualTo("test");
         assertThat(processorDefinition.getConfig().get("value")).isEqualTo("message");
 
-        assertThat(processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList()).isNull();
+        assertThat(processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList().isPresent()).isFalse();
     }
 
     @Test
     public void testOnFailure() {
-        String configJson = "{" +
-                "    \"name\": \"test pipeline\"," +
-                "    \"description\": \"this is pipeline configuration\"," +
-                "    \"executionSteps\": [{" +
-                "        \"test\": {" +
-                "            \"name\": \"test1\"," +
-                "            \"config\": {" +
-                "                \"value\": \"message\"" +
-                "            }," +
-                "            \"onFailure\": [{" +
-                "                \"addField\": {" +
-                "                    \"name\": \"addField1\"," +
-                "                    \"config\": {" +
-                "                        \"path\": \"path\"," +
-                "                        \"value\": \"sheker\"" +
-                "                    }" +
-                "                }" +
-                "            }]" +
-                "        }" +
-                "    }]," +
-                "    \"ignoreFailure\": false" +
-                "}";
+        String configJson = createJson(createMap(
+                "name", "test pipeline",
+                "description", "this is pipeline configuration",
+                "executionSteps", createList(createMap(
+                        "test", createMap(
+                                "name", "test1",
+                                "config", createMap("value", "message"),
+                                "onFailure", createList(createMap(
+                                        "addField", createMap(
+                                                "name", "on failure processor",
+                                                "config", createMap(
+                                                        "path", "field1",
+                                                        "value", "value1"
+                                                )
+                                        )
+                                ))
+                        )
+                )),
+                "ignoreFailure", false
+        ));
 
         PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(configJson);
         assertThat(pipelineDefinition.getName()).isEqualTo("test pipeline");
         assertThat(pipelineDefinition.getDescription()).isEqualTo("this is pipeline configuration");
-        assertThat(pipelineDefinition.isIgnoreFailure()).isFalse();
+        assertThat(pipelineDefinition.isIgnoreFailure().get()).isFalse();
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
 
-        ProcessorExecutionStepDefinition processorExecutionStepDefinition = (ProcessorExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
+        ProcessorExecutionStepDefinition processorExecutionStepDefinition =
+                (ProcessorExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
         ProcessorDefinition config = processorExecutionStepDefinition.getProcessorDefinition();
         assertThat(config.getType()).isEqualTo("test");
         assertThat(config.getConfig().get("value")).isEqualTo("message");
 
-        List<OnFailureExecutionStepDefinition> onFailureExecutionStepDefinitionList = processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList();
-        assertThat(onFailureExecutionStepDefinitionList.size()).isEqualTo(1);
+        List<OnFailureExecutionStepDefinition> onFailureExecutionStepDefinitions
+                = processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList().get();
+        assertThat(onFailureExecutionStepDefinitions.size()).isEqualTo(1);
 
-        OnFailureExecutionStepDefinition onFailureExecutionStepDefinition = onFailureExecutionStepDefinitionList.get(0);
-        assertThat(onFailureExecutionStepDefinition.getName()).isEqualTo("addField1");
+        OnFailureExecutionStepDefinition onFailureExecutionStepDefinition = onFailureExecutionStepDefinitions.get(0);
+        assertThat(onFailureExecutionStepDefinition.getName()).isEqualTo("on failure processor");
 
         ProcessorDefinition processorDefinition = onFailureExecutionStepDefinition.getProcessorDefinition();
         assertThat(processorDefinition.getType()).isEqualTo("addField");
-        assertThat(processorDefinition.getConfig().get("path")).isEqualTo("path");
-        assertThat(processorDefinition.getConfig().get("value")).isEqualTo("sheker");
+        assertThat(processorDefinition.getConfig().get("path")).isEqualTo("field1");
+        assertThat(processorDefinition.getConfig().get("value")).isEqualTo("value1");
     }
 
     @Test
-    public void testIf() {
-        String pipelineName = "pipeline1";
-        String pipelineDescription = "description la la la";
+    public void testConditional() {
         String json = createJson(createMap(
-                "name", pipelineName,
-                "description", pipelineDescription,
+                "name", "pipeline1",
+                "description", "description la la la",
                 "executionSteps", createList(
                         createMap(
                                 "if", createMap(
@@ -152,28 +151,21 @@ public class PipelineDefinitionParserTest {
                                         ),
                                         "then", createList(
                                                 createMap("removeField", createMap(
-                                                        "name", "processor1",
+                                                        "name", "on true",
                                                         "config", createMap("path", "field1")
                                                 ))
 
-                                        ),
-                                        "else", createList(
-                                                createMap("removeField", createMap(
-                                                        "name", "processor2",
-                                                        "config", createMap("path", "field2")
-                                                ))
                                         )
                                 ))
                 )
         ));
 
         PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(json);
-        assertThat(pipelineDefinition.getName()).isEqualTo(pipelineName);
-        assertThat(pipelineDefinition.getDescription()).isEqualTo(pipelineDescription);
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
 
-        ConditionalExecutionStepDefinition executionStepDefinition = (ConditionalExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
-        ConditionDefinition conditionDefinition = executionStepDefinition.getCondition();
+        ConditionalExecutionStepDefinition executionStepDefinition =
+                (ConditionalExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
+        ConditionDefinition conditionDefinition = executionStepDefinition.getConditionDefinition();
 
         assertThat(conditionDefinition.getType()).isEqualTo("and");
         List<ConditionDefinition> andConditions = (List<ConditionDefinition>) conditionDefinition.getConfig().get("conditions");
@@ -191,24 +183,60 @@ public class PipelineDefinitionParserTest {
         assertThat(onTrue.size()).isEqualTo(1);
 
         ProcessorExecutionStepDefinition onTrueProcessorExecutionStep = (ProcessorExecutionStepDefinition) onTrue.get(0);
-        assertThat(onTrueProcessorExecutionStep.getName()).isEqualTo("processor1");
-        assertThat(onTrueProcessorExecutionStep.getOnFailureExecutionStepDefinitionList()).isNull();
+        assertThat(onTrueProcessorExecutionStep.getName()).isEqualTo("on true");
+        assertThat(onTrueProcessorExecutionStep.getOnFailureExecutionStepDefinitionList().isPresent()).isFalse();
 
-        ProcessorDefinition processorDefinition1 = onTrueProcessorExecutionStep.getProcessorDefinition();
-        assertThat(processorDefinition1.getType()).isEqualTo("removeField");
-        assertThat(processorDefinition1.getConfig().get("path")).isEqualTo("field1");
+        ProcessorDefinition processorDefinition = onTrueProcessorExecutionStep.getProcessorDefinition();
+        assertThat(processorDefinition.getType()).isEqualTo("removeField");
+        assertThat(processorDefinition.getConfig().get("path")).isEqualTo("field1");
 
-        List<ExecutionStepDefinition> onFalse = executionStepDefinition.getOnFalse();
+        assertThat(executionStepDefinition.getOnFalse().isPresent()).isFalse();
+    }
+
+    @Test
+    public void testConditionalElse() {
+        String json = createJson(createMap(
+                "name", "pipeline1",
+                "description", "description la la la",
+                "executionSteps", createList(
+                        createMap(
+                                "if", createMap(
+                                        "condition", createMap(
+                                                "testCondition", createMap("value", "message1")),
+                                        "then", createList(
+                                                createMap("removeField", createMap(
+                                                        "name", "on true",
+                                                        "config", createMap("path", "field1")
+                                                ))
+                                        ),
+                                        "else", createList(
+                                                createMap("removeField", createMap(
+                                                        "name", "on false",
+                                                        "config", createMap("path", "field2")
+                                                ))
+                                        )
+                                ))
+                )
+        ));
+
+        PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(json);
+        assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
+
+        ConditionalExecutionStepDefinition executionStepDefinition =
+                (ConditionalExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
+
+        List<ExecutionStepDefinition> onFalse = executionStepDefinition.getOnFalse().get();
         assertThat(onFalse.size()).isEqualTo(1);
 
         ProcessorExecutionStepDefinition onFalseProcessorExecutionStep = (ProcessorExecutionStepDefinition) onFalse.get(0);
-        assertThat(onFalseProcessorExecutionStep.getName()).isEqualTo("processor2");
-        assertThat(onFalseProcessorExecutionStep.getOnFailureExecutionStepDefinitionList()).isNull();
+        assertThat(onFalseProcessorExecutionStep.getName()).isEqualTo("on false");
+        assertThat(onFalseProcessorExecutionStep.getOnFailureExecutionStepDefinitionList().isPresent()).isFalse();
 
         ProcessorDefinition processorDefinition2 = onFalseProcessorExecutionStep.getProcessorDefinition();
         assertThat(processorDefinition2.getType()).isEqualTo("removeField");
         assertThat(processorDefinition2.getConfig().get("path")).isEqualTo("field2");
-
     }
+
+
 
 }
