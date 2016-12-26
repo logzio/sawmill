@@ -1,5 +1,6 @@
 package io.logz.sawmill;
 
+import io.logz.sawmill.conditions.AndCondition;
 import io.logz.sawmill.conditions.ExistsCondition;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.junit.Before;
@@ -107,21 +108,22 @@ public class PipelineExecutorTest {
 
     @Test
     public void testConditionalExecutionStep() {
-        String fieldExists = "fieldExists";
+        String fieldExists1 = "fieldExists1";
+        String fieldExists2 = "fieldExists2";
         String fieldToAdd = "fieldToAdd";
         String valueOnTrue = "valueOnTrue";
         String valueOnFalse = "valueOnFalse";
         Pipeline pipeline = createPipeline(false, createConditionalExecutionStep(
-                createExistsCondition(fieldExists),
+                createExistsCondition(fieldExists1, fieldExists2),
                 createAddFieldExecutionStep(fieldToAdd, valueOnTrue),
                 createAddFieldExecutionStep(fieldToAdd, valueOnFalse)));
 
-        Doc doc1 = createDoc(fieldExists, "value");
+        Doc doc1 = createDoc(fieldExists1, "value1", fieldExists2, "value2");
         assertThat(pipelineExecutor.execute(pipeline, doc1).isSucceeded()).isTrue();
         String value1 = doc1.getField(fieldToAdd);
         assertThat(value1).isEqualTo(valueOnTrue);
 
-        Doc doc2 = createDoc("otherField", "value");
+        Doc doc2 = createDoc(fieldExists1, "value3");
         assertThat(pipelineExecutor.execute(pipeline, doc2).isSucceeded()).isTrue();
         String value2 = doc2.getField(fieldToAdd);
         assertThat(value2).isEqualTo(valueOnFalse);
@@ -183,7 +185,7 @@ public class PipelineExecutorTest {
         return new ConditionalExecutionStep(condition, Collections.singletonList(onTrue), Collections.singletonList(onFalse));
     }
 
-    private Condition createExistsCondition(String field) {
-        return new ExistsCondition(field);
+    private Condition createExistsCondition(String field1, String field2) {
+        return new AndCondition(Arrays.asList(new ExistsCondition(field1), new ExistsCondition(field2)));
     }
 }
