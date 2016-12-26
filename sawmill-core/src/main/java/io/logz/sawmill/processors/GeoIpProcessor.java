@@ -13,6 +13,7 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
+import static java.util.Collections.EMPTY_LIST;
 
 @ProcessorProvider(type = "geoIp", factory = GeoIpProcessor.Factory.class)
 public class GeoIpProcessor implements Processor {
@@ -45,11 +51,14 @@ public class GeoIpProcessor implements Processor {
     private final String sourceField;
     private final String targetField;
     private final List<Property> properties;
+    private final List<String> tagsOnSuccess;
 
-    public GeoIpProcessor(String sourceField, String targetField, List<Property> properties) {
-        this.sourceField = sourceField;
-        this.targetField = targetField;
+    public GeoIpProcessor(String sourceField, String targetField, List<Property> properties, List<String> tagsOnSuccess) {
+        checkState(CollectionUtils.isNotEmpty(properties), "properties cannot be empty");
+        this.sourceField = checkNotNull(sourceField, "source field cannot be null");
+        this.targetField = checkNotNull(targetField, "target field cannot be null");
         this.properties = properties;
+        this.tagsOnSuccess = tagsOnSuccess != null ? tagsOnSuccess : EMPTY_LIST;
     }
 
     @Override
@@ -59,6 +68,9 @@ public class GeoIpProcessor implements Processor {
         }
 
         String ip = doc.getField(sourceField);
+        if (!InetAddresses.isInetAddress(ip)) {
+            return ProcessResult.failure(String.format("failed to process geoIp, source field [%s] in path [%s] is not a valid IP string", ip, sourceField));
+        }
         InetAddress ipAddress = InetAddresses.forString(ip);
 
         Map<String, Object> geoIp;
@@ -74,6 +86,7 @@ public class GeoIpProcessor implements Processor {
 
         if (geoIp != null) {
             doc.addField(targetField, geoIp);
+            doc.appendList("tags", tagsOnSuccess);
         }
 
         return ProcessResult.success();
@@ -84,7 +97,11 @@ public class GeoIpProcessor implements Processor {
 
         Map<String, Object> geoIp = new HashMap<>();
         for (Property property : properties) {
-            geoIp.put(property.toString(), property.getValue(response));
+            Object propertyValue = property.getValue(response);
+
+            if (propertyValue != null) {
+                geoIp.put(property.toString(), propertyValue);
+            }
         }
 
         return geoIp;
@@ -99,15 +116,17 @@ public class GeoIpProcessor implements Processor {
             GeoIpProcessor.Configuration geoIpConfig = JsonUtils.fromJsonMap(Configuration.class, config);
 
             return new GeoIpProcessor(geoIpConfig.getSourceField(),
-                    geoIpConfig.getTargetField() != null ? geoIpConfig.getTargetField() : "geoip",
-                    geoIpConfig.getProperties() != null ? geoIpConfig.getProperties() : Property.ALL_PROPERTIES);
+                    geoIpConfig.getTargetField(),
+                    geoIpConfig.getProperties(),
+                    geoIpConfig.getTagsOnSuccess());
         }
     }
 
     public static class Configuration implements Processor.Configuration {
         private String sourceField;
-        private String targetField;
-        private List<Property> properties;
+        private String targetField = "geoip";
+        private List<Property> properties = ALL_PROPERTIES;
+        private List<String> tagsOnSuccess = EMPTY_LIST;
 
         public Configuration() { }
 
@@ -116,12 +135,20 @@ public class GeoIpProcessor implements Processor {
             this.targetField = targetField;
         }
 
-        public String getSourceField() { return sourceField; }
+        public String getSourceField() {
+            return sourceField;
+        }
 
-        public String getTargetField() { return targetField; }
+        public String getTargetField() {
+            return targetField;
+        }
 
         public List<Property> getProperties() {
             return properties;
+        }
+
+        public List<String> getTagsOnSuccess() {
+            return tagsOnSuccess;
         }
     }
 

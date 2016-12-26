@@ -8,13 +8,15 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @ProcessorProvider(type = "addField", factory = AddFieldProcessor.Factory.class)
 public class AddFieldProcessor implements Processor {
     private final String path;
     private final Object value;
 
     public AddFieldProcessor(String path, Object value) {
-        this.path = path;
+        this.path = checkNotNull(path, "path cannot be null");
         this.value = value;
     }
 

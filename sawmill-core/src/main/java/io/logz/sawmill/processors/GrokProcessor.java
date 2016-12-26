@@ -26,6 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.EMPTY_LIST;
+
 @ProcessorProvider(type = "grok", factory = GrokProcessor.Factory.class)
 public class GrokProcessor implements Processor {
     private final String field;
@@ -35,9 +39,10 @@ public class GrokProcessor implements Processor {
     private final boolean ignoreMissing;
 
     public GrokProcessor(String field, List<String> matchExpressions, Map<String, String> patternsBank, List<String> overwrite, boolean ignoreMissing) {
-        this.field = field;
+        checkState(CollectionUtils.isNotEmpty(matchExpressions), "patterns cannot be empty");
+        this.field = checkNotNull(field, "field cannot be null");
         this.expressions = matchExpressions;
-        this.overwrite = overwrite != null ? overwrite : Collections.EMPTY_LIST;
+        this.overwrite = overwrite != null ? overwrite : EMPTY_LIST;
         this.ignoreMissing = ignoreMissing;
 
         this.groks = new ArrayList<>();
@@ -181,15 +186,15 @@ public class GrokProcessor implements Processor {
                     grokConfig.getPatterns(),
                     patternsBank,
                     grokConfig.getOverwrite(),
-                    grokConfig.getIgnoreMissing() != null ? grokConfig.getIgnoreMissing() : true);
+                    grokConfig.getIgnoreMissing());
         }
     }
 
     public static class Configuration implements Processor.Configuration {
         private String field;
         private List<String> patterns;
-        private List<String> overwrite;
-        private Boolean ignoreMissing;
+        private List<String> overwrite = EMPTY_LIST;
+        private boolean ignoreMissing = true;
 
         public Configuration() { }
 
@@ -212,7 +217,7 @@ public class GrokProcessor implements Processor {
             return overwrite;
         }
 
-        public Boolean getIgnoreMissing() {
+        public boolean getIgnoreMissing() {
             return ignoreMissing;
         }
     }
