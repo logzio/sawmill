@@ -82,6 +82,7 @@ public class GrokProcessor implements Processor {
 
         matches.entrySet().stream()
                 .filter((e) -> Objects.nonNull(e.getValue()))
+                .filter((e) -> !e.getValue().toString().isEmpty())
                 .forEach((e) -> {
                     if (overwrite.contains(e.getKey()) || !doc.hasField(e.getKey())) {
                         doc.addField(e.getKey(), e.getValue());
