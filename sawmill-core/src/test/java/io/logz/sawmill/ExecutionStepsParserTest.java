@@ -1,7 +1,6 @@
 package io.logz.sawmill;
 
 import io.logz.sawmill.conditions.AndCondition;
-import io.logz.sawmill.conditions.ExistsCondition;
 import io.logz.sawmill.conditions.TestCondition;
 import io.logz.sawmill.parser.ConditionDefinition;
 import io.logz.sawmill.parser.ConditionalExecutionStepDefinition;
@@ -24,9 +23,6 @@ import static io.logz.sawmill.JsonUtils.createList;
 import static io.logz.sawmill.JsonUtils.createMap;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-/**
- * Created by naorguetta on 22/12/2016.
- */
 public class ExecutionStepsParserTest {
 
     private ProcessorFactoryRegistry processorFactoryRegistry;
@@ -111,11 +107,7 @@ public class ExecutionStepsParserTest {
 
         ConditionalExecutionStep conditionalExecutionStep = (ConditionalExecutionStep) executionSteps.get(0);
 
-        AndCondition andCondition = (AndCondition) conditionalExecutionStep.getCondition();
-        List<Condition> conditions = andCondition.getConditions();
-        assertThat(conditions.size()).isEqualTo(2);
-        assertThat(conditions.get(0)).isInstanceOf(ExistsCondition.class);
-        assertThat(conditions.get(1)).isInstanceOf(ExistsCondition.class);
+        assertThat(conditionalExecutionStep.getCondition()).isInstanceOf(AndCondition.class);
 
         ProcessorExecutionStep onTrueExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnTrue().get(0);
         assertThat(onTrueExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);

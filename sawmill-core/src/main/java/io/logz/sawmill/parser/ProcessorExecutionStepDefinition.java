@@ -3,9 +3,6 @@ package io.logz.sawmill.parser;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Created by naorguetta on 21/12/2016.
- */
 public class ProcessorExecutionStepDefinition implements ExecutionStepDefinition {
     private ProcessorDefinition processorDefinition;
     private String name;

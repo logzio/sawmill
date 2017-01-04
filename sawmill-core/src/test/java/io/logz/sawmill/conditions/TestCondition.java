@@ -7,9 +7,6 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;
 
-/**
- * Created by naorguetta on 20/12/2016.
- */
 public class TestCondition implements Condition {
     public final String value;
 

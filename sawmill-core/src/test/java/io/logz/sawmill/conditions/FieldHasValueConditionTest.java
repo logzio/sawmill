@@ -10,9 +10,6 @@ import java.util.List;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Created by naorguetta on 20/12/2016.
- */
 public class FieldHasValueConditionTest {
 
     @Test

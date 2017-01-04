@@ -48,16 +48,12 @@ public class Pipeline {
         private final ExecutionStepsParser executionStepsParser;
 
         public Factory() {
-            ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
-            ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
-            ConditionFactoryRegistry conditionFactoryRegistry = new ConditionFactoryRegistry();
-            ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
-
-            pipelineDefinitionParser = new PipelineDefinitionParser();
-            executionStepsParser = new ExecutionStepsParser(processorFactoryRegistry, conditionFactoryRegistry);
+            this(new ProcessorFactoryRegistry(), new ConditionFactoryRegistry());
         }
 
         public Factory(ProcessorFactoryRegistry processorFactoryRegistry, ConditionFactoryRegistry conditionFactoryRegistry) {
+            ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
+            ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
             pipelineDefinitionParser = new PipelineDefinitionParser();
             executionStepsParser = new ExecutionStepsParser(processorFactoryRegistry, conditionFactoryRegistry);
         }

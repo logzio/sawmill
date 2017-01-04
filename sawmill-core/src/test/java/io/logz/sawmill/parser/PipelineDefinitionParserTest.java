@@ -10,9 +10,6 @@ import static io.logz.sawmill.JsonUtils.createList;
 import static io.logz.sawmill.JsonUtils.createMap;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-/**
- * Created by naorguetta on 22/12/2016.
- */
 public class PipelineDefinitionParserTest {
 
     private PipelineDefinitionParser pipelineDefinitionParser;

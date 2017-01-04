@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -26,61 +27,60 @@ public class PipelineExecutor {
 
         long executionIdentifier = watchdog.startedExecution(new ExecutionContext(doc, pipeline.getId(), System.currentTimeMillis()));
 
+        ExecutionResult executionResult;
         try {
-            for (ExecutionStep executionStep : pipeline.getExecutionSteps()) {
-                try {
-                    ExecutionResult executionResult = executeStep(pipeline, doc, pipelineStopwatch, executionStep);
+            List<ExecutionStep> executionSteps = pipeline.getExecutionSteps();
+            executionResult = executeSteps(executionSteps, pipeline, doc, pipelineStopwatch);
 
-                    if (!executionResult.isSucceeded()) {
-                         if (pipeline.isIgnoreFailure()) {
-                             continue;
-                         }
+        } catch (RuntimeException e) {
+            pipelineExecutionMetricsTracker.pipelineFailedOnUnexpectedError(pipeline.getId(), doc, e);
+            throw new PipelineExecutionException(pipeline.getName(), e);
 
-                         return executionResult;
-                     }
-                } catch (RuntimeException e) {
-                    pipelineExecutionMetricsTracker.pipelineFailedOnUnexpectedError(pipeline.getId(), "", doc, e);
-                    throw new PipelineExecutionException(pipeline.getName(), e);
-                }
-            }
-            logger.trace("pipeline {} executed successfully, took {}ns", pipeline.getId(), pipelineStopwatch.pipelineElapsed());
-        }
-        finally {
+        } finally {
             pipelineStopwatch.stop();
             watchdog.removeExecution(executionIdentifier);
         }
 
+        if (!executionResult.isSucceeded()) {
+            pipelineExecutionMetricsTracker.pipelineFailed(pipeline.getId(), doc);
+            return executionResult;
+        }
+
+        logger.trace("pipeline {} executed successfully, took {}ns", pipeline.getId(), pipelineStopwatch.pipelineElapsed());
         pipelineExecutionMetricsTracker.pipelineFinishedSuccessfully(pipeline.getId(), doc, pipelineStopwatch.pipelineElapsed());
 
         return ExecutionResult.success();
     }
 
-    private ExecutionResult executeStep(Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch, ExecutionStep executionStep) {
-        if (executionStep instanceof ProcessorExecutionStep) {
-            return execProcessorStep(pipeline, doc, pipelineStopwatch, (ProcessorExecutionStep) executionStep);
-        } else if (executionStep instanceof ConditionalExecutionStep) {
-            return execConditionalStep(pipeline, doc, pipelineStopwatch, (ConditionalExecutionStep) executionStep);
-        }
-
-        return ExecutionResult.failure("invalid execution step.", String.valueOf(executionStep));
-    }
-
-    private ExecutionResult execConditionalStep(Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch, ConditionalExecutionStep conditionalExecutionStep) {
-        Condition condition = conditionalExecutionStep.getCondition();
-        List<ExecutionStep> conditionalNextSteps;
-        if (condition.evaluate(doc)) {
-            conditionalNextSteps = conditionalExecutionStep.getOnTrue();
-        } else {
-            conditionalNextSteps = conditionalExecutionStep.getOnFalse();
-        }
-        for (ExecutionStep step : conditionalNextSteps) {
-            ExecutionResult result = executeStep(pipeline, doc, pipelineStopwatch, step);
-            if (!result.isSucceeded()) return result;
+    private ExecutionResult executeSteps(List<ExecutionStep> executionSteps, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {
+        for (ExecutionStep executionStep : executionSteps) {
+            ExecutionResult executionResult = executeStep(executionStep, pipeline, doc, pipelineStopwatch);
+            if (!executionResult.isSucceeded()) {
+                return executionResult;
+            }
         }
         return ExecutionResult.success();
     }
 
-    private ExecutionResult execProcessorStep(Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch, ProcessorExecutionStep executionStep) {
+    private ExecutionResult executeStep(ExecutionStep executionStep, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {
+        if (executionStep instanceof ConditionalExecutionStep) {
+            return executeConditionalStep((ConditionalExecutionStep) executionStep, pipeline, doc, pipelineStopwatch);
+        } else {
+            return executeProcessorStep((ProcessorExecutionStep) executionStep, pipeline, doc, pipelineStopwatch);
+        }
+    }
+
+    private ExecutionResult executeConditionalStep(ConditionalExecutionStep conditionalExecutionStep, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {
+        Condition condition = conditionalExecutionStep.getCondition();
+
+        if (condition.evaluate(doc)) {
+            return executeSteps(conditionalExecutionStep.getOnTrue(), pipeline, doc, pipelineStopwatch);
+        } else {
+            return executeSteps(conditionalExecutionStep.getOnFalse(), pipeline, doc, pipelineStopwatch);
+        }
+    }
+
+    private ExecutionResult executeProcessorStep(ProcessorExecutionStep executionStep, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {
         Processor processor = executionStep.getProcessor();
 
         ProcessResult processResult = executeProcessor(doc, processor, pipelineStopwatch, pipeline.getId(), executionStep.getProcessorName());
@@ -89,12 +89,12 @@ public class PipelineExecutor {
             return ExecutionResult.success();
         }
 
-        if (executionStep.getOnFailureExecutionSteps().isPresent()) {
-            executeOnFailure(doc, executionStep.getOnFailureExecutionSteps().get(), pipelineStopwatch, pipeline.getId());
+        Optional<List<OnFailureExecutionStep>> onFailureExecutionSteps = executionStep.getOnFailureExecutionSteps();
+        if (onFailureExecutionSteps.isPresent()) {
+            executeOnFailure(onFailureExecutionSteps.get(), doc, pipelineStopwatch, pipeline.getId());
             return ExecutionResult.success();
         }
 
-        pipelineExecutionMetricsTracker.pipelineFailed(pipeline.getId(), doc);
         ProcessResult.Error error = processResult.getError().get();
         return ExecutionResult.failure(error.getMessage(),
                 executionStep.getProcessorName(),
@@ -118,7 +118,7 @@ public class PipelineExecutor {
         return processResult;
     }
 
-    private void executeOnFailure(Doc doc, List<OnFailureExecutionStep> onFailureExecutionSteps, PipelineStopwatch pipelineStopwatch, String pipelineId) {
+    private void executeOnFailure(List<OnFailureExecutionStep> onFailureExecutionSteps, Doc doc, PipelineStopwatch pipelineStopwatch, String pipelineId) {
         for (OnFailureExecutionStep executionStep : onFailureExecutionSteps) {
             executeProcessor(doc, executionStep.getProcessor(), pipelineStopwatch, pipelineId, executionStep.getProcessorName());
         }

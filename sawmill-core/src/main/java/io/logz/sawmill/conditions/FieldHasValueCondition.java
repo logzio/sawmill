@@ -9,9 +9,6 @@ import io.logz.sawmill.utilities.JsonUtils;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by naorguetta on 13/12/2016.
- */
 @ConditionProvider(type = "hasValue", factory = FieldHasValueCondition.Factory.class)
 public class FieldHasValueCondition implements Condition {
 
@@ -27,7 +24,7 @@ public class FieldHasValueCondition implements Condition {
     public boolean evaluate(Doc doc) {
         if (!doc.hasField(field)) return false;
 
-        Object value = doc.getField(this.field);
+        Object value = doc.getField(field);
 
         return possibleValues.stream().anyMatch(value::equals);
     }

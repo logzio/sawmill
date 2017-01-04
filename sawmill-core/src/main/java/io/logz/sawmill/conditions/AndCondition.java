@@ -11,9 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Created by naorguetta on 13/12/2016.
- */
 @ConditionProvider(type = "and", factory = AndCondition.Factory.class)
 public class AndCondition implements Condition {
 
@@ -26,10 +23,6 @@ public class AndCondition implements Condition {
     @Override
     public boolean evaluate(Doc doc) {
         return conditions.stream().allMatch(condition -> condition.evaluate(doc));
-    }
-
-    public List<Condition> getConditions() {
-        return conditions;
     }
 
     public static class Factory implements Condition.Factory {

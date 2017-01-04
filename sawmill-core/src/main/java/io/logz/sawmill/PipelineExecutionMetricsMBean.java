@@ -84,7 +84,7 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     }
 
     @Override
-    public void pipelineFailedOnUnexpectedError(String pipelineId, String processorName, Doc doc, Exception e) {
+    public void pipelineFailedOnUnexpectedError(String pipelineId, Doc doc, Exception e) {
         unexpectedFailure.increment();
     }
 

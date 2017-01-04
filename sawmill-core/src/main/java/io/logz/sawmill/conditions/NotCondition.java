@@ -11,9 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Created by naorguetta on 13/12/2016.
- */
 @ConditionProvider(type = "not", factory = NotCondition.Factory.class)
 public class NotCondition implements Condition {
 

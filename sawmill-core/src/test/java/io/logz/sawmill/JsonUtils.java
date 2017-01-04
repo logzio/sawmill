@@ -7,9 +7,6 @@ import java.util.Map;
 
 import static io.logz.sawmill.utilities.JsonUtils.toJsonString;
 
-/**
- * Created by naorguetta on 22/12/2016.
- */
 public class JsonUtils {
     public static String createJson(Map<String, Object> map) {
         return toJsonString(map);

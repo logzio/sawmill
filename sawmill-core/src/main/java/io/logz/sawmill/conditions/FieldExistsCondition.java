@@ -8,14 +8,11 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;
 
-/**
- * Created by naorguetta on 19/12/2016.
- */
-@ConditionProvider(type = "exists", factory = ExistsCondition.Factory.class)
-public class ExistsCondition implements Condition {
+@ConditionProvider(type = "exists", factory = FieldExistsCondition.Factory.class)
+public class FieldExistsCondition implements Condition {
     private String field;
 
-    public ExistsCondition(String field) {
+    public FieldExistsCondition(String field) {
         this.field = field;
     }
 
@@ -30,9 +27,9 @@ public class ExistsCondition implements Condition {
 
         @Override
         public Condition create(Map<String, Object> config, ConditionParser conditionParser) {
-            ExistsCondition.Configuration existsCondition = JsonUtils.fromJsonMap(ExistsCondition.Configuration.class, config);
+            FieldExistsCondition.Configuration existsCondition = JsonUtils.fromJsonMap(FieldExistsCondition.Configuration.class, config);
 
-            return new ExistsCondition(existsCondition.getField());
+            return new FieldExistsCondition(existsCondition.getField());
         }
     }
 

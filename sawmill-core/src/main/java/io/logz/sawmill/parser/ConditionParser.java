@@ -4,9 +4,6 @@ import io.logz.sawmill.Condition;
 import io.logz.sawmill.ConditionFactoryRegistry;
 import io.logz.sawmill.parser.ConditionDefinition;
 
-/**
- * Created by naorguetta on 22/12/2016.
- */
 public class ConditionParser {
 
     private ConditionFactoryRegistry conditionFactoryRegistry;

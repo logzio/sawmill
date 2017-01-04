@@ -5,9 +5,6 @@ import io.logz.sawmill.exceptions.ProcessorMissingException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by naorguetta on 18/12/2016.
- */
 public class ConditionFactoryRegistry {
     private final Map<String, Condition.Factory> conditionFactory = new HashMap<>();
 

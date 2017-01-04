@@ -2,9 +2,6 @@ package io.logz.sawmill.parser;
 
 import java.util.Map;
 
-/**
- * Created by naorguetta on 25/12/2016.
- */
 public class ConditionDefinition {
     private String type;
     private Map<String, Object> config;

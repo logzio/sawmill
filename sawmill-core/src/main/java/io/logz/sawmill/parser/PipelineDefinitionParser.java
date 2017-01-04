@@ -13,9 +13,6 @@ import java.util.stream.Collectors;
 
 import static io.logz.sawmill.utilities.JsonUtils.toJsonString;
 
-/**
- * Created by naorguetta on 18/12/2016.
- */
 public class PipelineDefinitionParser {
 
     public PipelineDefinition parse(String config) {

@@ -132,12 +132,7 @@ public class PipelineTest {
 
         ConditionalExecutionStep conditionalExecutionStep = (ConditionalExecutionStep) pipeline.getExecutionSteps().get(0);
 
-        AndCondition andCondition = (AndCondition) conditionalExecutionStep.getCondition();
-
-        TestCondition testCondition1 = (TestCondition) andCondition.getConditions().get(0);
-        assertThat(testCondition1.getValue()).isEqualTo("message1");
-        TestCondition testCondition2 = (TestCondition) andCondition.getConditions().get(1);
-        assertThat(testCondition2.getValue()).isEqualTo("message2");
+        assertThat(conditionalExecutionStep.getCondition()).isInstanceOf(AndCondition.class);
 
         ProcessorExecutionStep onTrueExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnTrue().get(0);
         assertThat(onTrueExecutionStep.getProcessorName()).isEqualTo("processor1");

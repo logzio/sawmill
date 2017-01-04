@@ -3,9 +3,6 @@ package io.logz.sawmill.parser;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Created by naorguetta on 20/12/2016.
- */
 public class PipelineDefinition {
     private String name;
     private String description;

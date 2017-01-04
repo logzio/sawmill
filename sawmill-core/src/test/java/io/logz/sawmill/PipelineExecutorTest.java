@@ -1,7 +1,7 @@
 package io.logz.sawmill;
 
 import io.logz.sawmill.conditions.AndCondition;
-import io.logz.sawmill.conditions.ExistsCondition;
+import io.logz.sawmill.conditions.FieldExistsCondition;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.junit.Before;
 import org.junit.Test;
@@ -186,6 +186,6 @@ public class PipelineExecutorTest {
     }
 
     private Condition createExistsCondition(String field1, String field2) {
-        return new AndCondition(Arrays.asList(new ExistsCondition(field1), new ExistsCondition(field2)));
+        return new AndCondition(Arrays.asList(new FieldExistsCondition(field1), new FieldExistsCondition(field2)));
     }
 }

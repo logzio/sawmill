@@ -9,9 +9,6 @@ import io.logz.sawmill.utilities.JsonUtils;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by naorguetta on 25/12/2016.
- */
 @ConditionProvider(type = "in", factory = FieldHasValueCondition.Factory.class)
 public class InCondition implements Condition {
 
