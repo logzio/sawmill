@@ -20,12 +20,12 @@ public class PipelineExecutionTimeWatchdog {
     private static final Logger logger = LoggerFactory.getLogger(PipelineExecutionTimeWatchdog.class);
 
     private final long thresholdTimeMs;
-    private final ConcurrentMap<Long, ExecutionContext> currentlyRunning;
-    private final Consumer<ExecutionContext> overtimeOp;
+    private final ConcurrentMap<Long, WatchedPipeline> currentlyRunning;
+    private final Consumer<WatchedPipeline> overtimeOp;
     private final PipelineExecutionMetricsTracker metricsTracker;
     private final AtomicLong executionIdGenerator;
 
-    public PipelineExecutionTimeWatchdog(long thresholdTimeMs, PipelineExecutionMetricsTracker metricsTracker, Consumer<ExecutionContext> overtimeOp) {
+    public PipelineExecutionTimeWatchdog(long thresholdTimeMs, PipelineExecutionMetricsTracker metricsTracker, Consumer<WatchedPipeline> overtimeOp) {
         this.thresholdTimeMs = thresholdTimeMs;
         this.metricsTracker = metricsTracker;
         this.overtimeOp = overtimeOp;
@@ -42,21 +42,27 @@ public class PipelineExecutionTimeWatchdog {
     private void alertOvertimeExecutions() {
         try {
             long now = System.currentTimeMillis();
-            List<ExecutionContext> overtimeExecutions = currentlyRunning.values().stream().filter(context -> now - context.getIngestTimestamp() > thresholdTimeMs).collect(Collectors.toList());
+            List<WatchedPipeline> overtimeExecutions = currentlyRunning.values().stream()
+                    .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > thresholdTimeMs)
+                    .filter(watchedPipeline -> !watchedPipeline.hasBeenNotifiedAsOvertime())
+                    .collect(Collectors.toList());
             overtimeExecutions.forEach(this::notifyMetricsTracker);
             overtimeExecutions.forEach(overtimeOp);
+            overtimeExecutions.forEach(WatchedPipeline::setAsNotifiedWithOvertime);
         } catch (Exception e) {
             logger.error("failed to alert of overtime executions", e);
         }
     }
 
-    private void notifyMetricsTracker(ExecutionContext context) {
-        metricsTracker.overtimeProcessingDoc(context.getPipelineId(), context.getDoc());
+    private void notifyMetricsTracker(WatchedPipeline watchedPipeline) {
+        metricsTracker.overtimeProcessingDoc(watchedPipeline.getPipelineId(), watchedPipeline.getDoc());
     }
 
-    public long startedExecution(ExecutionContext context) {
+    public long startedExecution(String pipelineId, Doc doc) {
+        long ingestTimestamp = System.currentTimeMillis();
+        WatchedPipeline watchedPipeline = new WatchedPipeline(doc, pipelineId, ingestTimestamp);
         long id = executionIdGenerator.incrementAndGet();
-        currentlyRunning.put(id, context);
+        currentlyRunning.put(id, watchedPipeline);
 
         return id;
     }
