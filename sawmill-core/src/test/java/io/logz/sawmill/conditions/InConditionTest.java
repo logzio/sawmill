@@ -36,6 +36,18 @@ public class InConditionTest {
     }
 
     @Test
+    public void testFieldNotExists() {
+        String field = "field1";
+        String value = "value1";
+
+        InCondition inCondition = new InCondition(field, value);
+
+        Doc doc = createDoc("field2", "value2");
+
+        assertThat(inCondition.evaluate(doc)).isFalse();
+    }
+
+    @Test
     public void testStringList() {
         String field = "field1";
         String value = "value1";

@@ -2,6 +2,7 @@ package io.logz.sawmill;
 
 import com.google.common.base.Stopwatch;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
+import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,9 +66,11 @@ public class PipelineExecutor {
     private ExecutionResult executeStep(ExecutionStep executionStep, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {
         if (executionStep instanceof ConditionalExecutionStep) {
             return executeConditionalStep((ConditionalExecutionStep) executionStep, pipeline, doc, pipelineStopwatch);
-        } else {
+        } else if (executionStep instanceof ProcessorExecutionStep) {
             return executeProcessorStep((ProcessorExecutionStep) executionStep, pipeline, doc, pipelineStopwatch);
         }
+
+        throw new RuntimeException("Unsupported execution step " + executionStep.getClass());
     }
 
     private ExecutionResult executeConditionalStep(ConditionalExecutionStep conditionalExecutionStep, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {
@@ -96,11 +99,11 @@ public class PipelineExecutor {
         }
 
         ProcessResult.Error error = processResult.getError().get();
-        return ExecutionResult.failure(error.getMessage(),
-                executionStep.getProcessorName(),
-                error.getException().isPresent() ?
-                        new PipelineExecutionException(pipeline.getName(), error.getException().get()) :
-                        null);
+        String message = error.getMessage();
+        String processorName = executionStep.getProcessorName();
+        Optional<ProcessorExecutionException> exception = error.getException();
+        PipelineExecutionException e = exception.isPresent() ? new PipelineExecutionException(pipeline.getName(), exception.get()) : null;
+        return ExecutionResult.failure(message, processorName, e);
     }
 
     private ProcessResult executeProcessor(Doc doc, Processor processor, PipelineStopwatch pipelineStopwatch, String pipelineId, String processorName) {

@@ -34,38 +34,51 @@ public class PipelineExecutorTest {
 
     @Test
     public void testPipelineLongProcessingExecution() throws InterruptedException {
-        Pipeline pipeline = createPipeline(false, createSleepExecutionStep(1100));
+        Pipeline pipeline = createPipeline(false,
+                createAddFieldExecutionStep("newField1", "value1"),
+                createSleepExecutionStep(1100)
+        );
         Doc doc = createDoc("id", "long", "message", "hola",
                 "type", "test");
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
 
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
         assertThat(pipelineExecutorMetrics.getTotalDocsOvertimeProcessing()).isEqualTo(1);
     }
 
     @Test
     public void testPipelineExecution() {
-        Pipeline pipeline = createPipeline(false, createAddFieldExecutionStep("newField", "Hello"));
+        Pipeline pipeline = createPipeline(false,
+                createAddFieldExecutionStep("newField1", "value1"),
+                createAddFieldExecutionStep("newField2", "value2")
+        );
         Doc doc = createDoc("id", "add", "message", "hola");
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
 
-        assertNotNull(doc.getSource().get("newField"));
-        assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
+        assertThat(doc.getSource().get("newField2")).isEqualTo("value2");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
     }
 
     @Test
     public void testPipelineExecutionWithOnErrorProcessors() {
-        Pipeline pipeline = createPipeline(createFailAlwaysExecutionStep(Arrays.asList(createOnFailureExecutionStep(createAddFieldProcessor("newField", "Hello"), "addField2"))));
+        Pipeline pipeline = createPipeline(
+                createAddFieldExecutionStep("newField1", "value1"),
+                createFailAlwaysExecutionStep(
+                        createOnFailureExecutionStep(createAddFieldProcessor("newField2", "value2")),
+                        createOnFailureExecutionStep(createAddFieldProcessor("newField3", "value3"))
+                ));
         Doc doc = createDoc("id", "add", "message", "hola");
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
 
-        assertNotNull(doc.getSource().get("newField"));
-        assertThat(doc.getSource().get("newField")).isEqualTo("Hello");
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
+        assertThat(doc.getSource().get("newField2")).isEqualTo("value2");
+        assertThat(doc.getSource().get("newField3")).isEqualTo("value3");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
         assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(0);
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
@@ -73,22 +86,33 @@ public class PipelineExecutorTest {
 
     @Test
     public void testPipelineExecutionFailure() {
-        Pipeline pipeline = createPipeline(false, createFailAlwaysExecutionStep(null));
+        Pipeline pipeline = createPipeline(false,
+                createAddFieldExecutionStep("newField1", "value1"),
+                createFailAlwaysExecutionStep()
+        );
         Doc doc = createDoc("id", "fail", "message", "hola",
                 "type", "test");
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isFalse();
+
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
         assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(0);
     }
 
     @Test
     public void testPipelineExecutionIgnoreFailure() {
-        Pipeline pipeline = createPipeline(true, createFailAlwaysExecutionStep(null));
+        Pipeline pipeline = createPipeline(true,
+                createAddFieldExecutionStep("newField1", "value1"),
+                createFailAlwaysExecutionStep()
+        );
         Doc doc = createDoc("id", "fail", "message", "hola",
                 "type", "test");
 
         assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
+
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
         assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(0);
         assertThat(pipelineExecutorMetrics.getProcessingFailedCount("fail1")).isEqualTo(1);
@@ -97,11 +121,16 @@ public class PipelineExecutorTest {
 
     @Test
     public void testPipelineExecutionUnexpectedFailure() {
-        Pipeline pipeline = createPipeline(false, createUnexpectedFailAlwaysExecutionStep());
+        Pipeline pipeline = createPipeline(false,
+                createAddFieldExecutionStep("newField1", "value1"),
+                createUnexpectedFailAlwaysExecutionStep()
+        );
         Doc doc = createDoc("id", "fail", "message", "hola",
                 "type", "test");
 
         assertThatThrownBy(() -> pipelineExecutor.execute(pipeline, doc)).isInstanceOf(PipelineExecutionException.class);
+
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
         assertThat(pipelineExecutorMetrics.getTotalDocsFailedOnUnexpectedError()).isEqualTo(1);
     }
@@ -113,21 +142,33 @@ public class PipelineExecutorTest {
         String fieldToAdd = "fieldToAdd";
         String valueOnTrue = "valueOnTrue";
         String valueOnFalse = "valueOnFalse";
-        Pipeline pipeline = createPipeline(false, createConditionalExecutionStep(
+
+        Pipeline pipeline = createPipeline(createConditionalExecutionStep(
                 createExistsCondition(fieldExists1, fieldExists2),
-                createAddFieldExecutionStep(fieldToAdd, valueOnTrue),
-                createAddFieldExecutionStep(fieldToAdd, valueOnFalse)));
+                createExecutionSteps(
+                        createAddFieldExecutionStep("newField1", "value1"),
+                        createAddFieldExecutionStep(fieldToAdd, valueOnTrue)
+                ),
+                createExecutionSteps(
+                        createAddFieldExecutionStep("newField1", "value1"),
+                        createAddFieldExecutionStep(fieldToAdd, valueOnFalse))));
 
         Doc doc1 = createDoc(fieldExists1, "value1", fieldExists2, "value2");
         assertThat(pipelineExecutor.execute(pipeline, doc1).isSucceeded()).isTrue();
+        assertThat(doc1.getSource().get("newField1")).isEqualTo("value1");
         String value1 = doc1.getField(fieldToAdd);
         assertThat(value1).isEqualTo(valueOnTrue);
 
         Doc doc2 = createDoc(fieldExists1, "value3");
         assertThat(pipelineExecutor.execute(pipeline, doc2).isSucceeded()).isTrue();
+        assertThat(doc2.getSource().get("newField1")).isEqualTo("value1");
         String value2 = doc2.getField(fieldToAdd);
         assertThat(value2).isEqualTo(valueOnFalse);
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(2);
+    }
+
+    private List<ExecutionStep> createExecutionSteps(ExecutionStep... steps) {
+        return Arrays.asList(steps);
     }
 
     private Pipeline createPipeline(ExecutionStep... steps) {
@@ -138,26 +179,23 @@ public class PipelineExecutorTest {
         String id = "abc";
         String name = "test";
         String description = "test";
-        return new Pipeline(id,
-                name,
-                description,
-                Arrays.asList(steps),
-                ignoreFailure);
+        return new Pipeline(id, name, description, Arrays.asList(steps), ignoreFailure);
     }
 
-    private OnFailureExecutionStep createOnFailureExecutionStep(Processor processor, String name) {
+    private OnFailureExecutionStep createOnFailureExecutionStep(Processor processor) {
+        String name = "on failure processor";
         return new OnFailureExecutionStep(name, processor);
     }
 
     private ProcessorExecutionStep createSleepExecutionStep(long millis) {
         return new ProcessorExecutionStep("sleep1", (Doc doc) -> {
-                try {
-                    Thread.sleep(millis);
-                } catch (InterruptedException e) {
+            try {
+                Thread.sleep(millis);
+            } catch (InterruptedException e) {
 
-                }
-                return ProcessResult.success();
-            });
+            }
+            return ProcessResult.success();
+        });
     }
 
     private ProcessorExecutionStep createAddFieldExecutionStep(String k, String v) {
@@ -166,23 +204,27 @@ public class PipelineExecutorTest {
 
     private Processor createAddFieldProcessor(String k, String v) {
         return (Doc doc) -> {
-                doc.addField(k, v);
-                return ProcessResult.success();
-            };
+            doc.addField(k, v);
+            return ProcessResult.success();
+        };
     }
 
     private ProcessorExecutionStep createUnexpectedFailAlwaysExecutionStep() {
         return new ProcessorExecutionStep("failHard1", (Doc doc) -> {
-                throw new RuntimeException("test failure");
-            });
+            throw new RuntimeException("test failure");
+        });
     }
 
-    private ProcessorExecutionStep createFailAlwaysExecutionStep(List<OnFailureExecutionStep> onFailureExecutionSteps) {
-        return new ProcessorExecutionStep("fail1", (Doc doc) -> ProcessResult.failure("test failure"), onFailureExecutionSteps);
+    private ProcessorExecutionStep createFailAlwaysExecutionStep() {
+        return new ProcessorExecutionStep("fail1", (Doc doc) -> ProcessResult.failure("test failure"), null);
     }
 
-    private ConditionalExecutionStep createConditionalExecutionStep(Condition condition, ExecutionStep onTrue, ExecutionStep onFalse) {
-        return new ConditionalExecutionStep(condition, Collections.singletonList(onTrue), Collections.singletonList(onFalse));
+    private ProcessorExecutionStep createFailAlwaysExecutionStep(OnFailureExecutionStep... onFailureExecutionSteps) {
+        return new ProcessorExecutionStep("fail1", (Doc doc) -> ProcessResult.failure("test failure"), Arrays.asList(onFailureExecutionSteps));
+    }
+
+    private ConditionalExecutionStep createConditionalExecutionStep(Condition condition, List<ExecutionStep> onTrue, List<ExecutionStep> onFalse) {
+        return new ConditionalExecutionStep(condition, onTrue, onFalse);
     }
 
     private Condition createExistsCondition(String field1, String field2) {
