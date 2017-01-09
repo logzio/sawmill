@@ -1,8 +1,8 @@
 package io.logz.sawmill.conditions;
 
 import io.logz.sawmill.Condition;
-import io.logz.sawmill.parser.ConditionParser;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.parser.ConditionParser;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;

@@ -22,8 +22,6 @@ public class PipelineDefinitionParserTest {
     @Test
     public void testJson() {
         String configJson = createJson(createMap(
-                "description", "this is hocon",
-                "name", "json",
                 "executionSteps", createList(
                         createMap("test", createMap(
                                 "name", "test1",
@@ -35,8 +33,6 @@ public class PipelineDefinitionParserTest {
         ));
 
         PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(configJson);
-        assertThat(pipelineDefinition.getName()).isEqualTo("json");
-        assertThat(pipelineDefinition.getDescription()).isEqualTo("this is hocon");
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
         assertThat(pipelineDefinition.isIgnoreFailure().isPresent()).isFalse();
 
@@ -53,8 +49,6 @@ public class PipelineDefinitionParserTest {
     @Test
     public void testHocon() {
         String configHocon =
-                "name : hocon," +
-                        "description : this is hocon, " +
                         "executionSteps: [" +
                         "    {" +
                         "        test: {" +
@@ -65,8 +59,6 @@ public class PipelineDefinitionParserTest {
                         "]";
 
         PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(configHocon);
-        assertThat(pipelineDefinition.getName()).isEqualTo("hocon");
-        assertThat(pipelineDefinition.getDescription()).isEqualTo("this is hocon");
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
         assertThat(pipelineDefinition.isIgnoreFailure().isPresent()).isFalse();
 
@@ -83,8 +75,6 @@ public class PipelineDefinitionParserTest {
     @Test
     public void testOnFailure() {
         String configJson = createJson(createMap(
-                "name", "test pipeline",
-                "description", "this is pipeline configuration",
                 "executionSteps", createList(createMap(
                         "test", createMap(
                                 "name", "test1",
@@ -104,8 +94,6 @@ public class PipelineDefinitionParserTest {
         ));
 
         PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(configJson);
-        assertThat(pipelineDefinition.getName()).isEqualTo("test pipeline");
-        assertThat(pipelineDefinition.getDescription()).isEqualTo("this is pipeline configuration");
         assertThat(pipelineDefinition.isIgnoreFailure().get()).isFalse();
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
 
@@ -115,11 +103,11 @@ public class PipelineDefinitionParserTest {
         assertThat(config.getType()).isEqualTo("test");
         assertThat(config.getConfig().get("value")).isEqualTo("message");
 
-        List<OnFailureExecutionStepDefinition> onFailureExecutionStepDefinitions
+        List<ExecutionStepDefinition> onFailureExecutionStepDefinitions
                 = processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList().get();
         assertThat(onFailureExecutionStepDefinitions.size()).isEqualTo(1);
 
-        OnFailureExecutionStepDefinition onFailureExecutionStepDefinition = onFailureExecutionStepDefinitions.get(0);
+        ProcessorExecutionStepDefinition onFailureExecutionStepDefinition = (ProcessorExecutionStepDefinition) onFailureExecutionStepDefinitions.get(0);
         assertThat(onFailureExecutionStepDefinition.getName()).isEqualTo("on failure processor");
 
         ProcessorDefinition processorDefinition = onFailureExecutionStepDefinition.getProcessorDefinition();
@@ -131,8 +119,6 @@ public class PipelineDefinitionParserTest {
     @Test
     public void testConditional() {
         String json = createJson(createMap(
-                "name", "pipeline1",
-                "description", "description la la la",
                 "executionSteps", createList(
                         createMap(
                                 "if", createMap(
@@ -193,8 +179,6 @@ public class PipelineDefinitionParserTest {
     @Test
     public void testConditionalElse() {
         String json = createJson(createMap(
-                "name", "pipeline1",
-                "description", "description la la la",
                 "executionSteps", createList(
                         createMap(
                                 "if", createMap(

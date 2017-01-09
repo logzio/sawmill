@@ -7,8 +7,6 @@ import io.logz.sawmill.PipelineExecutionMetricsMBean;
 import io.logz.sawmill.PipelineExecutionMetricsTracker;
 import io.logz.sawmill.PipelineExecutionTimeWatchdog;
 import io.logz.sawmill.PipelineExecutor;
-import io.logz.sawmill.ProcessorFactoriesLoader;
-import io.logz.sawmill.ProcessorFactoryRegistry;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;

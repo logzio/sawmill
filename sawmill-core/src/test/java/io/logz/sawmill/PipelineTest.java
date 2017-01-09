@@ -33,8 +33,6 @@ public class PipelineTest {
     @Test
     public void testFactoryCreationJson() {
         String configJson = createJson(createMap(
-                "name", "test pipeline",
-                "description", "this is pipeline configuration",
                 "executionSteps", createList(createMap(
                         "test", createMap(
                                 "name", "test1",
@@ -57,8 +55,6 @@ public class PipelineTest {
         Pipeline pipeline = factory.create(id, configJson);
 
         assertThat(pipeline.getId()).isEqualTo(id);
-        assertThat(pipeline.getName()).isEqualTo("test pipeline");
-        assertThat(pipeline.getDescription()).isEqualTo("this is pipeline configuration");
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
         ProcessorExecutionStep executionStep = (ProcessorExecutionStep) pipeline.getExecutionSteps().get(0);
         TestProcessor processor = (TestProcessor) executionStep.getProcessor();
@@ -71,8 +67,6 @@ public class PipelineTest {
     @Test
     public void testFactoryCreationHoconWithoutId() {
         String configHocon =
-                "name : hocon," +
-                        "description : this is hocon, " +
                         "executionSteps: [" +
                         "    {" +
                         "        test: {" +
@@ -85,7 +79,6 @@ public class PipelineTest {
         String id = "abc";
         Pipeline pipeline = factory.create(id, configHocon);
 
-        assertThat(pipeline.getDescription()).isEqualTo("this is hocon");
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
         assertThat(pipeline.isIgnoreFailure()).isTrue();
 
@@ -98,8 +91,6 @@ public class PipelineTest {
     @Test
     public void testConditional() {
         String pipelineString = "{" +
-                "name: pipeline1," +
-                "description: description la la la," +
                 "executionSteps: [{" +
                 "    if: {" +
                 "        condition: {" +
@@ -125,8 +116,6 @@ public class PipelineTest {
         String id = "abc";
         Pipeline pipeline = factory.create(id, pipelineString);
 
-        assertThat(pipeline.getName()).isEqualTo("pipeline1");
-        assertThat(pipeline.getDescription()).isEqualTo("description la la la");
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
         assertThat(pipeline.isIgnoreFailure()).isTrue();
 
@@ -142,8 +131,6 @@ public class PipelineTest {
     @Test
     public void testConditionalElse() {
         String pipelineString = "{" +
-                "name: pipeline1," +
-                "description: description la la la," +
                 "executionSteps: [{" +
                 "    if: {" +
                 "        condition: {" +

@@ -217,14 +217,12 @@ public class PipelineExecutorTest {
 
     private Pipeline createPipeline(boolean ignoreFailure, ExecutionStep... steps) {
         String id = "abc";
-        String name = "test";
-        String description = "test";
-        return new Pipeline(id, name, description, Arrays.asList(steps), ignoreFailure);
+        return new Pipeline(id, Arrays.asList(steps), ignoreFailure);
     }
 
-    private OnFailureExecutionStep createOnFailureExecutionStep(Processor processor) {
+    private ExecutionStep createOnFailureExecutionStep(Processor processor) {
         String name = "on failure processor";
-        return new OnFailureExecutionStep(name, processor);
+        return new ProcessorExecutionStep(name, processor);
     }
 
     private ProcessorExecutionStep createSleepExecutionStep(long millis) {
@@ -263,7 +261,7 @@ public class PipelineExecutorTest {
         return new ProcessorExecutionStep("fail1", createFailAlwaysProcessor(e), null);
     }
 
-    private ProcessorExecutionStep createFailAlwaysExecutionStep(OnFailureExecutionStep... onFailureExecutionSteps) {
+    private ProcessorExecutionStep createFailAlwaysExecutionStep(ExecutionStep... onFailureExecutionSteps) {
         return new ProcessorExecutionStep("fail1", createFailAlwaysProcessor(), Arrays.asList(onFailureExecutionSteps));
     }
 

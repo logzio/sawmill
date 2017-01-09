@@ -4,7 +4,6 @@ import io.logz.sawmill.Condition;
 import io.logz.sawmill.ConditionFactoryRegistry;
 import io.logz.sawmill.ConditionalExecutionStep;
 import io.logz.sawmill.ExecutionStep;
-import io.logz.sawmill.OnFailureExecutionStep;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.ProcessorExecutionStep;
 import io.logz.sawmill.ProcessorFactoryRegistry;
@@ -50,24 +49,11 @@ public class ExecutionStepsParser {
     private ProcessorExecutionStep parseProcessorExecutionStep(ProcessorExecutionStepDefinition processorExecutionStepDefinition) {
         Processor processor = processorParser.parse(processorExecutionStepDefinition.getProcessorDefinition());
         String processorName = processorExecutionStepDefinition.getName();
-        List<OnFailureExecutionStep> onFailureExecutionSteps =
-                parseOnFailureExecutionSteps(processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList());
+        Optional<List<ExecutionStepDefinition>> onFailureExecutionStepDefinitions =
+                processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList();
+        List<ExecutionStep> executionSteps = onFailureExecutionStepDefinitions.isPresent() ? parse(onFailureExecutionStepDefinitions.get()) : null;
 
-        return new ProcessorExecutionStep(processorName, processor, onFailureExecutionSteps);
+        return new ProcessorExecutionStep(processorName, processor, executionSteps);
     }
 
-    private List<OnFailureExecutionStep> parseOnFailureExecutionSteps(Optional<List<OnFailureExecutionStepDefinition>> onFailureExecutionStepDefinitionList) {
-        if (!onFailureExecutionStepDefinitionList.isPresent()) return null;
-
-        List<OnFailureExecutionStep> onFailureExecutionSteps =
-                onFailureExecutionStepDefinitionList.get().stream().map(this::parseOnFailureExecutionStep).collect(Collectors.toList());
-        return onFailureExecutionSteps;
-
-    }
-
-    private OnFailureExecutionStep parseOnFailureExecutionStep(OnFailureExecutionStepDefinition onFailureExecutionStepDefinition) {
-        String name = onFailureExecutionStepDefinition.getName();
-        Processor processor = processorParser.parse(onFailureExecutionStepDefinition.getProcessorDefinition());
-        return new OnFailureExecutionStep(name, processor);
-    }
 }

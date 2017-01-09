@@ -22,49 +22,47 @@ public class PipelineDefinitionParser {
     }
 
     private PipelineDefinition parse(Map<String, Object> configMap) {
-        String name = getString(configMap, "name", true);
-        String description = getString(configMap, "description", true);
+        List<Map<String, Object>> executionSteps = getList(configMap, "executionSteps", true);
+        List<ExecutionStepDefinition> executionStepDefinitionList = parseExecutionStepDefinitionList(executionSteps);
+
         Boolean ignoreFailure = getBoolean(configMap, "ignoreFailure", false);
 
-        List<Map<String, Object>> executionSteps = getList(configMap, "executionSteps", true);
-        List<ExecutionStepDefinition> executionStepDefinitionList = parseExecutionSteps(executionSteps);
-
-        return new PipelineDefinition(name, description, executionStepDefinitionList, ignoreFailure);
+        return new PipelineDefinition(executionStepDefinitionList, ignoreFailure);
     }
 
-    private List<ExecutionStepDefinition> parseExecutionSteps(List<Map<String, Object>> configMapList) {
+    private List<ExecutionStepDefinition> parseExecutionStepDefinitionList(List<Map<String, Object>> configMapList) {
         if (configMapList == null) return null;
 
-        return configMapList.stream().map(this::parseExecutionStep).collect(Collectors.toList());
+        return configMapList.stream().map(this::parseExecutionStepDefinition).collect(Collectors.toList());
     }
 
-    private ExecutionStepDefinition parseExecutionStep(Map<String, Object> configMap) {
+    private ExecutionStepDefinition parseExecutionStepDefinition(Map<String, Object> configMap) {
         String type = getTheOnlyKeyFrom(configMap);
         Map<String, Object> executionStepConfig = getMap(configMap, type, true);
 
         if (type.equals("if")) {
-            return parseConditionalExecutionStep(executionStepConfig);
+            return parseConditionalExecutionStepDefinition(executionStepConfig);
         }
-        return parseProcessorExecutionStep(type, executionStepConfig);
+        return parseProcessorExecutionStepDefinition(type, executionStepConfig);
     }
 
-    private ConditionalExecutionStepDefinition parseConditionalExecutionStep(Map<String, Object> config) {
+    private ConditionalExecutionStepDefinition parseConditionalExecutionStepDefinition(Map<String, Object> config) {
         Map<String, Object> condition = getMap(config, "condition", true);
         List<Map<String, Object>> onTrue = getList(config, "then", true);
         List<Map<String, Object>> onFalse = getList(config, "else", false);
 
-        ConditionDefinition conditionDefinition = parseCondition(condition);
-        List<ExecutionStepDefinition> onTrueDefinitions = parseExecutionSteps(onTrue);
-        List<ExecutionStepDefinition> onFalseDefinitions = parseExecutionSteps(onFalse);
+        ConditionDefinition conditionDefinition = parseConditionDefinition(condition);
+        List<ExecutionStepDefinition> onTrueDefinitions = parseExecutionStepDefinitionList(onTrue);
+        List<ExecutionStepDefinition> onFalseDefinitions = parseExecutionStepDefinitionList(onFalse);
         return new ConditionalExecutionStepDefinition(conditionDefinition, onTrueDefinitions, onFalseDefinitions);
     }
 
-    private ConditionDefinition parseCondition(Map<String, Object> condition) {
+    private ConditionDefinition parseConditionDefinition(Map<String, Object> condition) {
         String conditionType = getTheOnlyKeyFrom(condition);
         if (isValueList(condition, conditionType)) {
             // operands (and, or, not etc.)
             List<Map<String, Object>> configList = getList(condition, conditionType, true);
-            List<ConditionDefinition> conditions = configList.stream().map(this::parseCondition).collect(Collectors.toList());
+            List<ConditionDefinition> conditions = configList.stream().map(this::parseConditionDefinition).collect(Collectors.toList());
             return new ConditionDefinition(conditionType, ImmutableMap.of("conditions", conditions));
         }
         if (isValueMap(condition, conditionType)) {
@@ -76,31 +74,15 @@ public class PipelineDefinitionParser {
 
     }
 
-    private ProcessorExecutionStepDefinition parseProcessorExecutionStep(String processorType, Map<String, Object> config) {
+    private ProcessorExecutionStepDefinition parseProcessorExecutionStepDefinition(String processorType, Map<String, Object> config) {
         String name = getString(config, "name", true);
         Map<String, Object> processorConfig = getMap(config, "config", true);
         ProcessorDefinition processorDefinition = new ProcessorDefinition(processorType, processorConfig);
 
         List<Map<String, Object>> onFailure = getList(config, "onFailure", false);
-        List<OnFailureExecutionStepDefinition> onFailureExecutionStepDefinitions = parseOnFailureExecutionSteps(onFailure);
+        List<ExecutionStepDefinition> onFailureExecutionStepDefinitions = parseExecutionStepDefinitionList(onFailure);
 
         return new ProcessorExecutionStepDefinition(processorDefinition, name, onFailureExecutionStepDefinitions);
-    }
-
-    private List<OnFailureExecutionStepDefinition> parseOnFailureExecutionSteps(List<Map<String, Object>> configMapList) {
-        if (configMapList == null) return null;
-
-        return configMapList.stream().map(this::parseOnFailureExecutionStep).collect(Collectors.toList());
-    }
-
-    private OnFailureExecutionStepDefinition parseOnFailureExecutionStep(Map<String, Object> configMap) {
-        String processorType = getTheOnlyKeyFrom(configMap);
-        Map<String, Object> onFailureConfig = getMap(configMap, processorType, true);
-        Map<String, Object> processorConfig = getMap(onFailureConfig, "config", true);
-        ProcessorDefinition processorDefinition = new ProcessorDefinition(processorType, processorConfig);
-
-        String name = getString(onFailureConfig, "name", true);
-        return new OnFailureExecutionStepDefinition(processorDefinition, name);
     }
 
     private String getTheOnlyKeyFrom(Map<String, Object> map) {
@@ -131,10 +113,11 @@ public class PipelineDefinitionParser {
         Object value = map.get(key);
         if (value == null) {
             if (!requiredField) return null;
-            throw new RuntimeException("\"" + key + "\"" + " is a required field");
+            throw new RuntimeException("\"" + key + "\"" + " is a required field which does not exists in " + map);
         }
         if (!clazz.isInstance(value)) {
-            throw new RuntimeException("Value of field \"" + key + "\"" + " should be " + clazz.getSimpleName());
+            throw new RuntimeException("Value of field \"" + key + "\"" + " is: " + value  + " with type: " + value.getClass().getSimpleName() +
+                    " , while it should be of type " + clazz.getSimpleName());
         }
         return clazz.cast(value);
     }

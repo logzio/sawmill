@@ -6,7 +6,6 @@ import io.logz.sawmill.parser.ConditionDefinition;
 import io.logz.sawmill.parser.ConditionalExecutionStepDefinition;
 import io.logz.sawmill.parser.ExecutionStepDefinition;
 import io.logz.sawmill.parser.ExecutionStepsParser;
-import io.logz.sawmill.parser.OnFailureExecutionStepDefinition;
 import io.logz.sawmill.parser.ProcessorDefinition;
 import io.logz.sawmill.parser.ProcessorExecutionStepDefinition;
 import io.logz.sawmill.processors.AddTagProcessor;
@@ -56,15 +55,15 @@ public class ExecutionStepsParserTest {
         assertThat(processorExecutionStep.getProcessorName()).isEqualTo(name);
         assertThat(processorExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
 
-        Optional<List<OnFailureExecutionStep>> onFailureExecutionSteps = processorExecutionStep.getOnFailureExecutionSteps();
+        Optional<List<ExecutionStep>> onFailureExecutionSteps = processorExecutionStep.getOnFailureExecutionSteps();
         assertThat(onFailureExecutionSteps.isPresent()).isFalse();
     }
 
     @Test
     public void testParseOnFailureExecutionStep() {
         String onFailureName = RandomStringUtils.randomAlphanumeric(10);
-        List<OnFailureExecutionStepDefinition> onFailureExecutionStepDefinitionList = Collections.singletonList(
-            createAddTagOnFailureStepDefinition(onFailureName)
+        List<ExecutionStepDefinition> onFailureExecutionStepDefinitionList = Collections.singletonList(
+            createAddTagStepDefinition(onFailureName)
         );
 
         List<ExecutionStepDefinition> executionStepDefinitionList = Collections.singletonList(
@@ -74,11 +73,11 @@ public class ExecutionStepsParserTest {
         List<ExecutionStep> executionSteps = executionStepsParser.parse(executionStepDefinitionList);
 
         ProcessorExecutionStep processorExecutionStep = (ProcessorExecutionStep) executionSteps.get(0);
-        List<OnFailureExecutionStep> onFailureExecutionSteps = processorExecutionStep.getOnFailureExecutionSteps().get();
+        List<ExecutionStep> onFailureExecutionSteps = processorExecutionStep.getOnFailureExecutionSteps().get();
 
         assertThat(onFailureExecutionSteps.size()).isEqualTo(1);
 
-        OnFailureExecutionStep onFailureExecutionStep = onFailureExecutionSteps.get(0);
+        ProcessorExecutionStep onFailureExecutionStep = (ProcessorExecutionStep) onFailureExecutionSteps.get(0);
         assertThat(onFailureExecutionStep.getProcessorName()).isEqualTo(onFailureName);
         assertThat(onFailureExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
     }
@@ -131,12 +130,12 @@ public class ExecutionStepsParserTest {
         )));
     }
 
-    private ProcessorExecutionStepDefinition createAddTagStepDefinition(String name, List<OnFailureExecutionStepDefinition> onFailureExecutionStepDefinitions) {
-        return new ProcessorExecutionStepDefinition(createAddTagProcessorDefinition(), name, onFailureExecutionStepDefinitions);
+    private ProcessorExecutionStepDefinition createAddTagStepDefinition(String name) {
+        return createAddTagStepDefinition(name, null);
     }
 
-    private OnFailureExecutionStepDefinition createAddTagOnFailureStepDefinition(String name) {
-        return new OnFailureExecutionStepDefinition(createAddTagProcessorDefinition(), name);
+    private ProcessorExecutionStepDefinition createAddTagStepDefinition(String name, List<ExecutionStepDefinition> onFailureExecutionStepDefinitions) {
+        return new ProcessorExecutionStepDefinition(createAddTagProcessorDefinition(), name, onFailureExecutionStepDefinitions);
     }
 
     private ProcessorDefinition createAddTagProcessorDefinition() {

@@ -16,7 +16,7 @@ public class ConditionFactoryRegistry {
 
     public Condition.Factory get(String name) {
         Condition.Factory factory = conditionFactory.get(name);
-        if (factory == null) throw new ProcessorMissingException("No such condition with name " + name);
+        if (factory == null) throw new ProcessorMissingException("No condition registered with name " + name);
         return factory;
     }
 }

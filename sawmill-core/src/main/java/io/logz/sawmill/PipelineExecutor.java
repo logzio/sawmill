@@ -34,7 +34,7 @@ public class PipelineExecutor {
 
         } catch (RuntimeException e) {
             pipelineExecutionMetricsTracker.pipelineFailedOnUnexpectedError(pipeline.getId(), doc, e);
-            throw new PipelineExecutionException(pipeline.getName(), e);
+            throw new PipelineExecutionException(pipeline.getId(), e);
 
         } finally {
             pipelineStopwatch.stop();
@@ -91,22 +91,12 @@ public class PipelineExecutor {
             return ExecutionResult.success();
         }
 
-        Optional<List<OnFailureExecutionStep>> onFailureExecutionSteps = executionStep.getOnFailureExecutionSteps();
+        Optional<List<ExecutionStep>> onFailureExecutionSteps = executionStep.getOnFailureExecutionSteps();
         if (onFailureExecutionSteps.isPresent()) {
-            return executeOnFailureSteps(onFailureExecutionSteps.get(), doc, pipelineStopwatch, pipeline);
+            return executeSteps(onFailureExecutionSteps.get(), pipeline, doc, pipelineStopwatch);
         }
 
         return processorErrorExecutionResult(processResult.getError().get(), executionStep.getProcessorName(), pipeline);
-    }
-
-    private ExecutionResult executeOnFailureSteps(List<OnFailureExecutionStep> onFailureExecutionSteps, Doc doc, PipelineStopwatch pipelineStopwatch, Pipeline pipeline) {
-        for (OnFailureExecutionStep executionStep : onFailureExecutionSteps) {
-            ProcessResult processResult = executeProcessor(doc, executionStep.getProcessor(), pipelineStopwatch, pipeline.getId(), executionStep.getProcessorName());
-            if (!processResult.isSucceeded()) {
-                return processorErrorExecutionResult(processResult.getError().get(), executionStep.getProcessorName(), pipeline);
-            }
-        }
-        return ExecutionResult.success();
     }
 
     private ProcessResult executeProcessor(Doc doc, Processor processor, PipelineStopwatch pipelineStopwatch, String pipelineId, String processorName) {
@@ -128,7 +118,7 @@ public class PipelineExecutor {
         String message = error.getMessage();
         if (error.getException().isPresent()) {
             return ExecutionResult.failure(message, processorName,
-                    new PipelineExecutionException(pipeline.getName(), error.getException().get()));
+                    new PipelineExecutionException(pipeline.getId(), error.getException().get()));
         } else {
             return ExecutionResult.failure(message, processorName);
         }

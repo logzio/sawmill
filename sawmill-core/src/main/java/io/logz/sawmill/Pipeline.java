@@ -14,27 +14,19 @@ import static com.google.common.base.Preconditions.checkState;
 public class Pipeline {
 
     private final String id;
-    private final String name;
-    private final String description;
     private final List<ExecutionStep> executionSteps;
     private final boolean ignoreFailure;
 
-    public Pipeline(String id, String name, String description, List<ExecutionStep> executionSteps, boolean ignoreFailure) {
+    public Pipeline(String id, List<ExecutionStep> executionSteps, boolean ignoreFailure) {
         checkState(!id.isEmpty(), "id cannot be empty");
         checkState(CollectionUtils.isNotEmpty(executionSteps), "executionSteps cannot be empty");
 
         this.id = id;
-        this.name = name;
-        this.description = description;
         this.executionSteps = executionSteps;
         this.ignoreFailure = ignoreFailure;
     }
 
     public String getId() { return id; }
-
-    public String getName() { return name; }
-
-    public String getDescription() { return description; }
 
     public List<ExecutionStep> getExecutionSteps() { return executionSteps; }
 
@@ -69,13 +61,11 @@ public class Pipeline {
         }
 
         public Pipeline create(String id, PipelineDefinition pipelineDefinition) {
-            String name = pipelineDefinition.getName();
-            String description = pipelineDefinition.getDescription();
             List<ExecutionStep> executionSteps = executionStepsParser.parse(pipelineDefinition.getExecutionSteps());
             Optional<Boolean> ignoreFailureNullable = pipelineDefinition.isIgnoreFailure();
             boolean ignoreFailure = ignoreFailureNullable.orElse(true);
 
-            return new Pipeline(id, name, description, executionSteps, ignoreFailure);
+            return new Pipeline(id, executionSteps, ignoreFailure);
         }
 
     }

@@ -6,12 +6,12 @@ import java.util.Optional;
 public class ProcessorExecutionStepDefinition implements ExecutionStepDefinition {
     private ProcessorDefinition processorDefinition;
     private String name;
-    private Optional<List<OnFailureExecutionStepDefinition>> onFailureExecutionStepDefinitionList;
+    private Optional<List<ExecutionStepDefinition>> onFailureExecutionStepDefinitionList;
 
     public ProcessorExecutionStepDefinition(
             ProcessorDefinition processorDefinition,
             String name,
-            List<OnFailureExecutionStepDefinition> onFailureExecutionStepDefinitionList) {
+            List<ExecutionStepDefinition> onFailureExecutionStepDefinitionList) {
         this.processorDefinition = processorDefinition;
         this.name = name;
         this.onFailureExecutionStepDefinitionList = Optional.ofNullable(onFailureExecutionStepDefinitionList);
@@ -25,7 +25,7 @@ public class ProcessorExecutionStepDefinition implements ExecutionStepDefinition
         return processorDefinition;
     }
 
-    public Optional<List<OnFailureExecutionStepDefinition>> getOnFailureExecutionStepDefinitionList() {
+    public Optional<List<ExecutionStepDefinition>> getOnFailureExecutionStepDefinitionList() {
         return onFailureExecutionStepDefinitionList;
     }
 }

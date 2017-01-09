@@ -2,7 +2,6 @@ package io.logz.sawmill.parser;
 
 import io.logz.sawmill.Condition;
 import io.logz.sawmill.ConditionFactoryRegistry;
-import io.logz.sawmill.parser.ConditionDefinition;
 
 public class ConditionParser {
 
