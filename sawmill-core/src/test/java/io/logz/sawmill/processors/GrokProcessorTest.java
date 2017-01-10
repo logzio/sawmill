@@ -66,7 +66,7 @@ public class GrokProcessorTest {
     @Test
     public void testOverwrite() {
         String field = "message";
-        List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}");
+        List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
 
         Doc doc = createDoc(field, APACHE_LOG_SAMPLE, "verb", "POST");
 
@@ -79,6 +79,7 @@ public class GrokProcessorTest {
         ProcessResult processResult = grokProcessor.process(doc);
 
         assertApacheLog(doc, processResult);
+        assertThat(doc.hasField("extra_fields")).isFalse();
     }
 
     @Test

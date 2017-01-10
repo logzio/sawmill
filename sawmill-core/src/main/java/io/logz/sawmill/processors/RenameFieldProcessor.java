@@ -8,14 +8,16 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @ProcessorProvider(type = "rename", factory = RenameFieldProcessor.Factory.class)
 public class RenameFieldProcessor implements Processor {
     private final String from;
     private final String to;
 
     public RenameFieldProcessor(String from, String to) {
-        this.from = from;
-        this.to = to;
+        this.from = checkNotNull(from, "from field path cannot be null");
+        this.to = checkNotNull(to, "to field path cannot be null");
     }
 
     @Override

@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
@@ -43,7 +44,7 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES);
+        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
 
         Doc doc = createDoc(source, ip);
 
@@ -53,6 +54,7 @@ public class GeoIpProcessorTest {
         assertThat(geoIp.get("country_name")).isEqualTo("Mexico");
         assertThat(geoIp.get("city_name")).isEqualTo("Mexico City");
         assertThat(geoIp.get("ip")).isEqualTo(ip);
+        assertThat(((List)doc.getField("tags")).contains("geoip")).isTrue();
     }
 
     @Test
@@ -61,11 +63,12 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES);
+        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
 
         Doc doc = createDoc(source, ip);
 
         assertThat(geoIpProcessor.process(doc).isSucceeded()).isTrue();
         assertThat(doc.hasField(target)).isFalse();
+        assertThat(doc.hasField("tags")).isFalse();
     }
 }

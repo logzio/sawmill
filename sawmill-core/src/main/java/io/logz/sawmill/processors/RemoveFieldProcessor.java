@@ -8,12 +8,14 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @ProcessorProvider(type = "removeField", factory = RemoveFieldProcessor.Factory.class)
 public class RemoveFieldProcessor implements Processor {
     private final String path;
 
     public RemoveFieldProcessor(String path) {
-        this.path = path;
+        this.path = checkNotNull(path, "path cannot be null");
     }
 
     @Override

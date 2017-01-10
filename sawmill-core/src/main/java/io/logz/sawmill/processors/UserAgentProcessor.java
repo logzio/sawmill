@@ -16,16 +16,20 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @ProcessorProvider(type = "userAgent", factory = UserAgentProcessor.Factory.class)
 public class UserAgentProcessor implements Processor {
     private final String field;
     private final String targetField;
+    private final String prefix;
     private final Parser uaParser;
 
-    public UserAgentProcessor(String field, String targetField, Parser uaParser) {
-        this.field = field;
+    public UserAgentProcessor(String field, String targetField, String prefix, Parser uaParser) {
+        this.field = checkNotNull(field, "field cannot be null");
         this.targetField = targetField;
-        this.uaParser = uaParser;
+        this.prefix = prefix != null ? prefix : "";
+        this.uaParser = checkNotNull(uaParser);
     }
 
     @Override
@@ -62,7 +66,7 @@ public class UserAgentProcessor implements Processor {
             doc.addField(targetField, userAgent);
         } else {
             userAgent.entrySet().forEach(property -> {
-                doc.addField(property.getKey(), property.getValue());
+                doc.addField(prefix + property.getKey(), property.getValue());
             });
         }
 
@@ -129,6 +133,7 @@ public class UserAgentProcessor implements Processor {
 
             return new UserAgentProcessor(userAgentConfig.getField(),
                     userAgentConfig.getTargetField(),
+                    userAgentConfig.getPrefix(),
                     uaParser);
         }
     }
@@ -136,6 +141,7 @@ public class UserAgentProcessor implements Processor {
     public static class Configuration implements Processor.Configuration {
         private String field;
         private String targetField;
+        private String prefix;
 
         public Configuration() { }
 
@@ -147,5 +153,9 @@ public class UserAgentProcessor implements Processor {
         public String getField() { return field; }
 
         public String getTargetField() { return targetField; }
+
+        public String getPrefix() {
+            return prefix;
+        }
     }
 }

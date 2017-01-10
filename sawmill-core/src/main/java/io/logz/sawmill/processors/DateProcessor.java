@@ -4,7 +4,9 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
+import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -16,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 @ProcessorProvider(type = "date", factory = DateProcessor.Factory.class)
 public class DateProcessor implements Processor {
@@ -29,11 +34,13 @@ public class DateProcessor implements Processor {
     private final ZoneId timeZone;
 
     public DateProcessor(String field, String targetField, List<String> formats, ZoneId timeZone) {
-        this.formatters = new ArrayList<>();
-        this.field = field;
-        this.targetField = targetField;
+        checkState(CollectionUtils.isNotEmpty(formats), "formats cannot be empty");
+        this.field = checkNotNull(field, "field cannot be null");
+        this.targetField = checkNotNull(targetField, "target field cannot be null");
         this.formats = formats;
         this.timeZone = timeZone;
+
+        this.formatters = new ArrayList<>();
 
         formats.forEach(format -> {
             if (format.toUpperCase().startsWith("UNIX")) return;
@@ -93,8 +100,12 @@ public class DateProcessor implements Processor {
         public Processor create(Map<String,Object> config) {
             DateProcessor.Configuration dateConfig = JsonUtils.fromJsonMap(Configuration.class, config);
 
+            if (CollectionUtils.isEmpty(dateConfig.getFormats())) {
+                throw new ProcessorParseException("cannot create date processor without any format");
+            }
+
             return new DateProcessor(dateConfig.getField(),
-                    dateConfig.getTargetField() != null ? dateConfig.getTargetField() : "@timestamp",
+                    dateConfig.getTargetField(),
                     dateConfig.getFormats(),
                     ZoneId.of(dateConfig.getTimeZone()));
         }
@@ -102,7 +113,7 @@ public class DateProcessor implements Processor {
 
     public static class Configuration implements Processor.Configuration {
         private String field;
-        private String targetField;
+        private String targetField = "@timestamp";
 
         /**
          * The format of the date string.
