@@ -10,13 +10,13 @@ import static io.logz.sawmill.JsonUtils.createList;
 import static io.logz.sawmill.JsonUtils.createMap;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class PipelineDefinitionParserTest {
+public class PipelineDefinitionJsonParserTest {
 
-    private PipelineDefinitionParser pipelineDefinitionParser;
+    private PipelineDefinitionJsonParser pipelineDefinitionJsonParser;
 
     @Before
     public void init() {
-        pipelineDefinitionParser = new PipelineDefinitionParser();
+        pipelineDefinitionJsonParser = new PipelineDefinitionJsonParser();
     }
 
     @Test
@@ -32,7 +32,7 @@ public class PipelineDefinitionParserTest {
                 )
         ));
 
-        PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(configJson);
+        PipelineDefinition pipelineDefinition = pipelineDefinitionJsonParser.parse(configJson);
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
         assertThat(pipelineDefinition.isIgnoreFailure().isPresent()).isFalse();
 
@@ -58,7 +58,7 @@ public class PipelineDefinitionParserTest {
                         "    }" +
                         "]";
 
-        PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(configHocon);
+        PipelineDefinition pipelineDefinition = pipelineDefinitionJsonParser.parse(configHocon);
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
         assertThat(pipelineDefinition.isIgnoreFailure().isPresent()).isFalse();
 
@@ -93,7 +93,7 @@ public class PipelineDefinitionParserTest {
                 "ignoreFailure", false
         ));
 
-        PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(configJson);
+        PipelineDefinition pipelineDefinition = pipelineDefinitionJsonParser.parse(configJson);
         assertThat(pipelineDefinition.isIgnoreFailure().get()).isFalse();
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
 
@@ -143,7 +143,7 @@ public class PipelineDefinitionParserTest {
                 )
         ));
 
-        PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(json);
+        PipelineDefinition pipelineDefinition = pipelineDefinitionJsonParser.parse(json);
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
 
         ConditionalExecutionStepDefinition executionStepDefinition =
@@ -200,7 +200,7 @@ public class PipelineDefinitionParserTest {
                 )
         ));
 
-        PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(json);
+        PipelineDefinition pipelineDefinition = pipelineDefinitionJsonParser.parse(json);
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
 
         ConditionalExecutionStepDefinition executionStepDefinition =

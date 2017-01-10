@@ -2,7 +2,7 @@ package io.logz.sawmill;
 
 import io.logz.sawmill.parser.ExecutionStepsParser;
 import io.logz.sawmill.parser.PipelineDefinition;
-import io.logz.sawmill.parser.PipelineDefinitionParser;
+import io.logz.sawmill.parser.PipelineDefinitionJsonParser;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
@@ -36,7 +36,7 @@ public class Pipeline {
 
     public static final class Factory {
 
-        private final PipelineDefinitionParser pipelineDefinitionParser;
+        private final PipelineDefinitionJsonParser pipelineDefinitionJsonParser;
         private final ExecutionStepsParser executionStepsParser;
 
         public Factory() {
@@ -46,7 +46,7 @@ public class Pipeline {
         public Factory(ProcessorFactoryRegistry processorFactoryRegistry, ConditionFactoryRegistry conditionFactoryRegistry) {
             ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
             ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
-            pipelineDefinitionParser = new PipelineDefinitionParser();
+            pipelineDefinitionJsonParser = new PipelineDefinitionJsonParser();
             executionStepsParser = new ExecutionStepsParser(processorFactoryRegistry, conditionFactoryRegistry);
         }
 
@@ -56,7 +56,7 @@ public class Pipeline {
         }
 
         public Pipeline create(String id, String config) {
-            PipelineDefinition pipelineDefinition = pipelineDefinitionParser.parse(config);
+            PipelineDefinition pipelineDefinition = pipelineDefinitionJsonParser.parse(config);
             return create(id, pipelineDefinition);
         }
 

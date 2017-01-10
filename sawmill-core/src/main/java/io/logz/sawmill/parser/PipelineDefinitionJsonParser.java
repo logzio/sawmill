@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 import static io.logz.sawmill.utilities.JsonUtils.toJsonString;
 
-public class PipelineDefinitionParser {
+public class PipelineDefinitionJsonParser {
 
     public PipelineDefinition parse(String config) {
         String configJson = ConfigFactory.parseString(config).root().render(ConfigRenderOptions.concise());
