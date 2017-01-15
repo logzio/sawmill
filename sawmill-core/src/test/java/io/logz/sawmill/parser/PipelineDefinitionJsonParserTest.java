@@ -5,9 +5,9 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static io.logz.sawmill.JsonUtils.createJson;
-import static io.logz.sawmill.JsonUtils.createList;
-import static io.logz.sawmill.JsonUtils.createMap;
+import static io.logz.sawmill.utilities.JsonUtils.createJson;
+import static io.logz.sawmill.utilities.JsonUtils.createList;
+import static io.logz.sawmill.utilities.JsonUtils.createMap;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class PipelineDefinitionJsonParserTest {
@@ -22,7 +22,7 @@ public class PipelineDefinitionJsonParserTest {
     @Test
     public void testJson() {
         String configJson = createJson(createMap(
-                "executionSteps", createList(
+                "steps", createList(
                         createMap("test", createMap(
                                 "name", "test1",
                                 "config", createMap(
@@ -49,7 +49,7 @@ public class PipelineDefinitionJsonParserTest {
     @Test
     public void testHocon() {
         String configHocon =
-                        "executionSteps: [" +
+                        "steps: [" +
                         "    {" +
                         "        test: {" +
                         "            name: test1, " +
@@ -75,7 +75,7 @@ public class PipelineDefinitionJsonParserTest {
     @Test
     public void testOnFailure() {
         String configJson = createJson(createMap(
-                "executionSteps", createList(createMap(
+                "steps", createList(createMap(
                         "test", createMap(
                                 "name", "test1",
                                 "config", createMap("value", "message"),
@@ -119,7 +119,7 @@ public class PipelineDefinitionJsonParserTest {
     @Test
     public void testConditional() {
         String json = createJson(createMap(
-                "executionSteps", createList(
+                "steps", createList(
                         createMap(
                                 "if", createMap(
                                         "condition", createMap(
@@ -179,7 +179,7 @@ public class PipelineDefinitionJsonParserTest {
     @Test
     public void testConditionalElse() {
         String json = createJson(createMap(
-                "executionSteps", createList(
+                "steps", createList(
                         createMap(
                                 "if", createMap(
                                         "condition", createMap(

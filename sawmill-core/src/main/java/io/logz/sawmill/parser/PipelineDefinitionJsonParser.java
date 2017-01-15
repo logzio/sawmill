@@ -22,7 +22,7 @@ public class PipelineDefinitionJsonParser {
     }
 
     private PipelineDefinition parse(Map<String, Object> configMap) {
-        List<Map<String, Object>> executionSteps = getList(configMap, "executionSteps", true);
+        List<Map<String, Object>> executionSteps = getList(configMap, "steps", true);
         List<ExecutionStepDefinition> executionStepDefinitionList = parseExecutionStepDefinitionList(executionSteps);
 
         Boolean ignoreFailure = getBoolean(configMap, "ignoreFailure", false);

@@ -6,9 +6,9 @@ import io.logz.sawmill.processors.TestProcessor;
 import org.junit.Before;
 import org.junit.Test;
 
-import static io.logz.sawmill.JsonUtils.createJson;
-import static io.logz.sawmill.JsonUtils.createList;
-import static io.logz.sawmill.JsonUtils.createMap;
+import static io.logz.sawmill.utilities.JsonUtils.createJson;
+import static io.logz.sawmill.utilities.JsonUtils.createList;
+import static io.logz.sawmill.utilities.JsonUtils.createMap;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class PipelineTest {
@@ -33,7 +33,7 @@ public class PipelineTest {
     @Test
     public void testFactoryCreationJson() {
         String configJson = createJson(createMap(
-                "executionSteps", createList(createMap(
+                "steps", createList(createMap(
                         "test", createMap(
                                 "name", "test1",
                                 "config", createMap("value", "message"),
@@ -67,7 +67,7 @@ public class PipelineTest {
     @Test
     public void testFactoryCreationHoconWithoutId() {
         String configHocon =
-                        "executionSteps: [" +
+                        "steps: [" +
                         "    {" +
                         "        test: {" +
                         "            name: test1, " +
@@ -91,7 +91,7 @@ public class PipelineTest {
     @Test
     public void testConditional() {
         String pipelineString = "{" +
-                "executionSteps: [{" +
+                "steps: [{" +
                 "    if: {" +
                 "        condition: {" +
                 "            and: [" +
@@ -131,7 +131,7 @@ public class PipelineTest {
     @Test
     public void testConditionalElse() {
         String pipelineString = "{" +
-                "executionSteps: [{" +
+                "steps: [{" +
                 "    if: {" +
                 "        condition: {" +
                 "            testCondition.value: message1" +
