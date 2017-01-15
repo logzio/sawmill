@@ -1,8 +1,8 @@
 package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
-import io.logz.sawmill.Processor;
 import io.logz.sawmill.ProcessResult;
+import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 

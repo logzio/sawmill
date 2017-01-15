@@ -1,11 +1,15 @@
 package io.logz.sawmill.utilities;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.commons.collections4.MapUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -33,6 +37,19 @@ public class JsonUtils {
         }
         catch (Exception e) {
             throw new RuntimeException("failed to deserialize object type="+type+" from json="+json, e);
+        }
+    }
+
+    public static <T> T fromJsonString(TypeReference<T> typeReference, String json) {
+        if (json == null || json.isEmpty()) {
+            throw new RuntimeException("json is either null or empty (json = "+json+")");
+        }
+
+        try {
+            return mapper.readValue(json, typeReference);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("failed to deserialize object type="+typeReference.getType()+" from json="+json, e);
         }
     }
 
@@ -82,5 +99,23 @@ public class JsonUtils {
             }
         }
         return Optional.of((T) cursor);
+    }
+
+    public static String createJson(Map<String, Object> map) {
+        return toJsonString(map);
+    }
+
+    public static List<Object> createList(Object... maps) {
+        return Arrays.asList(maps);
+    }
+
+    public static Map<String, Object> createMap(Object... objects) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        if (objects != null) {
+            for (int i = 0; i < objects.length; i++) {
+                map.put((String) objects[i], objects[++i]);
+            }
+        }
+        return map;
     }
 }

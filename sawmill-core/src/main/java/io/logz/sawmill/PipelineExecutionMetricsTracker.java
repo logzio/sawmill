@@ -9,7 +9,7 @@ public interface PipelineExecutionMetricsTracker {
 
     void processorFailed(String pipelineId, String processorName, Doc doc);
 
-    void pipelineFailedOnUnexpectedError(String pipelineId, String processorName, Doc doc, Exception e);
+    void pipelineFailedOnUnexpectedError(String pipelineId, Doc doc, Exception e);
 
     void overtimeProcessingDoc(String pipelineId, Doc doc);
 }
