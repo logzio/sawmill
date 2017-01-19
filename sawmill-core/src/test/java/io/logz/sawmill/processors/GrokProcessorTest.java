@@ -85,7 +85,7 @@ public class GrokProcessorTest {
     @Test
     public void testWithoutOverwrite() {
         String field = "message";
-        List<String> patterns = Arrays.asList("%{WORD:verb}");
+        List<String> patterns = Arrays.asList("%{WORD:verb:sheker}");
 
         Doc doc = createDoc(field, "GET", "verb", "POST");
 
@@ -97,7 +97,27 @@ public class GrokProcessorTest {
         ProcessResult processResult = grokProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isTrue();
+        assertThat(doc.hasField("verb_grokfailure")).isFalse();
         assertThat((List)doc.getField("verb")).isEqualTo(Arrays.asList("POST", "GET"));
+    }
+
+    @Test
+    public void testConverters() {
+        String field = "message";
+        List<String> patterns = Arrays.asList("%{NUMBER:int:int} %{NUMBER:float:float} %{NUMBER:long:long} %{NUMBER:double:double}");
+
+        Doc doc = createDoc(field, "200 15.5 200 15.5");
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", patterns);
+        GrokProcessor grokProcessor = factory.create(config);
+
+        ProcessResult processResult = grokProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat(doc.getField("int").getClass()).isEqualTo(doc.getField("long").getClass()).isEqualTo(Long.class);
+        assertThat(doc.getField("float").getClass()).isEqualTo(doc.getField("double").getClass()).isEqualTo(Double.class);
     }
 
     @Test
