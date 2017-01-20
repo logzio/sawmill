@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.apache.commons.collections4.MapUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
@@ -54,8 +53,8 @@ public class JsonUtils {
     }
 
     public static <T> T fromJsonMap(Class<T> type, Map json) {
-        if (MapUtils.isEmpty(json)) {
-            throw new RuntimeException("json is either null or empty (json = "+json+")");
+        if (json == null) {
+            throw new RuntimeException("json map is null");
         }
 
         try {

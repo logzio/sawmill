@@ -87,6 +87,10 @@ public class PipelineExecutor {
 
         ProcessResult processResult = executeProcessor(doc, processor, pipelineStopwatch, pipeline.getId(), executionStep.getProcessorName());
 
+        if (processResult.isDropped()) {
+            return ExecutionResult.dropped();
+        }
+
         if (processResult.isSucceeded() || pipeline.isIgnoreFailure()) {
             return ExecutionResult.success();
         }
