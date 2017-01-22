@@ -6,6 +6,7 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.JsonUtils;
+import io.thekraken.grok.api.Converter;
 import io.thekraken.grok.api.Grok;
 import io.thekraken.grok.api.Match;
 import io.thekraken.grok.api.exception.GrokException;
@@ -82,12 +83,14 @@ public class GrokProcessor implements Processor {
         Map<String, Object> matches = getMatches(value);
 
         if (MapUtils.isEmpty(matches)) {
+            doc.appendList("tags", "_grokparsefailure");
             return ProcessResult.failure(String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", value, field, expressions));
         }
 
         matches.entrySet().stream()
                 .filter((e) -> Objects.nonNull(e.getValue()))
                 .filter((e) -> !e.getValue().toString().isEmpty())
+                .filter((e) -> !e.getKey().contains("_grokfailure"))
                 .forEach((e) -> {
                     if (overwrite.contains(e.getKey()) || !doc.hasField(e.getKey())) {
                         doc.addField(e.getKey(), e.getValue());
@@ -120,6 +123,11 @@ public class GrokProcessor implements Processor {
         };
 
         private final Map<String,String> patternsBank;
+
+        static {
+            Converter.converters.replace("int", Converter.converters.get("long"));
+            Converter.converters.replace("float", Converter.converters.get("double"));
+        }
 
         public Factory() {
             this.patternsBank = loadBuiltinPatterns();
