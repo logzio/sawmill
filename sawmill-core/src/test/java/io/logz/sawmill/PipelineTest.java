@@ -48,7 +48,7 @@ public class PipelineTest {
                                 ))
                         )
                 )),
-                "ignoreFailure", false
+                "stopOnFailure", false
         ));
 
         String id = "abc";
@@ -60,7 +60,7 @@ public class PipelineTest {
         TestProcessor processor = (TestProcessor) executionStep.getProcessor();
         assertThat(executionStep.getProcessorName()).isEqualTo("test1");
         assertThat(processor.getValue()).isEqualTo("message");
-        assertThat(pipeline.isIgnoreFailure()).isFalse();
+        assertThat(pipeline.isStopOnFailure()).isFalse();
         assertThat(executionStep.getOnFailureExecutionSteps().get().size()).isEqualTo(1);
     }
 
@@ -80,7 +80,7 @@ public class PipelineTest {
         Pipeline pipeline = factory.create(id, configHocon);
 
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
-        assertThat(pipeline.isIgnoreFailure()).isTrue();
+        assertThat(pipeline.isStopOnFailure()).isFalse();
 
         ProcessorExecutionStep executionStep = (ProcessorExecutionStep) pipeline.getExecutionSteps().get(0);
         Processor processor = executionStep.getProcessor();
@@ -117,7 +117,7 @@ public class PipelineTest {
         Pipeline pipeline = factory.create(id, pipelineString);
 
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
-        assertThat(pipeline.isIgnoreFailure()).isTrue();
+        assertThat(pipeline.isStopOnFailure()).isFalse();
 
         ConditionalExecutionStep conditionalExecutionStep = (ConditionalExecutionStep) pipeline.getExecutionSteps().get(0);
 
