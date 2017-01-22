@@ -48,7 +48,7 @@ public class PipelineTest {
                                 ))
                         )
                 )),
-                "stopOnFailure", false
+                "stopOnFailure", true
         ));
 
         String id = "abc";
@@ -60,7 +60,7 @@ public class PipelineTest {
         TestProcessor processor = (TestProcessor) executionStep.getProcessor();
         assertThat(executionStep.getProcessorName()).isEqualTo("test1");
         assertThat(processor.getValue()).isEqualTo("message");
-        assertThat(pipeline.isStopOnFailure()).isFalse();
+        assertThat(pipeline.isStopOnFailure()).isTrue();
         assertThat(executionStep.getOnFailureExecutionSteps().get().size()).isEqualTo(1);
     }
 
