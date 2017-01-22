@@ -69,4 +69,17 @@ public class JsonProcessorTest {
 
         assertThat(processResult.isSucceeded()).isFalse();
     }
+
+    @Test
+    public void testFieldNotExists() {
+        String fieldNotExists = "fieldNotExists";
+
+        Doc doc = createDoc("message", VALID_JSON);
+
+        JsonProcessor jsonProcessor = new JsonProcessor(fieldNotExists, null);
+
+        ProcessResult processResult = jsonProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isFalse();
+    }
 }
