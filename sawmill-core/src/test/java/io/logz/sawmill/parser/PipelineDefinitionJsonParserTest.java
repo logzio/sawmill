@@ -34,7 +34,7 @@ public class PipelineDefinitionJsonParserTest {
 
         PipelineDefinition pipelineDefinition = pipelineDefinitionJsonParser.parse(configJson);
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
-        assertThat(pipelineDefinition.isIgnoreFailure().isPresent()).isFalse();
+        assertThat(pipelineDefinition.isStopOnFailure().isPresent()).isFalse();
 
         ProcessorExecutionStepDefinition processorExecutionStepDefinition =
                 (ProcessorExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
@@ -60,7 +60,7 @@ public class PipelineDefinitionJsonParserTest {
 
         PipelineDefinition pipelineDefinition = pipelineDefinitionJsonParser.parse(configHocon);
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
-        assertThat(pipelineDefinition.isIgnoreFailure().isPresent()).isFalse();
+        assertThat(pipelineDefinition.isStopOnFailure().isPresent()).isFalse();
 
         ProcessorExecutionStepDefinition processorExecutionStepDefinition = (ProcessorExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
         assertThat(processorExecutionStepDefinition.getName()).isEqualTo("test1");
@@ -90,11 +90,11 @@ public class PipelineDefinitionJsonParserTest {
                                 ))
                         )
                 )),
-                "ignoreFailure", false
+                "stopOnFailure", false
         ));
 
         PipelineDefinition pipelineDefinition = pipelineDefinitionJsonParser.parse(configJson);
-        assertThat(pipelineDefinition.isIgnoreFailure().get()).isFalse();
+        assertThat(pipelineDefinition.isStopOnFailure().get()).isFalse();
         assertThat(pipelineDefinition.getExecutionSteps().size()).isEqualTo(1);
 
         ProcessorExecutionStepDefinition processorExecutionStepDefinition =

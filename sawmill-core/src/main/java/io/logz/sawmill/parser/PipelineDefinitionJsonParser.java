@@ -25,9 +25,9 @@ public class PipelineDefinitionJsonParser {
         List<Map<String, Object>> executionSteps = getList(configMap, "steps", true);
         List<ExecutionStepDefinition> executionStepDefinitionList = parseExecutionStepDefinitionList(executionSteps);
 
-        Boolean ignoreFailure = getBoolean(configMap, "ignoreFailure", false);
+        Boolean stopOnFailure = getBoolean(configMap, "stopOnFailure", false);
 
-        return new PipelineDefinition(executionStepDefinitionList, ignoreFailure);
+        return new PipelineDefinition(executionStepDefinitionList, stopOnFailure);
     }
 
     private List<ExecutionStepDefinition> parseExecutionStepDefinitionList(List<Map<String, Object>> configMapList) {

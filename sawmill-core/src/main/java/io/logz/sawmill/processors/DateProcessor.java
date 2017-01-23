@@ -11,8 +11,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +24,32 @@ import java.util.concurrent.ConcurrentMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+import static java.time.temporal.ChronoField.HOUR_OF_DAY;
+import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
+import static java.time.temporal.ChronoField.NANO_OF_SECOND;
+import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 
 @ProcessorProvider(type = "date", factory = DateProcessor.Factory.class)
 public class DateProcessor implements Processor {
-    public static final DateTimeFormatter elasticPrintFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
+    public static final DateTimeFormatter elasticPrintFormat = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .append(ISO_LOCAL_DATE)
+            .appendLiteral('T')
+            .appendValue(HOUR_OF_DAY, 2)
+            .appendLiteral(':')
+            .appendValue(MINUTE_OF_HOUR, 2)
+            .optionalStart()
+            .appendLiteral(':')
+            .appendValue(SECOND_OF_MINUTE, 2)
+            .optionalStart()
+            .appendFraction(NANO_OF_SECOND, 3, 3, true)
+            .optionalStart()
+            .appendOffsetId()
+            .optionalEnd()
+            .toFormatter()
+            .withChronology(IsoChronology.INSTANCE)
+            .withResolverStyle(ResolverStyle.STRICT);
     private static ConcurrentMap<String, DateTimeFormatter> dateTimePatternToFormatter = new ConcurrentHashMap<>();
 
     private final String field;
@@ -59,37 +84,49 @@ public class DateProcessor implements Processor {
             return ProcessResult.failure(String.format("failed to process date, field in path [%s] is missing", field));
         }
 
-        Object value = doc.getField(field);
+        Object dateTimeDocValue = doc.getField(field);
+
         ZonedDateTime dateTime = null;
-
-        if (value instanceof Long) {
-            long unixTimestamp = (Long) value;
-            Instant instant;
-            if (formats.contains("UNIX_MS")) {
-                instant = Instant.ofEpochMilli(unixTimestamp);
-            } else {
-                instant = Instant.ofEpochSecond(unixTimestamp);
-            }
-
-            dateTime = ZonedDateTime.ofInstant(instant, timeZone);
-        } else if (value instanceof String) {
-            for (DateTimeFormatter formatter : formatters) {
-                try {
-                    dateTime = ZonedDateTime.parse(value.toString(), formatter.withZone(timeZone));
-                    break;
-                } catch (DateTimeParseException e) {
-                    // keep trying
-                }
-            }
+        if (dateTimeDocValue instanceof Long) {
+            dateTime = getUnixDateTime((Long) dateTimeDocValue);
+        } else if (dateTimeDocValue instanceof String) {
+            dateTime = getISODateTime((String) dateTimeDocValue);
         }
 
         if (dateTime == null) {
-            return ProcessResult.failure(String.format("failed to parse date in path [%s], [%s] is not one of the formats [%s]", field, value, formats));
+            return ProcessResult.failure(String.format("failed to parse date in path [%s], [%s] is not one of the formats [%s]", field, dateTimeDocValue, formats));
         }
 
         doc.addField(targetField, dateTime.format(elasticPrintFormat));
 
         return ProcessResult.success();
+    }
+
+    private ZonedDateTime getISODateTime(String value) {
+        for (DateTimeFormatter formatter : formatters) {
+            try {
+                return ZonedDateTime.parse(value, formatter.withZone(timeZone));
+            } catch (DateTimeParseException e) {
+                // keep trying
+            }
+        }
+        return null;
+    }
+
+    private ZonedDateTime getUnixDateTime(Long value) {
+        long unixTimestamp = value;
+        Instant instant;
+        if (formats.contains("UNIX_MS")) {
+            instant = Instant.ofEpochMilli(unixTimestamp);
+        } else {
+            instant = Instant.ofEpochSecond(unixTimestamp);
+        }
+
+        if (timeZone == null) {
+            return ZonedDateTime.ofInstant(instant, ZoneId.of("UTC"));
+        } else {
+            return ZonedDateTime.ofInstant(instant, timeZone);
+        }
     }
 
     public static class Factory implements Processor.Factory {
@@ -104,10 +141,13 @@ public class DateProcessor implements Processor {
                 throw new ProcessorParseException("cannot create date processor without any format");
             }
 
-            return new DateProcessor(dateConfig.getField(),
-                    dateConfig.getTargetField(),
-                    dateConfig.getFormats(),
-                    ZoneId.of(dateConfig.getTimeZone()));
+            String field = dateConfig.getField();
+            String targetField = dateConfig.getTargetField();
+            List<String> formats = dateConfig.getFormats();
+            String timeZone = dateConfig.getTimeZone();
+            ZoneId zoneId = timeZone != null ? ZoneId.of(timeZone) : null;
+
+            return new DateProcessor(field, targetField, formats, zoneId);
         }
     }
 
