@@ -5,18 +5,18 @@ import java.util.Optional;
 
 public class PipelineDefinition {
     private List<ExecutionStepDefinition> executionStepDefinitionList;
-    private Optional<Boolean> isIgnoreFailure;
+    private Optional<Boolean> stopOnFailure;
 
-    public PipelineDefinition(List<ExecutionStepDefinition> executionStepDefinitionList, Boolean isIgnoreFailure) {
+    public PipelineDefinition(List<ExecutionStepDefinition> executionStepDefinitionList, Boolean stopOnFailure) {
         this.executionStepDefinitionList = executionStepDefinitionList;
-        this.isIgnoreFailure = Optional.ofNullable(isIgnoreFailure);
+        this.stopOnFailure = Optional.ofNullable(stopOnFailure);
     }
 
     public List<ExecutionStepDefinition> getExecutionSteps() {
         return executionStepDefinitionList;
     }
 
-    public Optional<Boolean> isIgnoreFailure() {
-        return isIgnoreFailure;
+    public Optional<Boolean> isStopOnFailure() {
+        return stopOnFailure;
     }
 }
