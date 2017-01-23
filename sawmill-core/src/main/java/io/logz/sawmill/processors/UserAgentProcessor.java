@@ -34,8 +34,8 @@ public class UserAgentProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
-        if (!doc.hasField(field)) {
-            return ProcessResult.failure(String.format("failed to parse user agent, couldn't find field [%s]", field));
+        if (!doc.hasField(field, String.class)) {
+            return ProcessResult.failure(String.format("failed to parse user agent, couldn't find field [%s] or not instance of [%s]", field, String.class));
         }
 
         String uaString = doc.getField(field);

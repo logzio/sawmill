@@ -49,4 +49,16 @@ public class DocTest {
             assertThat(((List) doc.getField("list")).contains(item)).isFalse();
         }
     }
+
+    @Test
+    public void testHasField() {
+        Doc doc = createDoc("int", 15, "String", "test");
+
+        assertThat(doc.hasField("int")).isTrue();
+        assertThat(doc.hasField("notExists")).isFalse();
+        assertThat(doc.hasField("int", Integer.class)).isTrue();
+        assertThat(doc.hasField("int", String.class)).isFalse();
+        assertThat(doc.hasField("String", String.class)).isTrue();
+        assertThat(doc.hasField("String", Integer.class)).isFalse();
+    }
 }
