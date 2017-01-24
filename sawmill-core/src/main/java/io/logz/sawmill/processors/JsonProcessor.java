@@ -22,8 +22,8 @@ public class JsonProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
-        if (!doc.hasField(field)) {
-            return ProcessResult.failure(String.format("failed to parse json, couldn't find field [%s]", field));
+        if (!doc.hasField(field, String.class)) {
+            return ProcessResult.failure(String.format("failed to parse json, couldn't find field [%s] or not instance of [%s]", field, String.class));
         }
 
         Map<String, Object> jsonMap;
@@ -32,6 +32,7 @@ public class JsonProcessor implements Processor {
         try {
             jsonMap = JsonUtils.fromJsonString(Map.class, jsonString);
         } catch (RuntimeException e) {
+            doc.appendList("tags", "_jsonparsefailure");
             return ProcessResult.failure(String.format("failed to parse json, couldn't deserialize from json [%s]", jsonString));
         }
 

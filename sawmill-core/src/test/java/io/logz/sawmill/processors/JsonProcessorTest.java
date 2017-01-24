@@ -5,6 +5,8 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
@@ -58,7 +60,7 @@ public class JsonProcessorTest {
     }
 
     @Test
-    public void testInvalidJson() {
+    public void testJsonParseFailure() {
         String field = "message";
 
         Doc doc = createDoc(field, INVALID_JSON);
@@ -68,6 +70,7 @@ public class JsonProcessorTest {
         ProcessResult processResult = jsonProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isFalse();
+        assertThat((List)doc.getField("tags")).isEqualTo(Arrays.asList("_jsonparsefailure"));
     }
 
     @Test
