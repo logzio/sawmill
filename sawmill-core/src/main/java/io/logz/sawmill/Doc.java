@@ -35,6 +35,11 @@ public class Doc {
         return field.isPresent();
     }
 
+    public boolean hasField(String path, Class clazz) {
+        Optional<Object> field = JsonUtils.getByPath(source, path);
+        return field.isPresent() && clazz.isInstance(field.get());
+    }
+
     public <T> T getField(String path) {
         Optional<Object> field = JsonUtils.getByPath(source, path);
         checkState(field.isPresent(), String.format("Couldn't resolve field in path [%s]", path));
