@@ -32,6 +32,7 @@ public class JsonProcessor implements Processor {
         try {
             jsonMap = JsonUtils.fromJsonString(Map.class, jsonString);
         } catch (RuntimeException e) {
+            doc.appendList("tags", "_jsonparsefailure");
             return ProcessResult.failure(String.format("failed to parse json, couldn't deserialize from json [%s]", jsonString));
         }
 
