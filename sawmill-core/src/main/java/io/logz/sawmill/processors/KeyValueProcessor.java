@@ -5,24 +5,25 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @ProcessorProvider(type = "kv", factory = KeyValueProcessor.Factory.class)
 public class KeyValueProcessor implements Processor {
 
     private final String field;
     private final String targetField;
+    private final Pattern pattern;
     private final List<String> includeKeys;
     private final List<String> excludeKeys;
-    private final String fieldSplit;
-    private final String valueSplit;
     private final boolean allowDuplicateValues;
-    private final boolean includeBrackets;
     private final String prefix;
     private final boolean recursive;
     private final String trim;
@@ -30,24 +31,20 @@ public class KeyValueProcessor implements Processor {
 
     public KeyValueProcessor(String field,
                              String targetField,
+                             Pattern pattern,
                              List<String> includeKeys,
                              List<String> excludeKeys,
-                             String fieldSplit,
-                             String valueSplit,
                              boolean allowDuplicateValues,
-                             boolean includeBrackets,
                              String prefix,
                              boolean recursive,
                              String trim,
                              String trimKey) {
         this.field = field;
         this.targetField = targetField;
+        this.pattern = pattern;
         this.includeKeys = includeKeys;
         this.excludeKeys = excludeKeys;
-        this.fieldSplit = fieldSplit;
-        this.valueSplit = valueSplit;
         this.allowDuplicateValues = allowDuplicateValues;
-        this.includeBrackets = includeBrackets;
         this.prefix = prefix;
         this.recursive = recursive;
         this.trim = trim;
@@ -60,13 +57,27 @@ public class KeyValueProcessor implements Processor {
             return ProcessResult.failure(String.format("failed to process kv, couldn't find field [%s]", field));
         }
 
-        String message = doc.getField(this.field);
+        Map<String, Object> kvMap = new HashMap<>();
 
-        Map<String, Object> kvMap = (Map<String, Object>) getKeyValues(message);
+        Object kvField = doc.getField(this.field);
+
+        if (kvField instanceof List) {
+            for (Object subField : (List) kvField) {
+                if (subField instanceof String) {
+                    kvMap.putAll(parse((String) subField));
+                }
+            }
+
+        } else if (kvField instanceof String) {
+            kvMap = parse((String) kvField);
+        } else {
+            return ProcessResult.failure(String.format("failed to process kv, cannot parse type [%s] of field [%s]", kvField.getClass(), field));
+        }
 
         if (includeKeys != null) {
             kvMap.keySet().retainAll(includeKeys);
-        } else if (excludeKeys != null) {
+        }
+        if (excludeKeys != null) {
             kvMap.keySet().removeAll(excludeKeys);
         }
 
@@ -74,67 +85,70 @@ public class KeyValueProcessor implements Processor {
             doc.addField(targetField, kvMap);
         } else {
             kvMap.forEach((key,value) -> {
-                doc.addField(getKey(key), getValue(value));
+                doc.addField(key, value);
             });
         }
 
         return ProcessResult.success();
     }
 
-    private String getKey(String key) {
-        return prefix + trim(key, trimKey);
+    private String getKey(Matcher matcher) {
+        return prefix + trim(matcher.group(1), trimKey);
     }
 
-    private Object getValue(Object value) {
-        if (value instanceof Map) {
-            Map<String,Object> kvMap = new HashMap<>();
+    private Object getValue(Matcher matcher) {
+        Object value = getMatchedValue(matcher);
 
-            Map<String,Object> map = (Map) value;
-            map.forEach((innerKey, innerValue) -> {
-                kvMap.put(getKey(innerKey), getValue(innerValue));
-            });
-
-            return kvMap;
-        } else {
-            return trim((String) value, trim);
-        }
-    }
-
-    private Object getKeyValues(String message) {
-        Map<String,Object> kvMap = new HashMap<>();
-
-        String[] fields = includeBrackets ? message.split("[ ](?=[^\\]\\)>\\}]*?(?:\\[|\\(|<|\\{|$))") : message.split(fieldSplit);
-
-        if (fields.length == 1) {
-            return message;
-        }
-
-        for (String field : fields) {
-            if (field.contains(valueSplit)) {
-                String[] kv = field.split(valueSplit);
-                String key = kv[0];
-                Object value = recursive ? getKeyValues(kv[1]) : kv[1];
-
-                if (allowDuplicateValues) {
-                    kvMap.put(key, value);
-                } else {
-                    kvMap.computeIfPresent(key, (k, oldVal) -> {
-                        if (oldVal instanceof List) {
-                            return ((List) oldVal).add(value);
-                        }
-                        return Arrays.asList(oldVal, value);
-                    });
-                }
+        if (recursive) {
+            Map<String,Object> innerKv = parse((String) value);
+            if (MapUtils.isNotEmpty(innerKv)) {
+                return innerKv;
             }
         }
+
+        return trim((String) value, trim);
+    }
+
+    private Map<String,Object> parse(String message) {
+        Map<String,Object> kvMap = new HashMap<>();
+
+        Matcher matcher = pattern.matcher(message);
+
+        while (matcher.find()) {
+            String key = getKey(matcher);
+            Object value = getValue(matcher);
+
+            if (allowDuplicateValues) {
+                kvMap.compute(key, (k, oldVal) -> {
+                    if (oldVal == null) return value;
+                    if (oldVal instanceof List) {
+                        return ((List) oldVal).add(value);
+                    }
+                    return Arrays.asList(oldVal, value);
+                });
+            } else {
+                kvMap.putIfAbsent(key, value);
+            }
+        }
+
         return kvMap;
+    }
+
+    private String getMatchedValue(Matcher matcher) {
+        for (int i=2; i <= 7; i++ ) {
+            String value = matcher.group(i);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private String trim(String key, String trimChars) {
         if (trimChars != null) {
-            StringUtils.strip(key, trimChars);
+            key = StringUtils.strip(key, trimChars);
         }
-        return key;
+        return key.trim();
     }
 
     public static class Factory implements Processor.Factory {
@@ -145,14 +159,19 @@ public class KeyValueProcessor implements Processor {
         public KeyValueProcessor create(Map<String,Object> config) {
             KeyValueProcessor.Configuration keyValueConfig = JsonUtils.fromJsonMap(KeyValueProcessor.Configuration.class, config);
 
+            String valueRxString = "(?:\"([^\"]+)\"|'([^']+)'";
+            if (keyValueConfig.isIncludeBrackets()) {
+                valueRxString += "|\\(([^\\)]+)\\)|\\[([^\\]]+)\\]|<([^>]+)>";
+            }
+            valueRxString += "|((?:\\\\ |[^" + keyValueConfig.getFieldSplit() + "])+))";
+            Pattern pattern = Pattern.compile("((?:\\\\ |[^" + keyValueConfig.getFieldSplit() + keyValueConfig.getValueSplit() + "])+)\\s*[" + keyValueConfig.getValueSplit() + "]\\s*" + valueRxString);
+
             return new KeyValueProcessor(keyValueConfig.getField(),
                     keyValueConfig.getTargetField(),
+                    pattern,
                     keyValueConfig.getIncludeKeys(),
                     keyValueConfig.getExcludeKeys(),
-                    keyValueConfig.getFieldSplit(),
-                    keyValueConfig.getValueSplit(),
                     keyValueConfig.isAllowDuplicateValues(),
-                    keyValueConfig.isIncludeBrackets(),
                     keyValueConfig.getPrefix(),
                     keyValueConfig.isRecursive(),
                     keyValueConfig.getTrim(),
