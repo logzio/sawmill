@@ -30,7 +30,7 @@ public class ConvertFieldProcessor implements Processor {
     @Override
     public ProcessResult process(Doc doc) {
         if (!doc.hasField(path)) {
-            return ProcessResult.failure("failed to convert field in path [%s], field is missing");
+            return ProcessResult.failure(String.format("failed to convert field in path [%s], field is missing", path));
         }
         Object beforeCast = doc.getField(path);
 
