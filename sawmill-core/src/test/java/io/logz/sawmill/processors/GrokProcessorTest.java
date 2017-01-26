@@ -189,4 +189,27 @@ public class GrokProcessorTest {
 
         assertThatThrownBy(() -> factory.create(config)).isInstanceOf(RuntimeException.class);
     }
+
+    @Test
+    public void testPatternsPriority() {
+        String field = "message";
+        List<String> patterns = Arrays.asList(
+                "%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}",
+                "%{COMMONAPACHELOG}+%{GREEDYDATA:extra_fields}"
+        );
+
+        Doc doc1 = createDoc("message", "10.220.21.10 - - [26/Jan/2017:16:14:07 +0100] \"GET /clioonline.abo2/authentication/cliologin HTTP/1.0\" 404 238");
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", patterns);
+        config.put("ignoreMissing", false);
+        GrokProcessor grokProcessor = factory.create(config);
+
+        grokProcessor.process(doc1);
+
+        Doc doc2 = createDoc("message", "194.239.185.67 - - [26/Jan/2017:14:32:46 +0100] \"GET /religionsfaget/udskoling/typo3temp/Assets/464cb9f3a6.css?1467394170 HTTP/1.1\" 200 1196 \"http://www.clioonline.dk/religionsfaget/udskoling/emner/religioner/islam/islams-trosgrundlag/\" \"Mozilla/5.0 (X11; CrOS armv7l 8872.76.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.105 Safari/537.36\"");
+        grokProcessor.process(doc2);
+
+        assertThat(doc2.hasField("extra_fields")).isFalse();
+    }
 }

@@ -108,7 +108,6 @@ public class GrokProcessor implements Processor {
             match.captures();
             Map<String, Object> map = match.toMap();
             if (map.size() > 0) {
-                if (i > 0) Collections.swap(groks, 0, i); // Use the grok that matched first
                 return map;
             }
         }
