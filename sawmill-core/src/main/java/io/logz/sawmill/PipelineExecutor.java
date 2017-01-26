@@ -55,7 +55,8 @@ public class PipelineExecutor {
     private ExecutionResult executeSteps(List<ExecutionStep> executionSteps, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {
         for (ExecutionStep executionStep : executionSteps) {
             ExecutionResult executionResult = executeStep(executionStep, pipeline, doc, pipelineStopwatch);
-            if (!executionResult.isSucceeded() && pipeline.isStopOnFailure()) {
+            boolean shouldStop = !executionResult.isSucceeded() && pipeline.isStopOnFailure();
+            if (shouldStop || executionResult.isDropped()) {
                 return executionResult;
             }
         }
@@ -94,6 +95,8 @@ public class PipelineExecutor {
         if (processResult.isSucceeded()) {
             pipelineExecutionMetricsTracker.processorFinishedSuccessfully(pipelineId, processorName, processorTook);
             return ExecutionResult.success();
+        } else if (processResult.isDropped()) {
+            return ExecutionResult.dropped();
         } else {
             Optional<List<ExecutionStep>> onFailureExecutionSteps = executionStep.getOnFailureExecutionSteps();
             if (onFailureExecutionSteps.isPresent()) {

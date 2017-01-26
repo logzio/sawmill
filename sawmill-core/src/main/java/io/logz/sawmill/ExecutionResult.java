@@ -4,14 +4,23 @@ import io.logz.sawmill.exceptions.PipelineExecutionException;
 
 import java.util.Optional;
 
+import static io.logz.sawmill.Result.DROPPED;
+import static io.logz.sawmill.Result.FAILED;
+import static io.logz.sawmill.Result.SUCCEEDED;
+
 public class ExecutionResult {
-    private final boolean succeeded;
+    private final Result result;
     private final Optional<Error> error;
 
     private static ExecutionResult executionSucceeded = new ExecutionResult();
+    private static ExecutionResult executionDropped = new ExecutionResult(DROPPED);
 
     private ExecutionResult() {
-        this.succeeded = true;
+        this(SUCCEEDED);
+    }
+
+    private ExecutionResult(Result result) {
+        this.result = result;
         this.error = Optional.empty();
     }
 
@@ -20,7 +29,7 @@ public class ExecutionResult {
     }
 
     private ExecutionResult(String errorMessage, String failedProcessorName, PipelineExecutionException e) {
-        this.succeeded = false;
+        this.result = FAILED;
         this.error = Optional.of(new Error(errorMessage, failedProcessorName, Optional.ofNullable(e)));
     }
 
@@ -37,11 +46,18 @@ public class ExecutionResult {
     }
 
     public boolean isSucceeded() {
-        return succeeded;
+        return result == SUCCEEDED;
+    }
+    public boolean isDropped() {
+        return result == DROPPED;
     }
 
     public Optional<Error> getError() {
         return error;
+    }
+
+    public static ExecutionResult dropped() {
+        return executionDropped;
     }
 
     public static class Error {

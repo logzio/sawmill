@@ -124,6 +124,23 @@ public class PipelineExecutorTest {
     }
 
     @Test
+    public void testDrop() {
+        Pipeline pipeline = createPipeline(createAddFieldExecutionStep("newField1", "value1"),
+                createDropExecutionStep()
+        );
+        Doc doc = createDoc("id", "testDrop", "message", "hola",
+                "type", "test");
+
+        ExecutionResult result = pipelineExecutor.execute(pipeline, doc);
+        assertThat(result.isSucceeded()).isFalse();
+        assertThat(result.isDropped()).isTrue();
+
+        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(0);
+    }
+
+    @Test
     public void testFailureWithException() {
         Pipeline pipeline = createStopOnFailurePipeline(
                 createAddFieldExecutionStep("newField1", "value1"),
@@ -280,6 +297,14 @@ public class PipelineExecutorTest {
 
     private ProcessorExecutionStep createFailAlwaysExecutionStep(ExecutionStep... onFailureExecutionSteps) {
         return new ProcessorExecutionStep("fail1", createFailAlwaysProcessor(), Arrays.asList(onFailureExecutionSteps));
+    }
+
+    private ExecutionStep createDropExecutionStep() {
+        return new ProcessorExecutionStep("drop1", createDropProcessor());
+    }
+
+    private Processor createDropProcessor() {
+        return (Doc doc) -> ProcessResult.drop();
     }
 
     private Processor createFailAlwaysProcessor() {
