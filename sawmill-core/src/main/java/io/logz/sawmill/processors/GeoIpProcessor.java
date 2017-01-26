@@ -63,8 +63,8 @@ public class GeoIpProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
-        if (!doc.hasField(sourceField)) {
-            return ProcessResult.failure(String.format("failed to get ip from [%s], field missing", sourceField));
+        if (!doc.hasField(sourceField, String.class)) {
+            return ProcessResult.failure(String.format("failed to get ip from [%s], field is missing or not instance of [%s]", sourceField, String.class));
         }
 
         String ip = doc.getField(sourceField);

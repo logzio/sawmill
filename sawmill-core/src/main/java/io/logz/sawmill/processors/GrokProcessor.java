@@ -72,10 +72,10 @@ public class GrokProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
-        if (!doc.hasField(field)) {
+        if (!doc.hasField(field, String.class)) {
             if (ignoreMissing) return ProcessResult.success();
 
-            return ProcessResult.failure(String.format("failed to grok field in path [%s], field is missing", field));
+            return ProcessResult.failure(String.format("failed to grok field in path [%s], field is missing or not instance of [%s]", field, String.class));
         }
 
         String value = doc.getField(field);
@@ -108,7 +108,6 @@ public class GrokProcessor implements Processor {
             match.captures();
             Map<String, Object> map = match.toMap();
             if (map.size() > 0) {
-                if (i > 0) Collections.swap(groks, 0, i); // Use the grok that matched first
                 return map;
             }
         }
