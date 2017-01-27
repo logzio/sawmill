@@ -44,12 +44,14 @@ public class PipelineExecutor {
         if (executionResult.isSucceeded()) {
             logger.trace("pipeline {} executed successfully, took {}ns", pipeline.getId(), pipelineStopwatch.pipelineElapsed());
             pipelineExecutionMetricsTracker.pipelineFinishedSuccessfully(pipeline.getId(), doc, pipelineStopwatch.pipelineElapsed());
-            return ExecutionResult.success();
 
+        } else if (executionResult.isDropped()) {
+            pipelineExecutionMetricsTracker.docDropped(pipeline.getId(), doc);
         } else {
             pipelineExecutionMetricsTracker.pipelineFailed(pipeline.getId(), doc);
-            return executionResult;
         }
+
+        return executionResult;
     }
 
     private ExecutionResult executeSteps(List<ExecutionStep> executionSteps, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {

@@ -5,6 +5,8 @@ public interface PipelineExecutionMetricsTracker {
 
     void pipelineFailed(String pipelineId, Doc doc);
 
+    void docDropped(String pipelineId, Doc doc);
+
     void processorFinishedSuccessfully(String pipelineId, String processorName, long timeTookNs);
 
     void processorFailed(String pipelineId, String processorName, Doc doc);

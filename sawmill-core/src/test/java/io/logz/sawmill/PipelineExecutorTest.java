@@ -136,7 +136,8 @@ public class PipelineExecutorTest {
         assertThat(result.isDropped()).isTrue();
 
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
-        assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsDropped()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(0);
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(0);
     }
 
