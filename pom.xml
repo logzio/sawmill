@@ -6,7 +6,7 @@
 
     <groupId>io.logz.sawmill</groupId>
     <artifactId>sawmill</artifactId>
-    <version>1.1.6-SNAPSHOT</version>
+    <version>1.1.6</version>
     <modules>
         <module>sawmill-core</module>
         <module>sawmill-benchmark</module>
