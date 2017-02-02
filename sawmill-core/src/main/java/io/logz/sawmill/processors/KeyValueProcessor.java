@@ -8,6 +8,7 @@ import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -31,17 +32,19 @@ public class KeyValueProcessor implements Processor {
 
     public KeyValueProcessor(String field,
                              String targetField,
-                             Pattern pattern,
                              List<String> includeKeys,
                              List<String> excludeKeys,
+                             String fieldSplit,
+                             String valueSplit,
                              boolean allowDuplicateValues,
+                             boolean includeBrackets,
                              String prefix,
                              boolean recursive,
                              String trim,
                              String trimKey) {
         this.field = field;
         this.targetField = targetField;
-        this.pattern = pattern;
+        this.pattern = buildPattern(fieldSplit, valueSplit, includeBrackets);
         this.includeKeys = includeKeys;
         this.excludeKeys = excludeKeys;
         this.allowDuplicateValues = allowDuplicateValues;
@@ -49,6 +52,30 @@ public class KeyValueProcessor implements Processor {
         this.recursive = recursive;
         this.trim = trim;
         this.trimKey = trimKey;
+    }
+
+    /***
+     *  Build KeyValue Pattern
+     *  Group 1: Key
+     *  Group 2: Double quotes
+     *  Group 3: Single quotes
+     *  Group 4: Round brackets
+     *  Group 5: Brackets
+     *  Group 6: Angle beackets
+     *  Group 7: Normal
+     * @param includeBrackets
+     * @param fieldSplit
+     * @param valueSplit
+     * @return KV Pattern
+     */
+    private Pattern buildPattern(String fieldSplit, String valueSplit, boolean includeBrackets) {
+        String valueRxString = "(?:\"([^\"]+)\"|'([^']+)'";
+        if (includeBrackets) {
+            valueRxString += "|\\(([^\\)]+)\\)|\\[([^\\]]+)\\]|<([^>]+)>";
+        }
+        valueRxString += "|((?:\\\\ |[^" + fieldSplit + "])+))";
+
+        return Pattern.compile("((?:\\\\ |[^" + fieldSplit + valueSplit + "])+)\\s*[" + valueSplit + "]\\s*" + valueRxString);
     }
 
     @Override
@@ -84,9 +111,7 @@ public class KeyValueProcessor implements Processor {
         if (targetField != null) {
             doc.addField(targetField, kvMap);
         } else {
-            kvMap.forEach((key,value) -> {
-                doc.addField(key, value);
-            });
+            kvMap.forEach(doc::addField);
         }
 
         return ProcessResult.success();
@@ -122,9 +147,10 @@ public class KeyValueProcessor implements Processor {
                 kvMap.compute(key, (k, oldVal) -> {
                     if (oldVal == null) return value;
                     if (oldVal instanceof List) {
-                        return ((List) oldVal).add(value);
+                        ((List) oldVal).add(value);
+                        return oldVal;
                     }
-                    return Arrays.asList(oldVal, value);
+                    return new ArrayList<>(Arrays.asList(oldVal, value));
                 });
             } else {
                 kvMap.putIfAbsent(key, value);
@@ -135,6 +161,7 @@ public class KeyValueProcessor implements Processor {
     }
 
     private String getMatchedValue(Matcher matcher) {
+        // Running all over the value options and take the one that captured
         for (int i=2; i <= 7; i++ ) {
             String value = matcher.group(i);
             if (value != null) {
@@ -159,19 +186,14 @@ public class KeyValueProcessor implements Processor {
         public KeyValueProcessor create(Map<String,Object> config) {
             KeyValueProcessor.Configuration keyValueConfig = JsonUtils.fromJsonMap(KeyValueProcessor.Configuration.class, config);
 
-            String valueRxString = "(?:\"([^\"]+)\"|'([^']+)'";
-            if (keyValueConfig.isIncludeBrackets()) {
-                valueRxString += "|\\(([^\\)]+)\\)|\\[([^\\]]+)\\]|<([^>]+)>";
-            }
-            valueRxString += "|((?:\\\\ |[^" + keyValueConfig.getFieldSplit() + "])+))";
-            Pattern pattern = Pattern.compile("((?:\\\\ |[^" + keyValueConfig.getFieldSplit() + keyValueConfig.getValueSplit() + "])+)\\s*[" + keyValueConfig.getValueSplit() + "]\\s*" + valueRxString);
-
             return new KeyValueProcessor(keyValueConfig.getField(),
                     keyValueConfig.getTargetField(),
-                    pattern,
                     keyValueConfig.getIncludeKeys(),
                     keyValueConfig.getExcludeKeys(),
+                    keyValueConfig.getFieldSplit(),
+                    keyValueConfig.getValueSplit(),
                     keyValueConfig.isAllowDuplicateValues(),
+                    keyValueConfig.isIncludeBrackets(),
                     keyValueConfig.getPrefix(),
                     keyValueConfig.isRecursive(),
                     keyValueConfig.getTrim(),
