@@ -83,6 +83,20 @@ public class GeoIpProcessorTest {
 
     @Test
     public void testInternalIp() {
+        String ip = "192.168.1.1";
+        String source = "ipString";
+        String target = "geoip";
+
+        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+
+        Doc doc = createDoc(source, ip);
+
+        assertThat(geoIpProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat(doc.hasField(target)).isFalse();
+    }
+
+    @Test
+    public void testEmptyPropertiesIp() {
         String ip = "199.188.236.64";
         String source = "ipString";
         String target = "geoip";
