@@ -222,7 +222,12 @@ public class GeoIpProcessor implements Processor {
         LOCATION {
             @Override
             public Object getValue(CityResponse response) {
-                return Arrays.asList(response.getLocation().getLongitude(),response.getLocation().getLatitude());
+                Double longitude = response.getLocation().getLongitude();
+                Double latitude = response.getLocation().getLatitude();
+                if (longitude == null || latitude == null) {
+                    return null;
+                }
+                return Arrays.asList(longitude, latitude);
             }
         },
         DMA_CODE {

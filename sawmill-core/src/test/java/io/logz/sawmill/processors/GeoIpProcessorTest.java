@@ -52,8 +52,17 @@ public class GeoIpProcessorTest {
         assertThat(doc.hasField(target)).isTrue();
         Map<String, Object> geoIp = doc.getField(target);
         assertThat(geoIp.get("country_name")).isEqualTo("Mexico");
+        assertThat(geoIp.get("country_code2")).isEqualTo("MX");
+        assertThat(geoIp.get("continent_code")).isEqualTo("NA");
+        assertThat(geoIp.get("region_name")).isEqualTo("CMX");
+        assertThat(geoIp.get("real_region_name")).isEqualTo("Mexico City");
         assertThat(geoIp.get("city_name")).isEqualTo("Mexico City");
         assertThat(geoIp.get("ip")).isEqualTo(ip);
+        assertThat(geoIp.get("timezone")).isEqualTo("America/Mexico_City");
+        assertThat(geoIp.get("postal_code")).isEqualTo("63000");
+        assertThat(geoIp.get("longitude")).isEqualTo(-99.1386d);
+        assertThat(geoIp.get("latitude")).isEqualTo(19.4342d);
+        assertThat(geoIp.get("location")).isEqualTo(Arrays.asList(-99.1386d, 19.4342d));
         assertThat(((List)doc.getField("tags")).contains("geoip")).isTrue();
     }
 
@@ -70,5 +79,33 @@ public class GeoIpProcessorTest {
         assertThat(geoIpProcessor.process(doc).isSucceeded()).isTrue();
         assertThat(doc.hasField(target)).isFalse();
         assertThat(doc.hasField("tags")).isFalse();
+    }
+
+    @Test
+    public void testEmptyPropertiesIp() {
+        String ip = "199.188.236.64";
+        String source = "ipString";
+        String target = "geoip";
+
+        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+
+        Doc doc = createDoc(source, ip);
+
+        assertThat(geoIpProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat(doc.hasField(target)).isTrue();
+        Map<String, Object> geoIp = doc.getField(target);
+        assertThat(geoIp.get("ip")).isEqualTo(ip);
+        assertThat(((List)doc.getField("tags")).contains("geoip")).isTrue();
+        assertThat(geoIp.containsKey("country_name")).isFalse();
+        assertThat(geoIp.containsKey("country_code2")).isFalse();
+        assertThat(geoIp.containsKey("continent_code")).isFalse();
+        assertThat(geoIp.containsKey("region_name")).isFalse();
+        assertThat(geoIp.containsKey("real_region_name")).isFalse();
+        assertThat(geoIp.containsKey("city_name")).isFalse();
+        assertThat(geoIp.containsKey("timezone")).isFalse();
+        assertThat(geoIp.containsKey("postal_code")).isFalse();
+        assertThat(geoIp.containsKey("longitude")).isFalse();
+        assertThat(geoIp.containsKey("latitude")).isFalse();
+        assertThat(geoIp.containsKey("location")).isFalse();
     }
 }
