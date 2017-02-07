@@ -85,9 +85,27 @@ public class GrokProcessorTest {
     @Test
     public void testWithoutOverwrite() {
         String field = "message";
+        List<String> patterns = Arrays.asList("%{WORD:http-verb}");
+
+        Doc doc = createDoc(field, "GET", "http-verb", "POST");
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", patterns);
+        GrokProcessor grokProcessor = factory.create(config);
+
+        ProcessResult processResult = grokProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat((List)doc.getField("http-verb")).isEqualTo(Arrays.asList("POST", "GET"));
+    }
+
+    @Test
+    public void testUnknownConversionType() {
+        String field = "message";
         List<String> patterns = Arrays.asList("%{WORD:verb:sheker}");
 
-        Doc doc = createDoc(field, "GET", "verb", "POST");
+        Doc doc = createDoc(field, "GET");
 
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
@@ -98,7 +116,43 @@ public class GrokProcessorTest {
 
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat(doc.hasField("verb_grokfailure")).isFalse();
-        assertThat((List)doc.getField("verb")).isEqualTo(Arrays.asList("POST", "GET"));
+        assertThat((String)doc.getField("verb")).isEqualTo("GET");
+    }
+
+    @Test
+    public void testCustomPatterns() {
+        String field = "message";
+        List<String> patterns = Arrays.asList("(?<custompattern>\\w+)");
+
+        Doc doc = createDoc(field, "message");
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", patterns);
+        GrokProcessor grokProcessor = factory.create(config);
+
+        ProcessResult processResult = grokProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat((String)doc.getField("custompattern")).isEqualTo("message");
+    }
+
+    @Test
+    public void testCustomPatternsWithHyphen() {
+        String field = "message";
+        List<String> patterns = Arrays.asList("(?<custom-pattern>\\w+)");
+
+        Doc doc = createDoc(field, "message");
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", patterns);
+        GrokProcessor grokProcessor = factory.create(config);
+
+        ProcessResult processResult = grokProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat((String)doc.getField("custom-pattern")).isEqualTo("message");
     }
 
     @Test
