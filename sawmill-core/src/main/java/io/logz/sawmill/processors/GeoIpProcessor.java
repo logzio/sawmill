@@ -29,6 +29,7 @@ import java.util.zip.GZIPInputStream;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
+import static io.logz.sawmill.processors.GeoIpProcessor.Property.LOCATION;
 import static java.util.Collections.EMPTY_LIST;
 
 @ProcessorProvider(type = "geoIp", factory = GeoIpProcessor.Factory.class)
@@ -94,6 +95,10 @@ public class GeoIpProcessor implements Processor {
 
     private Map<String, Object> extractGeoIp(InetAddress ipAddress) throws GeoIp2Exception, IOException {
         CityResponse response = databaseReader.city(ipAddress);
+
+        if (LOCATION.getValue(response) == null) {
+            return null;
+        }
 
         Map<String, Object> geoIp = new HashMap<>();
         for (Property property : properties) {

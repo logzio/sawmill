@@ -82,7 +82,7 @@ public class GeoIpProcessorTest {
     }
 
     @Test
-    public void testEmptyPropertiesIp() {
+    public void testInternalIp() {
         String ip = "199.188.236.64";
         String source = "ipString";
         String target = "geoip";
@@ -92,20 +92,6 @@ public class GeoIpProcessorTest {
         Doc doc = createDoc(source, ip);
 
         assertThat(geoIpProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat(doc.hasField(target)).isTrue();
-        Map<String, Object> geoIp = doc.getField(target);
-        assertThat(geoIp.get("ip")).isEqualTo(ip);
-        assertThat(((List)doc.getField("tags")).contains("geoip")).isTrue();
-        assertThat(geoIp.containsKey("country_name")).isFalse();
-        assertThat(geoIp.containsKey("country_code2")).isFalse();
-        assertThat(geoIp.containsKey("continent_code")).isFalse();
-        assertThat(geoIp.containsKey("region_name")).isFalse();
-        assertThat(geoIp.containsKey("real_region_name")).isFalse();
-        assertThat(geoIp.containsKey("city_name")).isFalse();
-        assertThat(geoIp.containsKey("timezone")).isFalse();
-        assertThat(geoIp.containsKey("postal_code")).isFalse();
-        assertThat(geoIp.containsKey("longitude")).isFalse();
-        assertThat(geoIp.containsKey("latitude")).isFalse();
-        assertThat(geoIp.containsKey("location")).isFalse();
+        assertThat(doc.hasField(target)).isFalse();
     }
 }
