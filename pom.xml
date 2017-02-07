@@ -19,6 +19,10 @@
             <id>twitter-twttr</id>
             <url>http://maven.twttr.com/</url>
         </repository>
+        <repository>
+            <id>logzio</id>
+            <url>http://nexus.internal.logz.io/repository/logzio-repos</url>
+        </repository>
     </repositories>
 
     <properties>
