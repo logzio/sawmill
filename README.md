@@ -30,3 +30,7 @@ Simple configuration example:
   ]
 }
 ```
+
+## Open source
+In order to move to public repository, these are the items we need to fix:
+- Remove the dependency of custom java-grok in Nexus
