@@ -75,7 +75,7 @@ public class PipelineDefinitionJsonParser {
     }
 
     private ProcessorExecutionStepDefinition parseProcessorExecutionStepDefinition(String processorType, Map<String, Object> config) {
-        String name = getString(config, "name", true);
+        String name = getString(config, "name", false);
         Map<String, Object> processorConfig = getMap(config, "config", true);
         ProcessorDefinition processorDefinition = new ProcessorDefinition(processorType, processorConfig);
 

@@ -5,7 +5,7 @@ import java.util.Optional;
 
 public class ProcessorExecutionStepDefinition implements ExecutionStepDefinition {
     private ProcessorDefinition processorDefinition;
-    private String name;
+    private Optional<String> name;
     private Optional<List<ExecutionStepDefinition>> onFailureExecutionStepDefinitionList;
 
     public ProcessorExecutionStepDefinition(
@@ -13,11 +13,11 @@ public class ProcessorExecutionStepDefinition implements ExecutionStepDefinition
             String name,
             List<ExecutionStepDefinition> onFailureExecutionStepDefinitionList) {
         this.processorDefinition = processorDefinition;
-        this.name = name;
+        this.name = Optional.ofNullable(name);
         this.onFailureExecutionStepDefinitionList = Optional.ofNullable(onFailureExecutionStepDefinitionList);
     }
 
-    public String getName() {
+    public Optional<String> getName() {
         return name;
     }
 
