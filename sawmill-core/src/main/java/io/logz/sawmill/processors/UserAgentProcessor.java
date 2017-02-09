@@ -1,9 +1,11 @@
 package io.logz.sawmill.processors;
 
 import com.google.common.io.Resources;
+import com.samskivert.mustache.Template;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 import ua_parser.CachingParser;
@@ -20,12 +22,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @ProcessorProvider(type = "userAgent", factory = UserAgentProcessor.Factory.class)
 public class UserAgentProcessor implements Processor {
-    private final String field;
-    private final String targetField;
+    private final Template field;
+    private final Template targetField;
     private final String prefix;
     private final Parser uaParser;
 
-    public UserAgentProcessor(String field, String targetField, String prefix, Parser uaParser) {
+    public UserAgentProcessor(Template field, Template targetField, String prefix, Parser uaParser) {
         this.field = checkNotNull(field, "field cannot be null");
         this.targetField = targetField;
         this.prefix = prefix != null ? prefix : "";
@@ -131,8 +133,8 @@ public class UserAgentProcessor implements Processor {
         public UserAgentProcessor create(Map<String,Object> config) {
             UserAgentProcessor.Configuration userAgentConfig = JsonUtils.fromJsonMap(UserAgentProcessor.Configuration.class, config);
 
-            return new UserAgentProcessor(userAgentConfig.getField(),
-                    userAgentConfig.getTargetField(),
+            return new UserAgentProcessor(TemplateService.compileTemplate(userAgentConfig.getField()),
+                    TemplateService.compileTemplate(userAgentConfig.getTargetField()),
                     userAgentConfig.getPrefix(),
                     uaParser);
         }

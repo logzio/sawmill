@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -28,7 +29,7 @@ public class SubstituteProcessorTest {
 
         Doc doc = createDoc(field, message);
 
-        SubstituteProcessor substituteProcessor = new SubstituteProcessor.Factory().create(config);
+        SubstituteProcessor substituteProcessor = createProcessor(SubstituteProcessor.class, config);
 
         ProcessResult processResult = substituteProcessor.process(doc);
 
@@ -50,7 +51,7 @@ public class SubstituteProcessorTest {
 
         Doc doc = createDoc("differentFieldName", message);
 
-        SubstituteProcessor substituteProcessor = new SubstituteProcessor.Factory().create(config);
+        SubstituteProcessor substituteProcessor = createProcessor(SubstituteProcessor.class, config);
 
         ProcessResult processResult = substituteProcessor.process(doc);
 
@@ -69,6 +70,6 @@ public class SubstituteProcessorTest {
 
         Doc doc = createDoc(field, "value");
 
-        assertThatThrownBy(() -> new SubstituteProcessor.Factory().create(config)).isInstanceOf(ProcessorParseException.class);
+        assertThatThrownBy(() -> createProcessor(SubstituteProcessor.class, config)).isInstanceOf(ProcessorParseException.class);
     }
 }

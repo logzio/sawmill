@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class UserAgentProcessorTest {
@@ -21,7 +22,7 @@ public class UserAgentProcessorTest {
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
         config.put("targetField", targetField);
-        UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
+        UserAgentProcessor uaProceesor = createProcessor(UserAgentProcessor.class, config);
 
         ProcessResult processResult = uaProceesor.process(doc);
 
@@ -54,7 +55,7 @@ public class UserAgentProcessorTest {
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
         config.put("prefix", prefix);
-        UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
+        UserAgentProcessor uaProceesor = createProcessor(UserAgentProcessor.class, config);
 
         ProcessResult processResult = uaProceesor.process(doc);
 
@@ -83,7 +84,7 @@ public class UserAgentProcessorTest {
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
         config.put("targetField", targetField);
-        UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
+        UserAgentProcessor uaProceesor = createProcessor(UserAgentProcessor.class, config);
 
         ProcessResult processResult = uaProceesor.process(doc);
 

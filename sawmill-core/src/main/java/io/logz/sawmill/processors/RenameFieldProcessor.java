@@ -1,8 +1,10 @@
 package io.logz.sawmill.processors;
 
+import com.samskivert.mustache.Template;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
@@ -12,10 +14,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @ProcessorProvider(type = "rename", factory = RenameFieldProcessor.Factory.class)
 public class RenameFieldProcessor implements Processor {
-    private final String from;
-    private final String to;
+    private final Template from;
+    private final Template to;
 
-    public RenameFieldProcessor(String from, String to) {
+    public RenameFieldProcessor(Template from, Template to) {
         this.from = checkNotNull(from, "from field path cannot be null");
         this.to = checkNotNull(to, "to field path cannot be null");
     }
@@ -37,10 +39,10 @@ public class RenameFieldProcessor implements Processor {
         }
 
         @Override
-        public Processor create(Map<String,Object> config) {
+        public RenameFieldProcessor create(Map<String,Object> config) {
             RenameFieldProcessor.Configuration renameFieldConfig = JsonUtils.fromJsonMap(RenameFieldProcessor.Configuration.class, config);
 
-            return new RenameFieldProcessor(renameFieldConfig.getFrom(), renameFieldConfig.getTo());
+            return new RenameFieldProcessor(TemplateService.compileTemplate(renameFieldConfig.getFrom()), TemplateService.compileTemplate(renameFieldConfig.getTo()));
         }
     }
 

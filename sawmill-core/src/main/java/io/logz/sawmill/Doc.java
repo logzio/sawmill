@@ -1,5 +1,6 @@
 package io.logz.sawmill;
 
+import com.samskivert.mustache.Template;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.MapUtils;
 
@@ -30,9 +31,17 @@ public class Doc {
 
     public Map<String, Object> getMetadata() { return metadata; }
 
+    public boolean hasField(Template path) {
+        return hasField(renderTemplate(path));
+    }
+
     public boolean hasField(String path) {
         Optional<Object> field = JsonUtils.getByPath(source, path);
         return field.isPresent();
+    }
+
+    public boolean hasField(Template path, Class clazz) {
+        return hasField(renderTemplate(path), clazz);
     }
 
     public boolean hasField(String path, Class clazz) {
@@ -40,10 +49,22 @@ public class Doc {
         return field.isPresent() && clazz.isInstance(field.get());
     }
 
+    public <T> T getField(Template path) {
+        return getField(renderTemplate(path));
+    }
+
     public <T> T getField(String path) {
         Optional<Object> field = JsonUtils.getByPath(source, path);
         checkState(field.isPresent(), String.format("Couldn't resolve field in path [%s]", path));
         return (T) field.get();
+    }
+
+    public void addField(Template path, Object value) {
+        addField(renderTemplate(path), value);
+    }
+
+    public void addField(Template path, TemplatedValue value) {
+        addField(renderTemplate(path), renderTemplate(value));
     }
 
     public void addField(String path, Object value) {
@@ -72,6 +93,11 @@ public class Doc {
      * @return {@code true} if field has been removed
      *         {@code false} if field wasn't exist
      */
+
+    public boolean removeField(Template path) {
+        return removeField(renderTemplate(path));
+    }
+
     public boolean removeField(String path) {
         if (!hasField(path)) {
             return false;
@@ -89,6 +115,14 @@ public class Doc {
         context.remove(leafKey);
 
         return true;
+    }
+
+    public void appendList(Template path, TemplatedValue value) {
+        appendList(renderTemplate(path), renderTemplate(value));
+    }
+
+    public void appendList(String path, TemplatedValue value) {
+        appendList(path, renderTemplate(value));
     }
 
     public void appendList(String path, Object value) {
@@ -120,6 +154,14 @@ public class Doc {
      * @return {@code true} if value removed from list
      *         {@code false} otherwise
      */
+    public boolean removeFromList(Template path, TemplatedValue value) {
+        return removeFromList(renderTemplate(path), renderTemplate(value));
+    }
+
+    public boolean removeFromList(String path, TemplatedValue value) {
+        return removeFromList(path, renderTemplate(value));
+    }
+
     public boolean removeFromList(String path, Object value) {
         if (!hasField(path)) {
             return false;
@@ -139,6 +181,14 @@ public class Doc {
         }
 
         return false;
+    }
+
+    private String renderTemplate(Template template) {
+        return template.execute(source);
+    }
+
+    private Object renderTemplate(TemplatedValue value) {
+        return value.execute(source);
     }
 
     @Override

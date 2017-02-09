@@ -58,6 +58,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>com.samskivert</groupId>
+                <artifactId>jmustache</artifactId>
+                <version>1.13</version>
+            </dependency>
+            <dependency>
                 <groupId>io.thekraken</groupId>
                 <artifactId>grok</artifactId>
                 <version>0.1.6-SNAPSHOT</version>

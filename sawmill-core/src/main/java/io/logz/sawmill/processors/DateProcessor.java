@@ -1,8 +1,10 @@
 package io.logz.sawmill.processors;
 
+import com.samskivert.mustache.Template;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.JsonUtils;
@@ -52,13 +54,13 @@ public class DateProcessor implements Processor {
             .withResolverStyle(ResolverStyle.STRICT);
     private static ConcurrentMap<String, DateTimeFormatter> dateTimePatternToFormatter = new ConcurrentHashMap<>();
 
-    private final String field;
-    private final String targetField;
+    private final Template field;
+    private final Template targetField;
     private final List<String> formats;
     private final List<DateTimeFormatter> formatters;
     private final ZoneId timeZone;
 
-    public DateProcessor(String field, String targetField, List<String> formats, ZoneId timeZone) {
+    public DateProcessor(Template field, Template targetField, List<String> formats, ZoneId timeZone) {
         checkState(CollectionUtils.isNotEmpty(formats), "formats cannot be empty");
         this.field = checkNotNull(field, "field cannot be null");
         this.targetField = checkNotNull(targetField, "target field cannot be null");
@@ -147,7 +149,7 @@ public class DateProcessor implements Processor {
             String timeZone = dateConfig.getTimeZone();
             ZoneId zoneId = timeZone != null ? ZoneId.of(timeZone) : null;
 
-            return new DateProcessor(field, targetField, formats, zoneId);
+            return new DateProcessor(TemplateService.compileTemplate(field), TemplateService.compileTemplate(targetField), formats, zoneId);
         }
     }
 

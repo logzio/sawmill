@@ -1,8 +1,10 @@
 package io.logz.sawmill.processors;
 
+import com.samskivert.mustache.Template;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
@@ -12,10 +14,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @ProcessorProvider(type = "json", factory = JsonProcessor.Factory.class)
 public class JsonProcessor implements Processor {
-    private final String field;
-    private final String targetField;
+    private final Template field;
+    private final Template targetField;
 
-    public JsonProcessor(String field, String targetField) {
+    public JsonProcessor(Template field, Template targetField) {
         this.field = checkNotNull(field, "field cannot be null");
         this.targetField = targetField;
     }
@@ -54,7 +56,8 @@ public class JsonProcessor implements Processor {
         public Processor create(Map<String,Object> config) {
             JsonProcessor.Configuration jsonConfig = JsonUtils.fromJsonMap(JsonProcessor.Configuration.class, config);
 
-            return new JsonProcessor(jsonConfig.getField(), jsonConfig.getTargetField());
+            return new JsonProcessor(TemplateService.compileTemplate(jsonConfig.getField()),
+                    TemplateService.compileTemplate(jsonConfig.getTargetField()));
         }
     }
 

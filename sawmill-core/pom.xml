@@ -44,6 +44,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.samskivert</groupId>
+            <artifactId>jmustache</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.thekraken</groupId>
             <artifactId>grok</artifactId>
         </dependency>
