@@ -3,30 +3,22 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConvertFieldProcessorTest {
-    @Test
-    public void testFactory() {
-        Map<String,Object> config = new HashMap<>();
-        config.put("path", "fieldName");
-        config.put("type", "long");
-
-        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor.Factory().create(config);
-
-        assertThat(convertFieldProcessor.getFieldType()).isEqualTo(ConvertFieldProcessor.FieldType.LONG);
-    }
-
     @Test
     public void testConvertToBoolean() {
         String path = "bool";
         ConvertFieldProcessor.FieldType type = ConvertFieldProcessor.FieldType.BOOLEAN;
 
-        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type);
+        Map<String,Object> config = createConfig("path", path, "type", type.toString());
+
+        ConvertFieldProcessor convertFieldProcessor = createProcessor(ConvertFieldProcessor.class, config);
 
         Doc doc = createDoc(path, "yes");
 
@@ -40,7 +32,9 @@ public class ConvertFieldProcessorTest {
         String path = "double";
         ConvertFieldProcessor.FieldType type = ConvertFieldProcessor.FieldType.DOUBLE;
 
-        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type);
+        Map<String,Object> config = createConfig("path", path, "type", type.toString());
+
+        ConvertFieldProcessor convertFieldProcessor = createProcessor(ConvertFieldProcessor.class, config);
 
         Doc doc = createDoc(path, "1.55");
 
@@ -54,7 +48,9 @@ public class ConvertFieldProcessorTest {
         String path = "long";
         ConvertFieldProcessor.FieldType type = ConvertFieldProcessor.FieldType.LONG;
 
-        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type);
+        Map<String,Object> config = createConfig("path", path, "type", type.toString());
+
+        ConvertFieldProcessor convertFieldProcessor = createProcessor(ConvertFieldProcessor.class, config);
 
         Doc doc = createDoc(path, "12345");
 

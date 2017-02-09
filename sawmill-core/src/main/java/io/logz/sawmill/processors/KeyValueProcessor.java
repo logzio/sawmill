@@ -1,8 +1,10 @@
 package io.logz.sawmill.processors;
 
+import com.samskivert.mustache.Template;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -19,8 +21,8 @@ import java.util.regex.Pattern;
 @ProcessorProvider(type = "kv", factory = KeyValueProcessor.Factory.class)
 public class KeyValueProcessor implements Processor {
 
-    private final String field;
-    private final String targetField;
+    private final Template field;
+    private final Template targetField;
     private final Pattern pattern;
     private final List<String> includeKeys;
     private final List<String> excludeKeys;
@@ -30,8 +32,8 @@ public class KeyValueProcessor implements Processor {
     private final String trim;
     private final String trimKey;
 
-    public KeyValueProcessor(String field,
-                             String targetField,
+    public KeyValueProcessor(Template field,
+                             Template targetField,
                              List<String> includeKeys,
                              List<String> excludeKeys,
                              String fieldSplit,
@@ -186,8 +188,8 @@ public class KeyValueProcessor implements Processor {
         public KeyValueProcessor create(Map<String,Object> config) {
             KeyValueProcessor.Configuration keyValueConfig = JsonUtils.fromJsonMap(KeyValueProcessor.Configuration.class, config);
 
-            return new KeyValueProcessor(keyValueConfig.getField(),
-                    keyValueConfig.getTargetField(),
+            return new KeyValueProcessor(TemplateService.compileTemplate(keyValueConfig.getField()),
+                    TemplateService.compileTemplate(keyValueConfig.getTargetField()),
                     keyValueConfig.getIncludeKeys(),
                     keyValueConfig.getExcludeKeys(),
                     keyValueConfig.getFieldSplit(),

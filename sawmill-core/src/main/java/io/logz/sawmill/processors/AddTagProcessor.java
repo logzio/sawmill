@@ -3,21 +3,20 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
+import io.logz.sawmill.TemplatedValue;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkState;
-
 @ProcessorProvider(type = "addTag", factory = AddTagProcessor.Factory.class)
 public class AddTagProcessor implements Processor {
-    private final List<String> tags;
+    private final TemplatedValue tags;
 
-    public AddTagProcessor(List<String> tags) {
-        checkState(CollectionUtils.isNotEmpty(tags), "tags cannot be empty");
+    public AddTagProcessor(TemplatedValue tags) {
+        // TODO: TEST checkState(CollectionUtils.isNotEmpty(tags), "tags cannot be empty");
         this.tags = tags;
     }
 
@@ -32,10 +31,10 @@ public class AddTagProcessor implements Processor {
         }
 
         @Override
-        public Processor create(Map<String,Object> config) {
+        public AddTagProcessor create(Map<String,Object> config) {
             AddTagProcessor.Configuration addTagConfig = JsonUtils.fromJsonMap(AddTagProcessor.Configuration.class, config);
 
-            return new AddTagProcessor(addTagConfig.getTags());
+            return new AddTagProcessor(TemplateService.compileValue(addTagConfig.getTags()));
         }
     }
 

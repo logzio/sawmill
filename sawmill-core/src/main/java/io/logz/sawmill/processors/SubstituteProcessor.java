@@ -1,8 +1,10 @@
 package io.logz.sawmill.processors;
 
+import com.samskivert.mustache.Template;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.JsonUtils;
@@ -17,11 +19,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @ProcessorProvider(type = "gsub", factory = SubstituteProcessor.Factory.class)
 public class SubstituteProcessor implements Processor {
 
-    private final String field;
+    private final Template field;
     private final Pattern pattern;
     private final String replacement;
 
-    public SubstituteProcessor(String field, Pattern pattern, String replacement) {
+    public SubstituteProcessor(Template field, Pattern pattern, String replacement) {
         this.field = checkNotNull(field, "field cannot be null");
         this.pattern = checkNotNull(pattern, "pattern cannot be null");
         this.replacement = checkNotNull(replacement, "replacement cannot be null");
@@ -55,7 +57,7 @@ public class SubstituteProcessor implements Processor {
                 throw new ProcessorParseException("cannot create gsub processor with invalid pattern");
             }
 
-            return new SubstituteProcessor(subConfig.getField(), pattern, subConfig.getReplacement());
+            return new SubstituteProcessor(TemplateService.compileTemplate(subConfig.getField()), pattern, subConfig.getReplacement());
         }
     }
 

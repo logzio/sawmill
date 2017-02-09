@@ -7,9 +7,11 @@ import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
+import com.samskivert.mustache.Template;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
@@ -48,12 +50,12 @@ public class GeoIpProcessor implements Processor {
 
     }
 
-    private final String sourceField;
-    private final String targetField;
+    private final Template sourceField;
+    private final Template targetField;
     private final List<Property> properties;
     private final List<String> tagsOnSuccess;
 
-    public GeoIpProcessor(String sourceField, String targetField, List<Property> properties, List<String> tagsOnSuccess) {
+    public GeoIpProcessor(Template sourceField, Template targetField, List<Property> properties, List<String> tagsOnSuccess) {
         checkState(CollectionUtils.isNotEmpty(properties), "properties cannot be empty");
         this.sourceField = checkNotNull(sourceField, "source field cannot be null");
         this.targetField = checkNotNull(targetField, "target field cannot be null");
@@ -115,8 +117,8 @@ public class GeoIpProcessor implements Processor {
         public GeoIpProcessor create(Map<String,Object> config) {
             GeoIpProcessor.Configuration geoIpConfig = JsonUtils.fromJsonMap(Configuration.class, config);
 
-            return new GeoIpProcessor(geoIpConfig.getSourceField(),
-                    geoIpConfig.getTargetField(),
+            return new GeoIpProcessor(TemplateService.compileTemplate(geoIpConfig.getSourceField()),
+                    TemplateService.compileTemplate(geoIpConfig.getTargetField()),
                     geoIpConfig.getProperties(),
                     geoIpConfig.getTagsOnSuccess());
         }

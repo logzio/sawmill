@@ -1,8 +1,11 @@
 package io.logz.sawmill.processors;
 
+import com.samskivert.mustache.Template;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
+import io.logz.sawmill.TemplatedValue;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
@@ -12,10 +15,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @ProcessorProvider(type = "addField", factory = AddFieldProcessor.Factory.class)
 public class AddFieldProcessor implements Processor {
-    private final String path;
-    private final Object value;
+    private final Template path;
+    private final TemplatedValue value;
 
-    public AddFieldProcessor(String path, Object value) {
+    public AddFieldProcessor(Template path, TemplatedValue value) {
         this.path = checkNotNull(path, "path cannot be null");
         this.value = value;
     }
@@ -31,10 +34,10 @@ public class AddFieldProcessor implements Processor {
         }
 
         @Override
-        public Processor create(Map<String,Object> config) {
+        public AddFieldProcessor create(Map<String,Object> config) {
             AddFieldProcessor.Configuration addFieldConfig = JsonUtils.fromJsonMap(AddFieldProcessor.Configuration.class, config);
 
-            return new AddFieldProcessor(addFieldConfig.getPath(), addFieldConfig.getValue());
+            return new AddFieldProcessor(TemplateService.compileTemplate(addFieldConfig.getPath()), TemplateService.compileValue(addFieldConfig.getValue()));
         }
     }
 

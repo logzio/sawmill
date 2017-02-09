@@ -2,9 +2,11 @@ package io.logz.sawmill.processors;
 
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Longs;
+import com.samskivert.mustache.Template;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.JsonUtils;
@@ -15,16 +17,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 @ProcessorProvider(type = "convert", factory = ConvertFieldProcessor.Factory.class)
 public class ConvertFieldProcessor implements Processor {
-    private final String path;
+    private final Template path;
     private final FieldType fieldType;
 
-    public ConvertFieldProcessor(String path, FieldType fieldType) {
+    public ConvertFieldProcessor(Template path, FieldType fieldType) {
         this.path = checkNotNull(path, "path cannot be null");
         this.fieldType = checkNotNull(fieldType, "field type cannot be null");
-    }
-
-    public FieldType getFieldType() {
-        return fieldType;
     }
 
     @Override
@@ -65,7 +63,7 @@ public class ConvertFieldProcessor implements Processor {
                 throw new ProcessorParseException("failed to parse convert processor, could not resolve field type");
             }
 
-            return new ConvertFieldProcessor(convertFieldConfig.getPath(), convertFieldConfig.getType());
+            return new ConvertFieldProcessor(TemplateService.compileTemplate(convertFieldConfig.getPath()), convertFieldConfig.getType());
         }
     }
 

@@ -5,12 +5,12 @@ import io.logz.sawmill.ProcessResult;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GeoIpProcessorTest {
@@ -20,10 +20,10 @@ public class GeoIpProcessorTest {
         String source = "ipString";
 
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("sourceField", source);
-        config.put("properties", Arrays.asList("ip", "country_name", "country_code2", "city_name"));
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor.Factory().create(config);
+        Map<String,Object> config = createConfig("sourceField", source,
+                "properties", Arrays.asList("ip", "country_name", "country_code2", "city_name"));
+
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 
@@ -43,8 +43,13 @@ public class GeoIpProcessorTest {
         String ip = "187.162.70.166";
         String source = "ipString";
         String target = "geoip";
+        List<String> tagsOnSuccess = Arrays.asList("geoip");
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+        Map<String,Object> config = createConfig("sourceField", source,
+                "target", target,
+                "tagsOnSuccess", tagsOnSuccess);
+
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 
@@ -62,8 +67,13 @@ public class GeoIpProcessorTest {
         String ip = "0.0.0.0";
         String source = "ipString";
         String target = "geoip";
+        List<String> tagsOnSuccess = Arrays.asList("geoip");
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+        Map<String,Object> config = createConfig("sourceField", source,
+                "target", target,
+                "tagsOnSuccess", tagsOnSuccess);
+
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 

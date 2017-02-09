@@ -3,21 +3,20 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.TemplateService;
+import io.logz.sawmill.TemplatedValue;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkState;
-
 @ProcessorProvider(type = "removeTag", factory = RemoveTagProcessor.Factory.class)
 public class RemoveTagProcessor implements Processor {
-    private final List<String> tags;
+    private final TemplatedValue tags;
 
-    public RemoveTagProcessor(List<String> tags) {
-        checkState(CollectionUtils.isNotEmpty(tags), "tags cannot be empty");
+    public RemoveTagProcessor(TemplatedValue tags) {
+        // TODO: TEST checkState(CollectionUtils.isNotEmpty(tags), "tags cannot be empty");
         this.tags = tags;
     }
 
@@ -32,10 +31,10 @@ public class RemoveTagProcessor implements Processor {
         }
 
         @Override
-        public Processor create(Map<String,Object> config) {
+        public RemoveTagProcessor create(Map<String,Object> config) {
             RemoveTagProcessor.Configuration removeTagConfig = JsonUtils.fromJsonMap(RemoveTagProcessor.Configuration.class, config);
 
-            return new RemoveTagProcessor(removeTagConfig.getTags());
+            return new RemoveTagProcessor(TemplateService.compileValue(removeTagConfig.getTags()));
         }
     }
 
