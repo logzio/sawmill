@@ -9,13 +9,16 @@ import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -105,12 +108,21 @@ public class DateProcessor implements Processor {
     private ZonedDateTime getISODateTime(String value) {
         for (DateTimeFormatter formatter : formatters) {
             try {
-                return ZonedDateTime.parse(value, formatter.withZone(timeZone));
+                return getZonedDateTime(value, formatter);
             } catch (DateTimeParseException e) {
                 // keep trying
             }
         }
         return null;
+    }
+
+    private ZonedDateTime getZonedDateTime(String value, DateTimeFormatter formatter) {
+        TemporalAccessor temporal = formatter.parseBest(value, ZonedDateTime::from, LocalDateTime::from);
+        if (temporal instanceof LocalDateTime) {
+            return ZonedDateTime.of((LocalDateTime) temporal, ZoneOffset.UTC);
+        } else {
+            return ZonedDateTime.from(temporal);
+        }
     }
 
     private ZonedDateTime getUnixDateTime(Long value) {
