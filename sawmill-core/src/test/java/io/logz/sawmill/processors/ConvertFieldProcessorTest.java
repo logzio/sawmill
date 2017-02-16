@@ -1,6 +1,7 @@
 package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.FieldType;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -18,13 +19,13 @@ public class ConvertFieldProcessorTest {
 
         ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor.Factory().create(config);
 
-        assertThat(convertFieldProcessor.getFieldType()).isEqualTo(ConvertFieldProcessor.FieldType.LONG);
+        assertThat(convertFieldProcessor.getFieldType()).isEqualTo(FieldType.LONG);
     }
 
     @Test
     public void testConvertToBoolean() {
         String path = "bool";
-        ConvertFieldProcessor.FieldType type = ConvertFieldProcessor.FieldType.BOOLEAN;
+        FieldType type = FieldType.BOOLEAN;
 
         ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type);
 
@@ -38,7 +39,7 @@ public class ConvertFieldProcessorTest {
     @Test
     public void testConvertToDouble() {
         String path = "double";
-        ConvertFieldProcessor.FieldType type = ConvertFieldProcessor.FieldType.DOUBLE;
+        FieldType type = FieldType.DOUBLE;
 
         ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type);
 
@@ -52,7 +53,7 @@ public class ConvertFieldProcessorTest {
     @Test
     public void testConvertToLong() {
         String path = "long";
-        ConvertFieldProcessor.FieldType type = ConvertFieldProcessor.FieldType.LONG;
+        FieldType type = FieldType.LONG;
 
         ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type);
 
@@ -61,5 +62,19 @@ public class ConvertFieldProcessorTest {
         assertThat(convertFieldProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThat((Long) doc.getField(path)).isEqualTo(12345l);
+    }
+
+    @Test
+    public void testConvertToString() {
+        String path = "string";
+        FieldType type = FieldType.STRING;
+
+        ConvertFieldProcessor convertFieldProcessor = new ConvertFieldProcessor(path, type);
+
+        Doc doc = createDoc(path, 12345);
+
+        assertThat(convertFieldProcessor.process(doc).isSucceeded()).isTrue();
+
+        assertThat((String) doc.getField(path)).isEqualTo("12345");
     }
 }

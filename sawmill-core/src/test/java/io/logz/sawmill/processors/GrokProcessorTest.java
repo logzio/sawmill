@@ -3,6 +3,7 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.exceptions.ProcessorParseException;
+import io.logz.sawmill.utilities.Grok;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -60,7 +61,7 @@ public class GrokProcessorTest {
         assertThat((String)doc.getField("response")).isEqualTo("200");
         assertThat((String)doc.getField("verb")).isEqualTo("GET");
         assertThat((String)doc.getField("clientip")).isEqualTo("112.169.19.192");
-        assertThat((String)doc.getField("agent")).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22");
+        assertThat((String)doc.getField("agent")).isEqualTo("\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.152 Safari/537.22\"");
     }
 
     @Test
