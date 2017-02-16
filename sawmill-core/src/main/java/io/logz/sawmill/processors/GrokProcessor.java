@@ -52,8 +52,6 @@ public class GrokProcessor implements Processor {
         matchExpressions.forEach(expression -> {
             Grok grok = new Grok(patternsBank, expression);
             this.groks.add(grok);
-            //
-            //throw new RuntimeException(String.format("failed to compile grok pattern [%s]", expression));
         });
 
     }
