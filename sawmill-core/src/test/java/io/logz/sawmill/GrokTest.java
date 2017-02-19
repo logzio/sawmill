@@ -9,6 +9,7 @@ import java.util.Map;
 
 import static java.util.Collections.EMPTY_MAP;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class GrokTest {
 
@@ -21,12 +22,26 @@ public class GrokTest {
     }
 
     @Test
+    public void testUnknownPattern() {
+        Map<String, String> bank = new HashMap<>();
+        assertThatThrownBy(() -> new Grok(bank, "%{NONEXISTSPATTERN}")).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    public void testAddPatternByDefinition() {
+        Map<String, String> bank = new HashMap<>();
+        Grok grok = new Grok(bank, "%{SINGLEDIGIT:num=[0-9]}%{SINGLEDIGIT:num}");
+
+        assertThat(grok.captures("12").get("num")).isEqualTo(Arrays.asList("1","2"));
+    }
+
+    @Test
     public void testMultipleNamedCapturesWithSameName() {
         Map<String, String> bank = new HashMap<>();
         bank.put("SINGLEDIGIT", "[0-9]");
-        Grok grok = new Grok(bank, "%{SINGLEDIGIT:num}%{SINGLEDIGIT:num}");
+        Grok grok = new Grok(bank, "%{SINGLEDIGIT:num}%{SINGLEDIGIT:num}%{SINGLEDIGIT:num}");
 
-        assertThat(grok.captures("12").get("num")).isEqualTo(Arrays.asList("1","2"));
+        assertThat(grok.captures("123").get("num")).isEqualTo(Arrays.asList("1","2","3"));
     }
 
     @Test
@@ -61,8 +76,6 @@ public class GrokTest {
         String text = "hello - 10000l 500 - 31";
         String pattern = "%{WORD} - %{SPECIAL_NUMBER} %{BASE10NUM} - %{MONTHDAY}";
         Grok grok = new Grok(bank, pattern, false);
-
-        assertThat(grok.parsePattern(pattern)).isEqualTo("(?<WORD0>\\w+) - (?<SPECIAL_NUMBER16>(?:(?<BASE10NUM23>(?<![0-9.+-])(?>[+-]?(?:(?:[0-9]+(?:\\.[0-9]+)?)|(?:\\.[0-9]+)))))l) (?<BASE10NUM82>(?<![0-9.+-])(?>[+-]?(?:(?:[0-9]+(?:\\.[0-9]+)?)|(?:\\.[0-9]+)))) - (?<MONTHDAY81>(?:(?:0[1-9])|(?:[12][0-9])|(?:3[01])|[1-9]))");
 
         Object actual = grok.captures(text);
         Map<String, Object> expected = new HashMap<>();

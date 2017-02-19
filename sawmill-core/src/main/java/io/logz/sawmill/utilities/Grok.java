@@ -74,7 +74,7 @@ public final class Grok {
         return new NamedGroupMatch(name, matchValue);
     }
 
-    public String parsePattern(String grokPattern) {
+    private String parsePattern(String grokPattern) {
         byte[] grokPatternBytes = grokPattern.getBytes(StandardCharsets.UTF_8);
         Matcher matcher = GROK_PATTERN_REGEX.matcher(grokPatternBytes);
 
