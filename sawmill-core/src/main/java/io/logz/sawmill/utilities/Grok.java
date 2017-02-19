@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static io.logz.sawmill.FieldType.STRING;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public final class Grok {
@@ -51,9 +50,9 @@ public final class Grok {
 
     private String getNamedGroupMatch(String name, Region region, String pattern) {
         try {
-            int number = GROK_PATTERN_REGEX.nameToBackrefNumber(name.getBytes(StandardCharsets.UTF_8), 0,
+            int matchNumber = GROK_PATTERN_REGEX.nameToBackrefNumber(name.getBytes(StandardCharsets.UTF_8), 0,
                     name.getBytes(StandardCharsets.UTF_8).length, region);
-            NamedGroupMatch namedGroupMatch = getNamedGroupMatch(name, region, pattern.getBytes(), number);
+            NamedGroupMatch namedGroupMatch = getNamedGroupMatch(name, region, pattern.getBytes(), matchNumber);
             return (String) namedGroupMatch.getValue();
         } catch (ValueException e) {
             return null;
@@ -61,6 +60,10 @@ public final class Grok {
     }
 
     private NamedGroupMatch getNamedGroupMatch(String name, Region region, byte[] textAsBytes, int... matches) {
+        if (matches.length == 1) {
+            return new NamedGroupMatch(name, extractString(textAsBytes, region.beg[matches[0]], region.end[matches[0]]));
+        }
+
         List<String> matchValue = new ArrayList<>();
         for (int number : matches) {
             if (region.beg[number] >= 0) {
@@ -76,7 +79,8 @@ public final class Grok {
         Matcher matcher = GROK_PATTERN_REGEX.matcher(grokPatternBytes);
 
         int result = matcher.search(0, grokPatternBytes.length, Option.NONE);
-        if (result == -1) {
+        boolean matchNotFound = result == -1;
+        if (matchNotFound) {
             return grokPattern;
         }
 
@@ -118,7 +122,8 @@ public final class Grok {
         byte[] textAsBytes = text.getBytes(StandardCharsets.UTF_8);
         Matcher matcher = compiledExpression.matcher(textAsBytes);
         int result = matcher.search(0, textAsBytes.length, Option.DEFAULT);
-        if (result == -1) {
+        boolean matchNotFound = result == -1;
+        if (matchNotFound) {
             return null;
         }
         if (compiledExpression.numberOfNames() == 0) {
@@ -129,7 +134,8 @@ public final class Grok {
         for (Iterator<NameEntry> iterator = compiledExpression.namedBackrefIterator(); iterator.hasNext();) {
             NameEntry entry = iterator.next();
             String groupName = extractString(entry.name, entry.nameP, entry.nameEnd);
-            NamedGroupMatch namedGroupMatch = getNamedGroupMatch(groupName, region, textAsBytes, entry.getBackRefs());
+            int[] matchNumbers = entry.getBackRefs();
+            NamedGroupMatch namedGroupMatch = getNamedGroupMatch(groupName, region, textAsBytes, matchNumbers);
             fields.put(namedGroupMatch.getName(), namedGroupMatch.getValue());
         }
 
@@ -147,9 +153,9 @@ public final class Grok {
     final class NamedGroupMatch {
         private final String fieldName;
         private final FieldType type;
-        private final List<String> groupValue;
+        private final Object groupValue;
 
-        public NamedGroupMatch(String groupName, List<String> groupValue) {
+        public NamedGroupMatch(String groupName, Object groupValue) {
             String[] parts = groupName.split(":");
             fieldName = parts[0];
 
@@ -167,13 +173,14 @@ public final class Grok {
         }
 
         public Object getValue() {
-            if (isEmpty(groupValue)) { return null; }
+            if (groupValue == null) return null;
 
-            if (groupValue.size() == 1) {
-                return convertValue(groupValue.get(0));
-            } else {
-                return groupValue.stream().map(this::convertValue).collect(Collectors.toList());
+            if (groupValue instanceof List) {
+                List<String> listValue = (List) groupValue;
+                if (listValue.isEmpty()) return null;
+                return listValue.stream().map(this::convertValue).collect(Collectors.toList());
             }
+            return convertValue((String) groupValue);
         }
 
         private Object convertValue(String value) {
