@@ -2,6 +2,7 @@ package io.logz.sawmill;
 
 import io.logz.sawmill.conditions.AndCondition;
 import io.logz.sawmill.conditions.TestCondition;
+import io.logz.sawmill.processors.AddTagProcessor;
 import io.logz.sawmill.processors.TestProcessor;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,11 +36,9 @@ public class PipelineTest {
         String configJson = createJson(createMap(
                 "steps", createList(createMap(
                         "test", createMap(
-                                "name", "test1",
                                 "config", createMap("value", "message"),
                                 "onFailure", createList(createMap(
                                         "addField", createMap(
-                                                "name", "on failure processor",
                                                 "config", createMap(
                                                         "path", "field1",
                                                         "value", "value1"
@@ -58,7 +57,6 @@ public class PipelineTest {
         assertThat(pipeline.getExecutionSteps().size()).isEqualTo(1);
         ProcessorExecutionStep executionStep = (ProcessorExecutionStep) pipeline.getExecutionSteps().get(0);
         TestProcessor processor = (TestProcessor) executionStep.getProcessor();
-        assertThat(executionStep.getProcessorName()).isEqualTo("test1");
         assertThat(processor.getValue()).isEqualTo("message");
         assertThat(pipeline.isStopOnFailure()).isTrue();
         assertThat(executionStep.getOnFailureExecutionSteps().get().size()).isEqualTo(1);
@@ -70,7 +68,6 @@ public class PipelineTest {
                         "steps: [" +
                         "    {" +
                         "        test: {" +
-                        "            name: test1, " +
                         "            config.value: message" +
                         "        }" +
                         "    }" +
@@ -84,7 +81,6 @@ public class PipelineTest {
 
         ProcessorExecutionStep executionStep = (ProcessorExecutionStep) pipeline.getExecutionSteps().get(0);
         Processor processor = executionStep.getProcessor();
-        assertThat(executionStep.getProcessorName()).isEqualTo("test1");
         assertThat(((TestProcessor) processor).getValue()).isEqualTo("message");
     }
 
@@ -105,7 +101,6 @@ public class PipelineTest {
                 "        }," +
                 "        then: [{" +
                 "            addTag: {" +
-                "                name: processor1," +
                 "                config.tags: [tag1, tag2]" +
                 "            }" +
                 "        }]" +
@@ -124,7 +119,8 @@ public class PipelineTest {
         assertThat(conditionalExecutionStep.getCondition()).isInstanceOf(AndCondition.class);
 
         ProcessorExecutionStep onTrueExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnTrue().get(0);
-        assertThat(onTrueExecutionStep.getProcessorName()).isEqualTo("processor1");
+        assertThat(onTrueExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
+
         assertThat(conditionalExecutionStep.getOnFalse().size()).isEqualTo(0);
     }
 
@@ -137,16 +133,10 @@ public class PipelineTest {
                 "            testCondition.value: message1" +
                 "        }," +
                 "        then: [{" +
-                "            addTag: {" +
-                "                name: processor1," +
-                "                config.tags: [tag1, tag2]" +
-                "            }" +
+                "            addTag.config.tags: [tag1, tag2]" +
                 "        }]," +
                 "        else: [{" +
-                "            addTag: {" +
-                "                name: processor2," +
-                "                config.tags: [tag3, tag4]" +
-                "            }" +
+                "            addTag.config.tags: [tag3, tag4]" +
                 "        }]" +
                 "    }" +
                 "}]" +
@@ -155,8 +145,9 @@ public class PipelineTest {
         String id = "abc";
         Pipeline pipeline = factory.create(id, pipelineString);
         ConditionalExecutionStep conditionalExecutionStep = (ConditionalExecutionStep) pipeline.getExecutionSteps().get(0);
+        assertThat(conditionalExecutionStep.getCondition()).isInstanceOf(TestCondition.class);
 
         ProcessorExecutionStep onFalseExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnFalse().get(0);
-        assertThat(onFalseExecutionStep.getProcessorName()).isEqualTo("processor2");
+        assertThat(onFalseExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
     }
 }

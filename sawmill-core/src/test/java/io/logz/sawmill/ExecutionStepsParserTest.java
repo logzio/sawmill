@@ -14,6 +14,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -41,16 +42,14 @@ public class ExecutionStepsParserTest {
 
     @Test
     public void testParseProcessorExecutionStep() {
-        String name = RandomStringUtils.randomAlphanumeric(10);
         List<ExecutionStepDefinition> executionStepDefinitionList = Collections.singletonList(
-                createAddTagStepDefinition(name)
+                createAddTagStepDefinition()
         );
 
         List<ExecutionStep> executionSteps = executionStepsParser.parse(executionStepDefinitionList);
         assertThat(executionSteps.size()).isEqualTo(1);
 
         ProcessorExecutionStep processorExecutionStep = (ProcessorExecutionStep) executionSteps.get(0);
-        assertThat(processorExecutionStep.getProcessorName()).isEqualTo(name);
         assertThat(processorExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
 
         Optional<List<ExecutionStep>> onFailureExecutionSteps = processorExecutionStep.getOnFailureExecutionSteps();
@@ -59,13 +58,10 @@ public class ExecutionStepsParserTest {
 
     @Test
     public void testParseOnFailureExecutionStep() {
-        String onFailureName = RandomStringUtils.randomAlphanumeric(10);
-        List<ExecutionStepDefinition> onFailureExecutionStepDefinitionList = Collections.singletonList(
-            createAddTagStepDefinition(onFailureName)
-        );
-
         List<ExecutionStepDefinition> executionStepDefinitionList = Collections.singletonList(
-                createAddTagStepDefinition(RandomStringUtils.randomAlphanumeric(10), onFailureExecutionStepDefinitionList)
+                createAddTagStepDefinition(Collections.singletonList(
+                    createAddTagStepDefinition()
+                ))
         );
 
         List<ExecutionStep> executionSteps = executionStepsParser.parse(executionStepDefinitionList);
@@ -76,30 +72,22 @@ public class ExecutionStepsParserTest {
         assertThat(onFailureExecutionSteps.size()).isEqualTo(1);
 
         ProcessorExecutionStep onFailureExecutionStep = (ProcessorExecutionStep) onFailureExecutionSteps.get(0);
-        assertThat(onFailureExecutionStep.getProcessorName()).isEqualTo(onFailureName);
         assertThat(onFailureExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
     }
 
     @Test
     public void testParseConditionalExecutionStep() {
-        ConditionDefinition conditionDefinition = createAndExistsConditionDefinition();
-
-        String onTrueProcessorName = RandomStringUtils.randomAlphanumeric(10);
-
-        String onFalseProcessorName = RandomStringUtils.randomAlphanumeric(10);
-
-        ConditionalExecutionStepDefinition conditionalExecutionStepDefinition =
-                new ConditionalExecutionStepDefinition(conditionDefinition,
+        List<ExecutionStepDefinition> executionStepDefinitionList = Collections.singletonList(
+                new ConditionalExecutionStepDefinition(
+                        createAndExistsConditionDefinition(),
                         Collections.singletonList(
-                                createAddTagStepDefinition(onTrueProcessorName, null)
+                                createAddTagStepDefinition()
                         ),
                         Collections.singletonList(
-                                createAddTagStepDefinition(onFalseProcessorName, null)
-                        ));
+                                createAddTagStepDefinition()
+                        )));
 
-        List<ExecutionStepDefinition> conditionalExecutionStepDefinitions = Collections.singletonList(conditionalExecutionStepDefinition);
-
-        List<ExecutionStep> executionSteps = executionStepsParser.parse(conditionalExecutionStepDefinitions);
+        List<ExecutionStep> executionSteps = executionStepsParser.parse(executionStepDefinitionList);
         assertThat(executionSteps.size()).isEqualTo(1);
 
         ConditionalExecutionStep conditionalExecutionStep = (ConditionalExecutionStep) executionSteps.get(0);
@@ -108,13 +96,78 @@ public class ExecutionStepsParserTest {
 
         ProcessorExecutionStep onTrueExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnTrue().get(0);
         assertThat(onTrueExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
-        assertThat(onTrueExecutionStep.getProcessorName()).isEqualTo(onTrueProcessorName);
 
         ProcessorExecutionStep onFalseExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnFalse().get(0);
         assertThat(onFalseExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
-        assertThat(onFalseExecutionStep.getProcessorName()).isEqualTo(onFalseProcessorName);
+    }
 
+    @Test
+    public void testDefaultProcessorName() {
+        List<ExecutionStepDefinition> executionStepDefinitionList = Arrays.asList(
+                new ConditionalExecutionStepDefinition(
+                        createAndExistsConditionDefinition(),
+                        Collections.singletonList(
+                                createAddTagStepDefinition()
+                        ),
+                        Collections.singletonList(
+                                createAddTagStepDefinition()
+                        )),
+                createAddTagStepDefinition(Collections.singletonList(
+                        createAddTagStepDefinition()
+                ))
+        );
 
+        List<ExecutionStep> executionSteps = executionStepsParser.parse(executionStepDefinitionList);
+        ConditionalExecutionStep conditionalExecutionStep = (ConditionalExecutionStep) executionSteps.get(0);
+
+        ProcessorExecutionStep onTrueExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnTrue().get(0);
+        assertThat(onTrueExecutionStep.getProcessorName()).isEqualTo("[addTag1]");
+
+        ProcessorExecutionStep onFalseExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnFalse().get(0);
+        assertThat(onFalseExecutionStep.getProcessorName()).isEqualTo("[addTag2]");
+
+        ProcessorExecutionStep processorExecutionStep = (ProcessorExecutionStep) executionSteps.get(1);
+        assertThat(processorExecutionStep.getProcessorName()).isEqualTo("[addTag3]");
+
+        ProcessorExecutionStep onFailureExecutionStep = (ProcessorExecutionStep) processorExecutionStep.getOnFailureExecutionSteps().get().get(0);
+        assertThat(onFailureExecutionStep.getProcessorName()).isEqualTo("[addTag4]");
+    }
+
+    @Test
+    public void testProcessorName() {
+        String processorName1 = RandomStringUtils.randomAlphanumeric(10);
+        String processorName2 = RandomStringUtils.randomAlphanumeric(10);
+        String processorName3 = RandomStringUtils.randomAlphanumeric(10);
+        String processorName4 = RandomStringUtils.randomAlphanumeric(10);
+
+        List<ExecutionStepDefinition> executionStepDefinitionList = Arrays.asList(
+                new ConditionalExecutionStepDefinition(
+                        createAndExistsConditionDefinition(),
+                        Collections.singletonList(
+                                createAddTagStepDefinition(processorName1)
+                        ),
+                        Collections.singletonList(
+                                createAddTagStepDefinition(processorName2)
+                        )),
+                createAddTagStepDefinition(processorName3, Collections.singletonList(
+                        createAddTagStepDefinition(processorName4)
+                ))
+        );
+
+        List<ExecutionStep> executionSteps = executionStepsParser.parse(executionStepDefinitionList);
+        ConditionalExecutionStep conditionalExecutionStep = (ConditionalExecutionStep) executionSteps.get(0);
+
+        ProcessorExecutionStep onTrueExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnTrue().get(0);
+        assertThat(onTrueExecutionStep.getProcessorName()).isEqualTo("[addTag1]" + processorName1);
+
+        ProcessorExecutionStep onFalseExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnFalse().get(0);
+        assertThat(onFalseExecutionStep.getProcessorName()).isEqualTo("[addTag2]" + processorName2);
+
+        ProcessorExecutionStep processorExecutionStep = (ProcessorExecutionStep) executionSteps.get(1);
+        assertThat(processorExecutionStep.getProcessorName()).isEqualTo("[addTag3]" + processorName3);
+
+        ProcessorExecutionStep onFailureExecutionStep = (ProcessorExecutionStep) processorExecutionStep.getOnFailureExecutionSteps().get().get(0);
+        assertThat(onFailureExecutionStep.getProcessorName()).isEqualTo("[addTag4]" + processorName4);
     }
 
     private ConditionDefinition createAndExistsConditionDefinition() {
@@ -128,8 +181,16 @@ public class ExecutionStepsParserTest {
         )));
     }
 
+    private ProcessorExecutionStepDefinition createAddTagStepDefinition() {
+        return createAddTagStepDefinition(null, null);
+    }
+
     private ProcessorExecutionStepDefinition createAddTagStepDefinition(String name) {
         return createAddTagStepDefinition(name, null);
+    }
+
+    private ProcessorExecutionStepDefinition createAddTagStepDefinition(List<ExecutionStepDefinition> onFailureExecutionStepDefinitions) {
+        return createAddTagStepDefinition(null, onFailureExecutionStepDefinitions);
     }
 
     private ProcessorExecutionStepDefinition createAddTagStepDefinition(String name, List<ExecutionStepDefinition> onFailureExecutionStepDefinitions) {

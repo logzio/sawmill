@@ -38,7 +38,7 @@ public class PipelineDefinitionJsonParserTest {
 
         ProcessorExecutionStepDefinition processorExecutionStepDefinition =
                 (ProcessorExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
-        assertThat(processorExecutionStepDefinition.getName()).isEqualTo("test1");
+        assertThat(processorExecutionStepDefinition.getName().get()).isEqualTo("test1");
         ProcessorDefinition processorDefinition = processorExecutionStepDefinition.getProcessorDefinition();
         assertThat(processorDefinition.getType()).isEqualTo("test");
         assertThat(processorDefinition.getConfig().get("value")).isEqualTo("message");
@@ -52,7 +52,6 @@ public class PipelineDefinitionJsonParserTest {
                         "steps: [" +
                         "    {" +
                         "        test: {" +
-                        "            name: test1, " +
                         "            config.value: message" +
                         "        }" +
                         "    }" +
@@ -63,7 +62,7 @@ public class PipelineDefinitionJsonParserTest {
         assertThat(pipelineDefinition.isStopOnFailure().isPresent()).isFalse();
 
         ProcessorExecutionStepDefinition processorExecutionStepDefinition = (ProcessorExecutionStepDefinition) pipelineDefinition.getExecutionSteps().get(0);
-        assertThat(processorExecutionStepDefinition.getName()).isEqualTo("test1");
+        assertThat(processorExecutionStepDefinition.getName().isPresent()).isFalse();
 
         ProcessorDefinition processorDefinition = processorExecutionStepDefinition.getProcessorDefinition();
         assertThat(processorDefinition.getType()).isEqualTo("test");
@@ -108,7 +107,7 @@ public class PipelineDefinitionJsonParserTest {
         assertThat(onFailureExecutionStepDefinitions.size()).isEqualTo(1);
 
         ProcessorExecutionStepDefinition onFailureExecutionStepDefinition = (ProcessorExecutionStepDefinition) onFailureExecutionStepDefinitions.get(0);
-        assertThat(onFailureExecutionStepDefinition.getName()).isEqualTo("on failure processor");
+        assertThat(onFailureExecutionStepDefinition.getName().get()).isEqualTo("on failure processor");
 
         ProcessorDefinition processorDefinition = onFailureExecutionStepDefinition.getProcessorDefinition();
         assertThat(processorDefinition.getType()).isEqualTo("addField");
@@ -166,7 +165,7 @@ public class PipelineDefinitionJsonParserTest {
         assertThat(onTrue.size()).isEqualTo(1);
 
         ProcessorExecutionStepDefinition onTrueProcessorExecutionStep = (ProcessorExecutionStepDefinition) onTrue.get(0);
-        assertThat(onTrueProcessorExecutionStep.getName()).isEqualTo("on true");
+        assertThat(onTrueProcessorExecutionStep.getName().get()).isEqualTo("on true");
         assertThat(onTrueProcessorExecutionStep.getOnFailureExecutionStepDefinitionList().isPresent()).isFalse();
 
         ProcessorDefinition processorDefinition = onTrueProcessorExecutionStep.getProcessorDefinition();
@@ -210,7 +209,7 @@ public class PipelineDefinitionJsonParserTest {
         assertThat(onFalse.size()).isEqualTo(1);
 
         ProcessorExecutionStepDefinition onFalseProcessorExecutionStep = (ProcessorExecutionStepDefinition) onFalse.get(0);
-        assertThat(onFalseProcessorExecutionStep.getName()).isEqualTo("on false");
+        assertThat(onFalseProcessorExecutionStep.getName().get()).isEqualTo("on false");
         assertThat(onFalseProcessorExecutionStep.getOnFailureExecutionStepDefinitionList().isPresent()).isFalse();
 
         ProcessorDefinition processorDefinition2 = onFalseProcessorExecutionStep.getProcessorDefinition();
