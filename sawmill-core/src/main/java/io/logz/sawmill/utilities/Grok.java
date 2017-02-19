@@ -10,29 +10,26 @@ import org.joni.exception.ValueException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.logz.sawmill.FieldType.STRING;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public final class Grok {
 
-    private static final String PATTERN_GROUP = "pattern";
-    private static final String SUBNAME_GROUP = "subname";
-    private static final String DEFINITION_GROUP = "definition";
+    public static final String PATTERN_GROUP = "pattern";
+    public static final String SUBNAME_GROUP = "subname";
+    public static final String DEFINITION_GROUP = "definition";
     private static final Regex GROK_PATTERN_REGEX = new Regex("%\\{" +
-            "(?<pattern>[A-z0-9]+)" +
-            "(?::(?<subname>[A-z0-9_:.-]+))?" +
-            "(?:=(?<definition>" +
-            "(?:" +
-            "(?:[^{}]+|\\.+)+" +
-            ")+" +
-            ")" +
-            ")?" + "\\}");
+            "(?<" + PATTERN_GROUP + ">[A-z0-9_-]+)" +
+            "(?::(?<" + SUBNAME_GROUP + ">[A-z0-9_:.-]+))?" +
+            "(?:=(?<" + DEFINITION_GROUP + ">(?:(?:[^{}]+|\\.+)+)+))?" +
+            "\\}");
     private final Map<String, String> patternBank;
     private final boolean namedOnly;
     private final Regex compiledExpression;
@@ -52,18 +49,26 @@ public final class Grok {
     }
 
 
-    public String getNamedGroupMatch(String name, Region region, String pattern) {
+    private String getNamedGroupMatch(String name, Region region, String pattern) {
         try {
             int number = GROK_PATTERN_REGEX.nameToBackrefNumber(name.getBytes(StandardCharsets.UTF_8), 0,
                     name.getBytes(StandardCharsets.UTF_8).length, region);
-            int begin = region.beg[number];
-            int end = region.end[number];
-            return new String(pattern.getBytes(StandardCharsets.UTF_8), begin, end - begin, StandardCharsets.UTF_8);
-        } catch (StringIndexOutOfBoundsException e) {
-            return null;
+            NamedGroupMatch namedGroupMatch = getNamedGroupMatch(name, region, pattern.getBytes(), number);
+            return (String) namedGroupMatch.getValue();
         } catch (ValueException e) {
             return null;
         }
+    }
+
+    private NamedGroupMatch getNamedGroupMatch(String name, Region region, byte[] textAsBytes, int... matches) {
+        List<String> matchValue = new ArrayList<>();
+        for (int number : matches) {
+            if (region.beg[number] >= 0) {
+                matchValue.add(extractString(textAsBytes, region.beg[number], region.end[number]));
+            }
+        }
+
+        return new NamedGroupMatch(name, matchValue);
     }
 
     public String parsePattern(String grokPattern) {
@@ -71,84 +76,80 @@ public final class Grok {
         Matcher matcher = GROK_PATTERN_REGEX.matcher(grokPatternBytes);
 
         int result = matcher.search(0, grokPatternBytes.length, Option.NONE);
-        if (result != -1) {
-            Region region = matcher.getEagerRegion();
-            String subName = getNamedGroupMatch(SUBNAME_GROUP, region, grokPattern);
-            String definition = getNamedGroupMatch(DEFINITION_GROUP, region, grokPattern);
-            String patternName = getNamedGroupMatch(PATTERN_GROUP, region, grokPattern);
-
-            if (isNotEmpty(definition)) {
-                addPattern(patternName, definition);
-            }
-
-            String pattern = patternBank.get(patternName);
-
-            if (pattern == null) {
-                throw new RuntimeException(String.format("failed to create grok, unknown pattern [%s]", grokPattern));
-            }
-
-            String grokPart;
-            if (namedOnly && isNotEmpty(subName)) {
-                grokPart = String.format("(?<%s>%s)", subName, pattern);
-            } else if (!namedOnly) {
-                grokPart = String.format("(?<%s>%s)", patternName + String.valueOf(result), pattern);
-            } else {
-                grokPart = String.format("(?:%s)", pattern);
-            }
-
-            String start = new String(grokPatternBytes, 0, result, StandardCharsets.UTF_8);
-            String rest = new String(grokPatternBytes, region.end[0], grokPatternBytes.length - region.end[0], StandardCharsets.UTF_8);
-            return start + parsePattern(grokPart + rest);
+        if (result == -1) {
+            return grokPattern;
         }
 
-        return grokPattern;
+        Region region = matcher.getEagerRegion();
+        String patternName = getNamedGroupMatch(PATTERN_GROUP, region, grokPattern);
+        String subName = getNamedGroupMatch(SUBNAME_GROUP, region, grokPattern);
+        String definition = getNamedGroupMatch(DEFINITION_GROUP, region, grokPattern);
+
+        if (isNotEmpty(definition)) {
+            addPattern(patternName, definition);
+        }
+
+        String pattern = patternBank.get(patternName);
+
+        if (pattern == null) {
+            throw new RuntimeException(String.format("failed to create grok, unknown " + Grok.PATTERN_GROUP + " [%s]", grokPattern));
+        }
+
+        String grokPart;
+        if (namedOnly && isNotEmpty(subName)) {
+            grokPart = String.format("(?<%s>%s)", subName, pattern);
+        } else if (!namedOnly) {
+            grokPart = String.format("(?<%s>%s)", patternName + String.valueOf(result), pattern);
+        } else {
+            grokPart = String.format("(?:%s)", pattern);
+        }
+
+        String start = extractString(grokPatternBytes, 0, result);
+        String rest = extractString(grokPatternBytes, region.end[0], grokPatternBytes.length);
+        return start + parsePattern(grokPart + rest);
     }
 
-    public void addPattern(String patternName, String definition) {
+    private void addPattern(String patternName, String definition) {
         patternBank.put(patternName, definition);
     }
 
     public Map<String, Object> captures(String text) {
-        byte[] textAsBytes = text.getBytes(StandardCharsets.UTF_8);
         Map<String, Object> fields = new HashMap<>();
+        byte[] textAsBytes = text.getBytes(StandardCharsets.UTF_8);
         Matcher matcher = compiledExpression.matcher(textAsBytes);
         int result = matcher.search(0, textAsBytes.length, Option.DEFAULT);
-        if (result != -1 && compiledExpression.numberOfNames() > 0) {
-            Region region = matcher.getEagerRegion();
-            for (Iterator<NameEntry> entry = compiledExpression.namedBackrefIterator(); entry.hasNext();) {
-                NameEntry e = entry.next();
-                String groupName = new String(e.name, e.nameP, e.nameEnd - e.nameP, StandardCharsets.UTF_8);
-                for (int number : e.getBackRefs()) {
-                    if (region.beg[number] >= 0) {
-                        String matchValue = new String(textAsBytes, region.beg[number], region.end[number] - region.beg[number],
-                            StandardCharsets.UTF_8);
-                        NamedGroupMatch namedGroupMatch = new NamedGroupMatch(groupName, matchValue);
-                        Object value = namedGroupMatch.getValue();
-                        fields.compute(namedGroupMatch.getName(), (k, oldVal) -> {
-                            if (oldVal == null) return value;
-                            if (oldVal instanceof List) {
-                                ((List) oldVal).add(value);
-                                return oldVal;
-                            }
-                            return new ArrayList<>(Arrays.asList(oldVal, value));
-                        });
-                    }
-                }
-
-            }
-            return fields;
-        } else if (result != -1) {
+        if (result == -1) {
+            return null;
+        }
+        if (compiledExpression.numberOfNames() == 0) {
             return fields;
         }
-        return null;
+
+        Region region = matcher.getEagerRegion();
+        for (Iterator<NameEntry> iterator = compiledExpression.namedBackrefIterator(); iterator.hasNext();) {
+            NameEntry entry = iterator.next();
+            String groupName = extractString(entry.name, entry.nameP, entry.nameEnd);
+            NamedGroupMatch namedGroupMatch = getNamedGroupMatch(groupName, region, textAsBytes, entry.getBackRefs());
+            fields.put(namedGroupMatch.getName(), namedGroupMatch.getValue());
+        }
+
+        return fields;
+    }
+
+    private String extractString(byte[] original, int start, int end) {
+        try {
+            return new String(original, start, end - start, StandardCharsets.UTF_8);
+        } catch (StringIndexOutOfBoundsException e) {
+            return null;
+        }
     }
 
     final class NamedGroupMatch {
         private final String fieldName;
         private final FieldType type;
-        private final String groupValue;
+        private final List<String> groupValue;
 
-        public NamedGroupMatch(String groupName, String groupValue) {
+        public NamedGroupMatch(String groupName, List<String> groupValue) {
             String[] parts = groupName.split(":");
             fieldName = parts[0];
 
@@ -166,10 +167,20 @@ public final class Grok {
         }
 
         public Object getValue() {
-            if (groupValue == null) { return null; }
+            if (isEmpty(groupValue)) { return null; }
 
-            Object valueAfterConvert = type.convertFrom(groupValue, 0l);
-            if (valueAfterConvert == null) { return groupValue; }
+            if (groupValue.size() == 1) {
+                return convertValue(groupValue.get(0));
+            } else {
+                return groupValue.stream().map(this::convertValue).collect(Collectors.toList());
+            }
+        }
+
+        private Object convertValue(String value) {
+            Object valueAfterConvert = type.convertFrom(value, 0l);
+            if (valueAfterConvert == null) {
+                return groupValue;
+            }
 
             return valueAfterConvert;
         }
