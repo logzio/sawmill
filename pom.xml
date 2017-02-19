@@ -6,7 +6,7 @@
 
     <groupId>io.logz.sawmill</groupId>
     <artifactId>sawmill</artifactId>
-    <version>1.1.8-comperator</version>
+    <version>1.1.9</version>
     <modules>
         <module>sawmill-core</module>
         <module>sawmill-benchmark</module>
