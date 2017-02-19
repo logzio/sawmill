@@ -1,12 +1,11 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.primitives.Doubles;
-import com.google.common.primitives.Longs;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorParseException;
+import io.logz.sawmill.FieldType;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;
@@ -83,45 +82,5 @@ public class ConvertFieldProcessor implements Processor {
         public String getPath() { return path; }
 
         public FieldType getType() { return type; }
-    }
-
-    public enum FieldType {
-        LONG {
-            @Override
-            public Object convertFrom(Object value) {
-                return Longs.tryParse(value.toString());
-            }
-        },
-        DOUBLE {
-            @Override
-            public Object convertFrom(Object value) {
-                return Doubles.tryParse(value.toString());
-            }
-        },
-        STRING {
-            @Override
-            public Object convertFrom(Object value) {
-                return value.toString();
-            }
-        },
-        BOOLEAN {
-            @Override
-            public Object convertFrom(Object value) {
-                if (value.toString().matches("^(t|true|yes|y|1)$")) {
-                    return true;
-                } else if (value.toString().matches("^(f|false|no|n|0)$")) {
-                    return false;
-                } else {
-                    return null;
-                }
-            }
-        };
-
-        @Override
-        public String toString() {
-            return this.name().toLowerCase();
-        }
-
-        public abstract Object convertFrom(Object value);
     }
 }

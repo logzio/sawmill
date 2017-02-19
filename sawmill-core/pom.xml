@@ -10,7 +10,7 @@
     <parent>
         <artifactId>sawmill</artifactId>
         <groupId>io.logz.sawmill</groupId>
-        <version>1.1.8</version>
+        <version>1.1.8-comperator</version>
     </parent>
 
     <build>
@@ -44,8 +44,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.thekraken</groupId>
-            <artifactId>grok</artifactId>
+            <groupId>org.jruby.joni</groupId>
+            <artifactId>joni</artifactId>
         </dependency>
         <dependency>
             <groupId>ua_parser</groupId>
