@@ -5,11 +5,8 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorParseException;
+import io.logz.sawmill.utilities.Grok;
 import io.logz.sawmill.utilities.JsonUtils;
-import io.thekraken.grok.api.Converter;
-import io.thekraken.grok.api.Grok;
-import io.thekraken.grok.api.Match;
-import io.thekraken.grok.api.exception.GrokException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 
@@ -53,21 +50,10 @@ public class GrokProcessor implements Processor {
 
     private void compileExpressions(List<String> matchExpressions, Map<String, String> patternsBank) {
         matchExpressions.forEach(expression -> {
-            Grok grok = new Grok();
-
-            grok.getPatterns().putAll(patternsBank);
-
-            try {
-                grok.compile(expression, true);
-                if (grok.getNamedRegex().equals("(?<name0>null)")) {
-                    throw new RuntimeException(String.format("failed to create grok processor, unknown expressions [%s]", expressions));
-                }
-
-                this.groks.add(grok);
-            } catch (GrokException e) {
-                throw new RuntimeException(String.format("failed to compile grok pattern [%s]", expression), e);
-            }
+            Grok grok = new Grok(patternsBank, expression);
+            this.groks.add(grok);
         });
+
     }
 
     @Override
@@ -90,7 +76,6 @@ public class GrokProcessor implements Processor {
         matches.entrySet().stream()
                 .filter((e) -> Objects.nonNull(e.getValue()))
                 .filter((e) -> !e.getValue().toString().isEmpty())
-                .filter((e) -> !e.getKey().contains("_grokfailure"))
                 .forEach((e) -> {
                     if (overwrite.contains(e.getKey()) || !doc.hasField(e.getKey())) {
                         doc.addField(e.getKey(), e.getValue());
@@ -104,11 +89,9 @@ public class GrokProcessor implements Processor {
 
     private Map<String, Object> getMatches(String value) {
         for (int i=0; i< groks.size(); i++) {
-            Match match = groks.get(i).match(value);
-            match.captures();
-            Map<String, Object> map = match.toMap();
-            if (map.size() > 0) {
-                return map;
+            Map<String, Object> captures = groks.get(i).captures(value);
+            if (MapUtils.isNotEmpty(captures)) {
+                return captures;
             }
         }
         return Collections.EMPTY_MAP;
@@ -122,11 +105,6 @@ public class GrokProcessor implements Processor {
         };
 
         private final Map<String,String> patternsBank;
-
-        static {
-            Converter.converters.replace("int", Converter.converters.get("long"));
-            Converter.converters.replace("float", Converter.converters.get("double"));
-        }
 
         public Factory() {
             this.patternsBank = loadBuiltinPatterns();

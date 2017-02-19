@@ -15,7 +15,7 @@ public class UserAgentProcessorTest {
     public void testValidUserAgent() {
         String field = "agent";
         String targetField = "user_agent";
-        String uaString = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36";
+        String uaString = "\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36\"";
         Doc doc = createDoc(field, uaString);
 
         Map<String,Object> config = new HashMap<>();
