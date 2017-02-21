@@ -45,6 +45,29 @@ public class DateProcessorTest {
     }
 
     @Test
+    public void testIso8601Format() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("UTC");
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
+        String iso8601Format1 = zonedDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss,SSS"));
+        String iso8601Format2 = zonedDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSxxx"));
+        Doc doc = createDoc(field, iso8601Format1);
+
+        DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("ISO8601"), zoneId);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+
+        doc = createDoc(field, iso8601Format2);
+
+        dateProcessor = new DateProcessor(field, targetField, Arrays.asList("ISO8601"), zoneId);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+    }
+
+    @Test
     public void testSeveralISOPatterns() {
         String field = "datetime";
         String targetField = "@timestamp";

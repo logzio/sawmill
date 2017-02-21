@@ -53,7 +53,36 @@ public class DateProcessor implements Processor {
             .toFormatter()
             .withChronology(IsoChronology.INSTANCE)
             .withResolverStyle(ResolverStyle.STRICT);
+    public static final DateTimeFormatter iso8601 = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .append(ISO_LOCAL_DATE)
+            .appendLiteral('T')
+            .appendValue(HOUR_OF_DAY, 2)
+            .appendLiteral(':')
+            .appendValue(MINUTE_OF_HOUR, 2)
+            .optionalStart()
+            .appendLiteral(':')
+            .appendValue(SECOND_OF_MINUTE, 2)
+            .optionalStart()
+            .optionalStart()
+            .appendLiteral(',')
+            .optionalEnd()
+            .optionalStart()
+            .appendLiteral('.')
+            .optionalEnd()
+            .appendFraction(NANO_OF_SECOND, 0, 9, false)
+            .optionalStart()
+            .appendOffsetId()
+            .optionalEnd()
+            .optionalEnd()
+            .toFormatter()
+            .withChronology(IsoChronology.INSTANCE)
+            .withResolverStyle(ResolverStyle.STRICT);
     private static ConcurrentMap<String, DateTimeFormatter> dateTimePatternToFormatter = new ConcurrentHashMap<>();
+
+    static {
+        dateTimePatternToFormatter.put("ISO8601", iso8601);
+    }
 
     private final String field;
     private final String targetField;
