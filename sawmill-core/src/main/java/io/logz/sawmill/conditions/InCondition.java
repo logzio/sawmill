@@ -9,7 +9,7 @@ import io.logz.sawmill.utilities.JsonUtils;
 import java.util.List;
 import java.util.Map;
 
-@ConditionProvider(type = "in", factory = FieldHasValueCondition.Factory.class)
+@ConditionProvider(type = "in", factory = InCondition.Factory.class)
 public class InCondition implements Condition {
 
     private String path;
