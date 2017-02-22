@@ -9,7 +9,7 @@ import io.logz.sawmill.utilities.JsonUtils;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-@ConditionProvider(type = "hasValue", factory = MatchRegexCondition.Factory.class)
+@ConditionProvider(type = "matchRegex", factory = MatchRegexCondition.Factory.class)
 public class MatchRegexCondition implements Condition {
 
     private String field;
