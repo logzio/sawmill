@@ -21,7 +21,7 @@ public class DropProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
-        if (random.nextFloat() > percentage / 100) {
+        if (random.nextFloat() > percentage / 100.0) {
             return ProcessResult.success();
         }
 
