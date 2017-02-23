@@ -9,6 +9,8 @@ import io.logz.sawmill.utilities.JsonUtils;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import static java.util.Objects.requireNonNull;
+
 @ConditionProvider(type = "matchRegex", factory = MatchRegexCondition.Factory.class)
 public class MatchRegexCondition implements Condition {
 
@@ -16,8 +18,8 @@ public class MatchRegexCondition implements Condition {
     private Pattern pattern;
 
     public MatchRegexCondition(String field, String regex) {
-        this.field = field;
-        this.pattern = Pattern.compile(regex);
+        this.field = requireNonNull(field);
+        this.pattern = Pattern.compile(requireNonNull(regex));
     }
 
     @Override

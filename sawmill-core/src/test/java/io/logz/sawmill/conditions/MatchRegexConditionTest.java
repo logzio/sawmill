@@ -34,10 +34,15 @@ public class MatchRegexConditionTest {
     @Test
     public void testInvalidRegex() {
         String field = "field1";
-        String regex = "Wed\\"+'x';
-        assertThatThrownBy(() -> new MatchRegexCondition(field, regex))
+        String invalidRegexEscaping = "Wed\\"+'x';
+        assertThatThrownBy(() -> new MatchRegexCondition(field, invalidRegexEscaping))
                 .isInstanceOf(PatternSyntaxException.class)
                 .hasMessageContaining("Illegal hexadecimal escape sequence near index");
+
+        String invalidRegex = "[]";
+        assertThatThrownBy(() -> new MatchRegexCondition(field, invalidRegex))
+                .isInstanceOf(PatternSyntaxException.class)
+                .hasMessageContaining("Unclosed character class near index");
     }
 
     @Test
