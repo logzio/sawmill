@@ -35,48 +35,48 @@ Simple configuration example:
 
 
 Processors:
-- Add Field
+- Add Field [addField]
 	- path (the path to the field to add, doted fqdn) 
 	- value 
-- Add Tag
+- Add Tag [addTag]
 	- tags - array of tags to add, i.e. tags: ["tag1","tag2"]
-- Convert Field
+- Convert Field [convert]
 	- path
 	- type (one of: long, double, string, boolean)
-- Date
+- Date [date]
 	- field 
 	- targetField
 	- formats - one of these: https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
 	- timeZone - one of these: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
-- Drop
+- Drop [drop]
 	- percentage, default to 100 which is full drop, can be used to throttle
-- Geo IP
+- Geo IP [geoIp]
 	- sourceField
 	- targetField
 	- properties
 	- tagsOnSuccess
-- Json
+- Json [json]
 	- field
 	- targetField
-- Key Value
+- Key Value [kv]
 	- field
 	- targetField
 	- includeKeys
 	- excludeKeys
 	- trim
 	- trimKey
-- Remove Field
+- Remove Field [removeField]
 	- path (dotted path, i.e: a.b.c)
-- Remove Tag
+- Remove Tag [removeTag]
 	- tags - list of tags
-- Rename Field
+- Rename Field [rename]
 	- from - the field name to rename
 	- to - the new name of that field
-- Substitue 
+- Substitue [gsub]
 	- field
 	- pattern
 	- replacement
-- User Agent
+- User Agent [userAgent]
 	- field
 	- targetField
 	- prefix
