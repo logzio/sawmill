@@ -3,6 +3,7 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -25,8 +26,7 @@ public class AppendListProcessorTest {
         // Tests no exception thrown when there is a field with different type
         assertThat(appendListProcessor.process(doc).isSucceeded()).isTrue();
 
-        assertThat(((List)doc.getField(FIELD_NAME)).contains(EXISTING_VALUE)).isTrue();
-        assertThat(((List)doc.getField(FIELD_NAME)).contains(APPENDED_VALUE)).isTrue();
+        assertThat((List) doc.getField(FIELD_NAME)).isEqualTo(Arrays.asList(EXISTING_VALUE, APPENDED_VALUE));
     }
 
     @Test
@@ -38,17 +38,20 @@ public class AppendListProcessorTest {
         assertThat(appendListProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThat((String) doc.getField("field")).isEqualTo("value");
-        values.forEach(value -> assertThat(((List) doc.getField(FIELD_NAME)).contains(value)).isTrue());
+        assertThat((List) doc.getField(FIELD_NAME)).isEqualTo(values);
     }
 
     @Test
     public void testAppendValuesWhileFieldExist() {
-        List<String> values = Arrays.asList(EXISTING_VALUE, APPENDED_VALUE, ANOTHER_VALUE);
+        List<String> existingList = new ArrayList<>();
+        existingList.add(EXISTING_VALUE);
+
+        List<String> values = Arrays.asList(APPENDED_VALUE, ANOTHER_VALUE);
         AppendListProcessor appendListProcessor = new AppendListProcessor(FIELD_NAME, values);
-        Doc doc = createDoc(FIELD_NAME, Collections.singleton(EXISTING_VALUE));
+        Doc doc = createDoc(FIELD_NAME, existingList);
 
         assertThat(appendListProcessor.process(doc).isSucceeded()).isTrue();
-        values.forEach(value -> assertThat(((List) doc.getField(FIELD_NAME)).contains(value)).isTrue());
+        assertThat((List) doc.getField(FIELD_NAME)).isEqualTo(Arrays.asList(EXISTING_VALUE, APPENDED_VALUE, ANOTHER_VALUE));
     }
 
 }
