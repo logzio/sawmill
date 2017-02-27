@@ -10,7 +10,6 @@ import org.joni.exception.ValueException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -47,33 +46,6 @@ public final class Grok {
         return new Regex(parsePattern(grokPattern));
     }
 
-
-    private String getNamedGroupMatch(String name, Region region, String pattern) {
-        try {
-            int matchNumber = GROK_PATTERN_REGEX.nameToBackrefNumber(name.getBytes(StandardCharsets.UTF_8), 0,
-                    name.getBytes(StandardCharsets.UTF_8).length, region);
-            NamedGroupMatch namedGroupMatch = getNamedGroupMatch(name, region, pattern.getBytes(), matchNumber);
-            return (String) namedGroupMatch.getValue();
-        } catch (ValueException e) {
-            return null;
-        }
-    }
-
-    private NamedGroupMatch getNamedGroupMatch(String name, Region region, byte[] textAsBytes, int... matches) {
-        if (matches.length == 1) {
-            return new NamedGroupMatch(name, extractString(textAsBytes, region.beg[matches[0]], region.end[matches[0]]));
-        }
-
-        List<String> matchValue = new ArrayList<>();
-        for (int number : matches) {
-            if (region.beg[number] >= 0) {
-                matchValue.add(extractString(textAsBytes, region.beg[number], region.end[number]));
-            }
-        }
-
-        return new NamedGroupMatch(name, matchValue);
-    }
-
     private String parsePattern(String grokPattern) {
         byte[] grokPatternBytes = grokPattern.getBytes(StandardCharsets.UTF_8);
         Matcher matcher = GROK_PATTERN_REGEX.matcher(grokPatternBytes);
@@ -85,9 +57,9 @@ public final class Grok {
         }
 
         Region region = matcher.getEagerRegion();
-        String patternName = getNamedGroupMatch(PATTERN_GROUP, region, grokPattern);
-        String subName = getNamedGroupMatch(SUBNAME_GROUP, region, grokPattern);
-        String definition = getNamedGroupMatch(DEFINITION_GROUP, region, grokPattern);
+        String patternName = matchPatternValue(PATTERN_GROUP, region, grokPattern);
+        String subName = matchPatternValue(SUBNAME_GROUP, region, grokPattern);
+        String definition = matchPatternValue(DEFINITION_GROUP, region, grokPattern);
 
         if (isNotEmpty(definition)) {
             addPattern(patternName, definition);
@@ -117,8 +89,8 @@ public final class Grok {
         patternBank.put(patternName, definition);
     }
 
-    public Map<String, Object> captures(String text) {
-        Map<String, Object> fields = new HashMap<>();
+    public List<Match> matches(String text) {
+        List<Match> matches = new ArrayList<>();
         byte[] textAsBytes = text.getBytes(StandardCharsets.UTF_8);
         Matcher matcher = compiledExpression.matcher(textAsBytes);
         int result = matcher.search(0, textAsBytes.length, Option.DEFAULT);
@@ -127,7 +99,7 @@ public final class Grok {
             return null;
         }
         if (compiledExpression.numberOfNames() == 0) {
-            return fields;
+            return matches;
         }
 
         Region region = matcher.getEagerRegion();
@@ -135,11 +107,60 @@ public final class Grok {
             NameEntry entry = iterator.next();
             String groupName = extractString(entry.name, entry.nameP, entry.nameEnd);
             int[] matchNumbers = entry.getBackRefs();
-            NamedGroupMatch namedGroupMatch = getNamedGroupMatch(groupName, region, textAsBytes, matchNumbers);
-            fields.put(namedGroupMatch.getName(), namedGroupMatch.getValue());
+
+            matches.add(match(groupName, region, textAsBytes, matchNumbers));
         }
 
-        return fields;
+        return matches;
+    }
+
+    private String matchPatternValue(String groupName, Region region, String pattern) {
+        try {
+            int matchNumber = GROK_PATTERN_REGEX.nameToBackrefNumber(groupName.getBytes(StandardCharsets.UTF_8), 0,
+                    groupName.getBytes(StandardCharsets.UTF_8).length, region);
+            Match match = match(groupName, region, pattern.getBytes(), matchNumber);
+            return (String) match.getValue();
+        } catch (ValueException e) {
+            return null;
+        }
+    }
+
+    private Match match(String groupName, Region region, byte[] textAsBytes, int... matchNumbers) {
+        String[] parts = groupName.split(":");
+        String fieldName = parts[0];
+        FieldType type = parts.length == 2 ? FieldType.tryParseOrDefault(parts[1]) : STRING;
+        Object value = getMatchValue(region, textAsBytes, matchNumbers, type);
+
+        int beg = region.beg[matchNumbers[0]];
+        int end = region.end[matchNumbers[matchNumbers.length - 1]];
+
+        return new Match(fieldName, value, beg, end);
+    }
+
+    private Object getMatchValue(Region region, byte[] textAsBytes, int[] matchNumbers, FieldType type) {
+        if (matchNumbers.length == 1) {
+            String value = extractString(textAsBytes, region.beg[matchNumbers[0]], region.end[matchNumbers[0]]);
+            if (value == null) return null;
+            return convertValue(value, type);
+        }
+
+        List<String> listValue = new ArrayList<>();
+        for (int number : matchNumbers) {
+            if (region.beg[number] >= 0) {
+                listValue.add(extractString(textAsBytes, region.beg[number], region.end[number]));
+            }
+        }
+        if (listValue.isEmpty()) return null;
+        return listValue.stream().map(v -> convertValue(v, type)).collect(Collectors.toList());
+    }
+
+    private Object convertValue(String value, FieldType type) {
+        Object valueAfterConvert = type.convertFrom(value, 0l);
+        if (valueAfterConvert == null) {
+            return value;
+        }
+
+        return valueAfterConvert;
     }
 
     private String extractString(byte[] original, int start, int end) {
@@ -150,46 +171,33 @@ public final class Grok {
         }
     }
 
-    final class NamedGroupMatch {
-        private final String fieldName;
-        private final FieldType type;
-        private final Object groupValue;
+    public final class Match {
+        private final String name;
+        private final Object value;
+        private final int start;
+        private final int end;
 
-        public NamedGroupMatch(String groupName, Object groupValue) {
-            String[] parts = groupName.split(":");
-            fieldName = parts[0];
-
-            if (parts.length == 2) {
-                type = FieldType.tryParseOrDefault(parts[1]);
-            } else {
-                type = STRING;
-            }
-
-            this.groupValue = groupValue;
+        public Match(String name, Object value, int start, int end) {
+            this.name = name;
+            this.value = value;
+            this.start = start;
+            this.end = end;
         }
 
         public String getName() {
-            return fieldName;
+            return name;
         }
 
         public Object getValue() {
-            if (groupValue == null) return null;
-
-            if (groupValue instanceof List) {
-                List<String> listValue = (List) groupValue;
-                if (listValue.isEmpty()) return null;
-                return listValue.stream().map(this::convertValue).collect(Collectors.toList());
-            }
-            return convertValue((String) groupValue);
+            return value;
         }
 
-        private Object convertValue(String value) {
-            Object valueAfterConvert = type.convertFrom(value, 0l);
-            if (valueAfterConvert == null) {
-                return groupValue;
-            }
+        public int getStart() {
+            return start;
+        }
 
-            return valueAfterConvert;
+        public int getEnd() {
+            return end;
         }
     }
 }
