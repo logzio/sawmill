@@ -18,7 +18,7 @@ public class GrokDebuggerProcessorTest {
     public static GrokDebuggerProcessor.Factory factory = new GrokDebuggerProcessor.Factory();
 
     @Test
-    public void testFieldPositions() {
+    public void testValueOffsets() {
         String messageField = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
 
