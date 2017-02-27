@@ -131,10 +131,10 @@ public final class Grok {
         FieldType type = parts.length == 2 ? FieldType.tryParseOrDefault(parts[1]) : STRING;
         Object value = getMatchValue(region, textAsBytes, matchNumbers, type);
 
-        int beg = region.beg[matchNumbers[0]];
+        int start = region.beg[matchNumbers[0]];
         int end = region.end[matchNumbers[matchNumbers.length - 1]];
 
-        return new Match(fieldName, value, beg, end);
+        return new Match(fieldName, value, start, end);
     }
 
     private Object getMatchValue(Region region, byte[] textAsBytes, int[] matchNumbers, FieldType type) {
