@@ -2,7 +2,7 @@
 Log enricher an transformer TBD
 
 Simple configuration example:
-```
+```json
 {
   "steps": [
     {
@@ -38,6 +38,9 @@ Processors:
 - Add Field [addField]
 	- path (the path to the field to add, doted fqdn) 
 	- value 
+- Append List [appendList]
+	- path (the path to the field to add, doted fqdn) 
+	- values - array of values to add, i.e. values: ["val1","val2"]
 - Add Tag [addTag]
 	- tags - array of tags to add, i.e. tags: ["tag1","tag2"]
 - Convert Field [convert]
@@ -88,6 +91,9 @@ Processors:
 - hasValue
 	- field
 	- possibleValues
+- matchRegex
+	- field
+	- pattern
 - exists
 	- field
 	
