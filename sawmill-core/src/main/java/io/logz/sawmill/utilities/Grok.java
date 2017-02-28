@@ -139,8 +139,8 @@ public final class Grok {
 
     private List<Offset> getOffsets(int[] beg, int[] end, int[] matchNumbers) {
         List<Offset> offsets = new ArrayList<>();
-        for (int i = 0; i < matchNumbers.length; i++) {
-            offsets.add(new Offset(beg[matchNumbers[i]], end[matchNumbers[i]]));
+        for (int matchNumber : matchNumbers) {
+            offsets.add(new Offset(beg[matchNumber], end[matchNumber]));
         }
         return offsets;
     }
@@ -150,15 +150,15 @@ public final class Grok {
         for (Offset offset : offsets) {
             if (offset.getStart() >= 0) {
                 String rawValue = extractString(textAsBytes, offset.getStart(), offset.getEnd());
-                Object value = convertValue(rawValue, type);
-                matchValues.add(new MatchValue(value, offset));
+                Object convertedValue = convertValue(rawValue, type);
+                matchValues.add(new MatchValue(convertedValue, offset));
             }
         }
         return matchValues;
     }
 
     private Object convertValue(String value, FieldType type) {
-        Object valueAfterConvert = type.convertFrom(value, 0l);
+        Object valueAfterConvert = type.convertFrom(value, 0L);
         if (valueAfterConvert == null) {
             return value;
         }
