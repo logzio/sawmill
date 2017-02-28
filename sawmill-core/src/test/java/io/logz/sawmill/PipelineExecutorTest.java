@@ -4,7 +4,6 @@ import io.logz.sawmill.conditions.AndCondition;
 import io.logz.sawmill.conditions.FieldExistsCondition;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
 
