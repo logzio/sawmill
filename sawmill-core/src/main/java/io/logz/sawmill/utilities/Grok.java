@@ -1,6 +1,7 @@
 package io.logz.sawmill.utilities;
 
 import io.logz.sawmill.FieldType;
+import org.apache.commons.lang3.StringUtils;
 import org.joni.Matcher;
 import org.joni.NameEntry;
 import org.joni.Option;
@@ -150,8 +151,10 @@ public final class Grok {
         for (Offset offset : offsets) {
             if (offset.getStart() >= 0) {
                 String rawValue = extractString(textAsBytes, offset.getStart(), offset.getEnd());
-                Object convertedValue = convertValue(rawValue, type);
-                matchValues.add(new MatchValue(convertedValue, offset));
+                if (!StringUtils.isEmpty(rawValue)) {
+                    Object convertedValue = convertValue(rawValue, type);
+                    matchValues.add(new MatchValue(convertedValue, offset));
+                }
             }
         }
         return matchValues;

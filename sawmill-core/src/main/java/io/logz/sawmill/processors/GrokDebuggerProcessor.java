@@ -66,7 +66,7 @@ public class GrokDebuggerProcessor implements Processor {
         }
 
         matches.stream()
-                .filter(match -> !emptyValue(match))
+                .filter(match -> !CollectionUtils.isEmpty(match.getValues()))
                 .forEach(match -> {
                     String field = match.getName();
                     List<Grok.MatchValue> matchValues = match.getMatchValues();
@@ -79,11 +79,6 @@ public class GrokDebuggerProcessor implements Processor {
                 });
 
         return ProcessResult.success();
-    }
-
-    private boolean emptyValue(Grok.Match match) {
-        List<Object> matchValues = match.getValues();
-        return CollectionUtils.isEmpty(matchValues) || matchValues.size() == 1 && matchValues.get(0).toString().isEmpty();
     }
 
     private Object getValue(List<Grok.MatchValue> matchValues) {
