@@ -209,10 +209,6 @@ public final class Grok {
             return value;
         }
 
-        public Offset getOffset() {
-            return offset;
-        }
-
         public int getStart() {
             return offset.getStart();
         }
