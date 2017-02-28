@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -66,28 +66,37 @@ public class GrokDebuggerProcessor implements Processor {
         }
 
         matches.stream()
-                .filter((e) -> Objects.nonNull(e.getValue()))
-                .filter((e) -> !e.getValue().toString().isEmpty())
-                .forEach((match) -> {
-                    String key = match.getName();
-                    Object value = getValue(match);
-                    if (overwrite.contains(key) || !doc.hasField(key)) {
-                        doc.addField(key, value);
+                .filter(match -> !emptyValue(match))
+                .forEach(match -> {
+                    String field = match.getName();
+                    List<Grok.MatchValue> matchValues = match.getMatchValues();
+                    Object value = getValue(matchValues);
+                    if (overwrite.contains(field) || !doc.hasField(field)) {
+                        doc.addField(field, value);
                     } else {
-                        doc.appendList(key, value);
+                        doc.appendList(field, value);
                     }
                 });
 
         return ProcessResult.success();
     }
 
-    private Object getValue(Grok.Match match) {
-        Map<String, Object> value = new HashMap<>();
-        value.put("value", match.getValue());
-        value.put("start", match.getStart());
-        value.put("end", match.getEnd());
+    private boolean emptyValue(Grok.Match match) {
+        List<Object> matchValues = match.getValues();
+        return CollectionUtils.isEmpty(matchValues) || matchValues.size() == 1 && matchValues.get(0).toString().isEmpty();
+    }
 
-        return value;
+    private Object getValue(List<Grok.MatchValue> matchValues) {
+        List<Map<String, Object>> valueList = matchValues.stream().map(matchValue -> {
+            Map<String, Object> value = new HashMap<>();
+            value.put("value", matchValue.getValue());
+            value.put("start", matchValue.getStart());
+            value.put("end", matchValue.getEnd());
+            return value;
+        }).collect(Collectors.toList());
+
+        return valueList.size() == 1 ? valueList.get(0) : valueList;
+
     }
 
     private List<Grok.Match> getMatches(String value) {

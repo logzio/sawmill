@@ -40,8 +40,7 @@ public class GrokTest {
 
         Grok.Match match = captures.get(0);
         assertThat(match.getName()).isEqualTo("num");
-        assertThat(match.getValue()).isEqualTo(Arrays.asList("1","2"));
-        assertThat(text.substring(match.getStart(), match.getEnd())).isEqualTo("12");
+        assertThat(match.getValues()).isEqualTo(Arrays.asList("1","2"));
     }
 
     @Test
@@ -57,8 +56,7 @@ public class GrokTest {
 
         Grok.Match match = captures.get(0);
         assertThat(match.getName()).isEqualTo("num");
-        assertThat(match.getValue()).isEqualTo(Arrays.asList("1","2","3"));
-        assertThat(text.substring(match.getStart(), match.getEnd())).isEqualTo("123");
+        assertThat(match.getValues()).isEqualTo(Arrays.asList("1","2","3"));
     }
 
     @Test
@@ -77,23 +75,23 @@ public class GrokTest {
 
         Grok.Match match1 = captures.get(0);
         assertThat(match1.getName()).isEqualTo("time");
-        assertThat(match1.getValue()).isEqualTo(5009.123d);
-        assertThat(text.substring(match1.getStart(), match1.getEnd())).isEqualTo("5009.123");
+        assertThat(match1.getValues()).hasSize(1);
+        assertThat(match1.getValues()).contains(5009.123d);
 
         Grok.Match match2 = captures.get(1);
         assertThat(match2.getName()).isEqualTo("bytes");
-        assertThat(match2.getValue()).isEqualTo(12009.34d);
-        assertThat(text.substring(match2.getStart(), match2.getEnd())).isEqualTo("12009.34");
+        assertThat(match2.getValues()).hasSize(1);
+        assertThat(match2.getValues()).contains(12009.34d);
 
         Grok.Match match3 = captures.get(2);
         assertThat(match3.getName()).isEqualTo("status");
-        assertThat(match3.getValue()).isEqualTo(200l);
-        assertThat(text.substring(match3.getStart(), match3.getEnd())).isEqualTo("200");
+        assertThat(match3.getValues()).hasSize(1);
+        assertThat(match3.getValues()).contains(200l);
 
         Grok.Match match4 = captures.get(3);
         assertThat(match4.getName()).isEqualTo("length");
-        assertThat(match4.getValue()).isEqualTo(9032l);
-        assertThat(text.substring(match4.getStart(), match4.getEnd())).isEqualTo("9032");
+        assertThat(match4.getValues()).hasSize(1);
+        assertThat(match4.getValues()).contains(9032l);
     }
 
     @Test
@@ -114,28 +112,28 @@ public class GrokTest {
 
         Grok.Match match1 = captures.get(0);
         assertThat(match1.getName()).isEqualTo("WORD0");
-        assertThat(match1.getValue()).isEqualTo("hello");
-        assertThat(text.substring(match1.getStart(), match1.getEnd())).isEqualTo("hello");
+        assertThat(match1.getValues()).hasSize(1);
+        assertThat(match1.getValues()).contains("hello");
 
         Grok.Match match2 = captures.get(1);
         assertThat(match2.getName()).isEqualTo("SPECIAL_NUMBER16");
-        assertThat(match2.getValue()).isEqualTo("10000l");
-        assertThat(text.substring(match2.getStart(), match2.getEnd())).isEqualTo("10000l");
+        assertThat(match2.getValues()).hasSize(1);
+        assertThat(match2.getValues()).contains("10000l");
 
         Grok.Match match3 = captures.get(2);
         assertThat(match3.getName()).isEqualTo("BASE10NUM23");
-        assertThat(match3.getValue()).isEqualTo("10000");
-        assertThat(text.substring(match3.getStart(), match3.getEnd())).isEqualTo("10000");
+        assertThat(match3.getValues()).hasSize(1);
+        assertThat(match3.getValues()).contains("10000");
 
         Grok.Match match4 = captures.get(3);
         assertThat(match4.getName()).isEqualTo("BASE10NUM82");
-        assertThat(match4.getValue()).isEqualTo("500");
-        assertThat(text.substring(match4.getStart(), match4.getEnd())).isEqualTo("500");
+        assertThat(match4.getValues()).hasSize(1);
+        assertThat(match4.getValues()).contains("500");
 
         Grok.Match match5 = captures.get(4);
         assertThat(match5.getName()).isEqualTo("MONTHDAY81");
-        assertThat(match5.getValue()).isEqualTo("31");
-        assertThat(text.substring(match5.getStart(), match5.getEnd())).isEqualTo("31");
+        assertThat(match5.getValues()).hasSize(1);
+        assertThat(match5.getValues()).contains("31");
     }
 
     @Test
@@ -148,8 +146,8 @@ public class GrokTest {
 
         Grok.Match match = captures.get(0);
         assertThat(match.getName()).isEqualTo("foo");
-        assertThat(match.getValue()).isEqualTo("hello");
-        assertThat(text.substring(match.getStart(), match.getEnd())).isEqualTo("hello");
+        assertThat(match.getValues()).hasSize(1);
+        assertThat(match.getValues()).contains("hello");
     }
 
     @Test
@@ -162,8 +160,8 @@ public class GrokTest {
 
         Grok.Match match = captures.get(0);
         assertThat(match.getName()).isEqualTo("foo-bar");
-        assertThat(match.getValue()).isEqualTo("hello");
-        assertThat(text.substring(match.getStart(), match.getEnd())).isEqualTo("hello");
+        assertThat(match.getValues()).hasSize(1);
+        assertThat(match.getValues()).contains("hello");
     }
 
     @Test

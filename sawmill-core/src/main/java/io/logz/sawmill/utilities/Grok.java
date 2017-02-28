@@ -119,7 +119,8 @@ public final class Grok {
             int matchNumber = GROK_PATTERN_REGEX.nameToBackrefNumber(groupName.getBytes(StandardCharsets.UTF_8), 0,
                     groupName.getBytes(StandardCharsets.UTF_8).length, region);
             Match match = match(groupName, region, pattern.getBytes(), matchNumber);
-            return (String) match.getValue();
+            List<Object> values = match.getValues();
+            return values.size() == 0 ? null : (String) values.get(0);
         } catch (ValueException e) {
             return null;
         }
@@ -129,29 +130,31 @@ public final class Grok {
         String[] parts = groupName.split(":");
         String fieldName = parts[0];
         FieldType type = parts.length == 2 ? FieldType.tryParseOrDefault(parts[1]) : STRING;
-        Object value = getMatchValue(region, textAsBytes, matchNumbers, type);
 
-        int start = region.beg[matchNumbers[0]];
-        int end = region.end[matchNumbers[matchNumbers.length - 1]];
+        List<Offset> offsets = getOffsets(region.beg, region.end, matchNumbers);
+        List<MatchValue> values = getMatchValue(textAsBytes, offsets, type);
 
-        return new Match(fieldName, value, start, end);
+        return new Match(fieldName, values);
     }
 
-    private Object getMatchValue(Region region, byte[] textAsBytes, int[] matchNumbers, FieldType type) {
-        if (matchNumbers.length == 1) {
-            String value = extractString(textAsBytes, region.beg[matchNumbers[0]], region.end[matchNumbers[0]]);
-            if (value == null) return null;
-            return convertValue(value, type);
+    private List<Offset> getOffsets(int[] beg, int[] end, int[] matchNumbers) {
+        List<Offset> offsets = new ArrayList<>();
+        for (int i = 0; i < matchNumbers.length; i++) {
+            offsets.add(new Offset(beg[matchNumbers[i]], end[matchNumbers[i]]));
         }
+        return offsets;
+    }
 
-        List<String> listValue = new ArrayList<>();
-        for (int number : matchNumbers) {
-            if (region.beg[number] >= 0) {
-                listValue.add(extractString(textAsBytes, region.beg[number], region.end[number]));
+    private List<MatchValue> getMatchValue(byte[] textAsBytes, List<Offset> offsets, FieldType type) {
+        List<MatchValue> matchValues = new ArrayList<>();
+        for (Offset offset : offsets) {
+            if (offset.getStart() >= 0) {
+                String rawValue = extractString(textAsBytes, offset.getStart(), offset.getEnd());
+                Object value = convertValue(rawValue, type);
+                matchValues.add(new MatchValue(value, offset));
             }
         }
-        if (listValue.isEmpty()) return null;
-        return listValue.stream().map(v -> convertValue(v, type)).collect(Collectors.toList());
+        return matchValues;
     }
 
     private Object convertValue(String value, FieldType type) {
@@ -173,23 +176,59 @@ public final class Grok {
 
     public final class Match {
         private final String name;
-        private final Object value;
-        private final int start;
-        private final int end;
+        private final List<MatchValue> values;
 
-        public Match(String name, Object value, int start, int end) {
+        public Match(String name, List<MatchValue> values) {
             this.name = name;
-            this.value = value;
-            this.start = start;
-            this.end = end;
+            this.values = values;
         }
 
         public String getName() {
             return name;
         }
 
+        public List<MatchValue> getMatchValues() {
+            return values;
+        }
+
+        public List<Object> getValues() {
+            return values.stream().map(MatchValue::getValue).collect(Collectors.toList());
+        }
+    }
+
+    public final class MatchValue {
+        private final Object value;
+        private final Offset offset;
+
+        public MatchValue(Object value, Offset offset) {
+            this.value = value;
+            this.offset = offset;
+        }
+
         public Object getValue() {
             return value;
+        }
+
+        public Offset getOffset() {
+            return offset;
+        }
+
+        public int getStart() {
+            return offset.getStart();
+        }
+
+        public int getEnd() {
+            return offset.getEnd();
+        }
+    }
+
+    private final class Offset {
+        private final int start;
+        private final int end;
+
+        public Offset(int start, int end) {
+            this.start = start;
+            this.end = end;
         }
 
         public int getStart() {

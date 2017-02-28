@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -63,29 +62,38 @@ public class GrokProcessor implements Processor {
             return ProcessResult.failure(String.format("failed to grok field in path [%s], field is missing or not instance of [%s]", field, String.class));
         }
 
-        String value = doc.getField(field);
+        String fieldValue = doc.getField(field);
 
-        List<Grok.Match> matches = getMatches(value);
+        List<Grok.Match> matches = getMatches(fieldValue);
 
         if (CollectionUtils.isEmpty(matches)) {
             doc.appendList("tags", "_grokparsefailure");
-            return ProcessResult.failure(String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", value, field, expressions));
+            return ProcessResult.failure(String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", fieldValue, field, expressions));
         }
 
         matches.stream()
-                .filter((e) -> Objects.nonNull(e.getValue()))
-                .filter((e) -> !e.getValue().toString().isEmpty())
-                .forEach((match) -> {
-                    String matchName = match.getName();
-                    Object matchValue = match.getValue();
-                    if (overwrite.contains(matchName) || !doc.hasField(matchName)) {
-                        doc.addField(matchName, matchValue);
+                .filter(match -> !emptyValue(match))
+                .forEach(match -> {
+                    String field = match.getName();
+                    List<Object> matchValues = match.getValues();
+                    Object value = getValue(matchValues);
+                    if (overwrite.contains(field) || !doc.hasField(field)) {
+                        doc.addField(field, value);
                     } else {
-                        doc.appendList(matchName, matchValue);
+                        doc.appendList(field, value);
                     }
                 });
 
         return ProcessResult.success();
+    }
+
+    private boolean emptyValue(Grok.Match match) {
+        List<Object> matchValues = match.getValues();
+        return CollectionUtils.isEmpty(matchValues) || matchValues.size() == 1 && matchValues.get(0).toString().isEmpty();
+    }
+
+    private Object getValue(List<Object> matchValues) {
+        return matchValues.size() == 1 ? matchValues.get(0) : matchValues;
     }
 
     private List<Grok.Match> getMatches(String value) {
