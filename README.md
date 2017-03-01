@@ -85,6 +85,16 @@ Processors:
 	- trimKey
 - Remove Field [removeField]
 	- path (dotted path, i.e: a.b.c)
+   Example:
+   ```
+   {
+      "removeField": {
+        "config": {
+          "path": "timestamp"
+        }
+      }
+    }
+    ```
 - Remove Tag [removeTag]
 	- tags - list of tags
 - Rename Field [rename]
@@ -111,6 +121,12 @@ Processors:
 	- pattern
 - exists
 	- field
+	
+## Additional Commands
+- ignoreFailure 
+    - true (default)  The pipeline will continue through the steps even if there is a processor failure
+    - false - The pipeline will stop processing at the first processor that has a failure
+    
 	
 
 ## Open source
