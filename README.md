@@ -123,9 +123,9 @@ Processors:
 	- field
 	
 ## Additional Commands
-- ignoreFailure 
-    - true (default)  The pipeline will continue through the steps even if there is a processor failure
-    - false - The pipeline will stop processing at the first processor that has a failure
+- stopOnFailure 
+    - false (default)  The pipeline will continue through the steps even if there is a processor failure
+    - true - The pipeline will stop processing at the first processor that has a failure
     
 	
 
