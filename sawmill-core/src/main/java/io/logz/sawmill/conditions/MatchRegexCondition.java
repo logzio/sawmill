@@ -7,6 +7,7 @@ import io.logz.sawmill.parser.ConditionParser;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
@@ -16,10 +17,13 @@ public class MatchRegexCondition implements Condition {
 
     private String field;
     private Pattern pattern;
+    private Function<String, Boolean> matchingFunction;
 
-    public MatchRegexCondition(String field, String regex) {
+    public MatchRegexCondition(String field, String regex, boolean caseInsensitive, boolean matchPartOfValue) {
+        int patternFlags = caseInsensitive ? Pattern.CASE_INSENSITIVE : 0;
         this.field = requireNonNull(field);
-        this.pattern = Pattern.compile(requireNonNull(regex));
+        this.pattern = Pattern.compile(requireNonNull(regex), patternFlags);
+        this.matchingFunction = matchPartOfValue ? this::matchPartOfValue : this::matchEntireOfValue;
     }
 
     @Override
@@ -28,10 +32,18 @@ public class MatchRegexCondition implements Condition {
 
         try {
             String value = doc.getField(field);
-            return pattern.matcher(value).matches();
+            return matchingFunction.apply(value);
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private boolean matchEntireOfValue(String value) {
+        return pattern.matcher(value).matches();
+    }
+
+    private boolean matchPartOfValue(String value) {
+        return pattern.matcher(value).find();
     }
 
     public static class Factory implements Condition.Factory {
@@ -41,7 +53,7 @@ public class MatchRegexCondition implements Condition {
         @Override
         public Condition create(Map<String, Object> config, ConditionParser conditionParser) {
             MatchRegexCondition.Configuration configuration = JsonUtils.fromJsonMap(MatchRegexCondition.Configuration.class, config);
-            return new MatchRegexCondition(configuration.getField(), configuration.getRegex());
+            return new MatchRegexCondition(configuration.getField(), configuration.getRegex(), configuration.isCaseInsensitive(), configuration.isMatchPartOfValue());
         }
 
     }
@@ -50,12 +62,16 @@ public class MatchRegexCondition implements Condition {
 
         private String field;
         private String regex;
+        private boolean caseInsensitive;
+        private boolean matchPartOfValue;
 
         public Configuration() {}
 
-        public Configuration(String field, String regex) {
+        public Configuration(String field, String regex, boolean caseInsensitive, boolean matchPartOfValue) {
             this.field = field;
             this.regex = regex;
+            this.caseInsensitive = caseInsensitive;
+            this.matchPartOfValue = matchPartOfValue;
         }
 
         public String getField() {
@@ -64,6 +80,14 @@ public class MatchRegexCondition implements Condition {
 
         public String getRegex() {
             return regex;
+        }
+
+        public boolean isCaseInsensitive() {
+            return caseInsensitive;
+        }
+
+        public boolean isMatchPartOfValue() {
+            return matchPartOfValue;
         }
 
     }

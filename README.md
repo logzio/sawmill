@@ -119,6 +119,8 @@ Processors:
 - matchRegex
 	- field
 	- pattern
+	- caseInsensitive - default false
+	- matchPartOfValue - default false
 - exists
 	- field
 	
