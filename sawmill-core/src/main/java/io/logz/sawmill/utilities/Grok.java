@@ -44,7 +44,8 @@ public final class Grok {
     }
 
     private Regex compilePattern(String grokPattern) {
-        return new Regex(parsePattern(grokPattern));
+        byte[] bytes = parsePattern(grokPattern).getBytes();
+        return new Regex(bytes, 0, bytes.length, Option.MULTILINE);
     }
 
 
@@ -121,7 +122,7 @@ public final class Grok {
         Map<String, Object> fields = new HashMap<>();
         byte[] textAsBytes = text.getBytes(StandardCharsets.UTF_8);
         Matcher matcher = compiledExpression.matcher(textAsBytes);
-        int result = matcher.search(0, textAsBytes.length, Option.DEFAULT);
+        int result = matcher.search(0, textAsBytes.length, Option.MULTILINE);
         boolean matchNotFound = result == -1;
         if (matchNotFound) {
             return null;
