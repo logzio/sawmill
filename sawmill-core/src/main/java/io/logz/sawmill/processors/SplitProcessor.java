@@ -24,7 +24,7 @@ public class SplitProcessor implements Processor {
     @Override
     public ProcessResult process(Doc doc) {
         if (!doc.hasField(field, String.class)) {
-            return ProcessResult.failure(String.format("failed to split field in path [%s], field is missing or not instance of [%s]", field, String.class));
+            return ProcessResult.failure(String.format("failed to split field in path [%s], field is missing or not instance of String", field));
         }
 
         String value = doc.getField(field);

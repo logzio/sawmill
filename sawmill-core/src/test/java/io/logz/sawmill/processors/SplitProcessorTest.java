@@ -41,7 +41,7 @@ public class SplitProcessorTest {
 
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat(doc.hasField(field, List.class)).isTrue();
-        assertThat((List) doc.getField(field)).isEqualTo(Arrays.asList(value.split(separator)));
+        assertThat((List) doc.getField(field)).isEqualTo(Arrays.asList("lets", "split", "it", "yo"));
     }
 
     @Test
@@ -58,7 +58,7 @@ public class SplitProcessorTest {
 
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat(doc.hasField(field, List.class)).isTrue();
-        assertThat((List) doc.getField(field)).isEqualTo(Arrays.asList(value.split(separator)));
+        assertThat((List) doc.getField(field)).isEqualTo(Arrays.asList("split", "by", "regex", "yo"));
     }
 
     @Test
