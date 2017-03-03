@@ -163,7 +163,11 @@ public class DateProcessor implements Processor {
     private ZonedDateTime getZonedDateTime(String value, DateTimeFormatter formatter) {
         TemporalAccessor temporal = formatter.parseBest(value, ZonedDateTime::from, LocalDateTime::from);
         if (temporal instanceof LocalDateTime) {
-            return ZonedDateTime.of((LocalDateTime) temporal, ZoneOffset.UTC);
+            if (timeZone == null) {
+                return ZonedDateTime.of((LocalDateTime) temporal, ZoneOffset.UTC);
+            } else {
+                return ZonedDateTime.of((LocalDateTime) temporal, timeZone);
+            }
         } else {
             return ZonedDateTime.from(temporal);
         }
