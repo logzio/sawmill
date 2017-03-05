@@ -8,7 +8,6 @@ import io.logz.sawmill.exceptions.ProcessorParseException;
 import io.logz.sawmill.utilities.Grok;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,7 +21,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -64,37 +62,43 @@ public class GrokProcessor implements Processor {
             return ProcessResult.failure(String.format("failed to grok field in path [%s], field is missing or not instance of [%s]", field, String.class));
         }
 
-        String value = doc.getField(field);
+        String fieldValue = doc.getField(field);
 
-        Map<String, Object> matches = getMatches(value);
+        List<Grok.Match> matches = getMatches(fieldValue);
 
-        if (MapUtils.isEmpty(matches)) {
+        if (CollectionUtils.isEmpty(matches)) {
             doc.appendList("tags", "_grokparsefailure");
-            return ProcessResult.failure(String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", value, field, expressions));
+            return ProcessResult.failure(String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", fieldValue, field, expressions));
         }
 
-        matches.entrySet().stream()
-                .filter((e) -> Objects.nonNull(e.getValue()))
-                .filter((e) -> !e.getValue().toString().isEmpty())
-                .forEach((e) -> {
-                    if (overwrite.contains(e.getKey()) || !doc.hasField(e.getKey())) {
-                        doc.addField(e.getKey(), e.getValue());
+        matches.stream()
+                .filter(match -> !CollectionUtils.isEmpty(match.getValues()))
+                .forEach(match -> {
+                    String field = match.getName();
+                    List<Object> matchValues = match.getValues();
+                    Object value = getValue(matchValues);
+                    if (overwrite.contains(field) || !doc.hasField(field)) {
+                        doc.addField(field, value);
                     } else {
-                        doc.appendList(e.getKey(), e.getValue());
+                        doc.appendList(field, value);
                     }
                 });
 
         return ProcessResult.success();
     }
 
-    private Map<String, Object> getMatches(String value) {
-        for (int i=0; i< groks.size(); i++) {
-            Map<String, Object> captures = groks.get(i).captures(value);
-            if (MapUtils.isNotEmpty(captures)) {
+    private Object getValue(List<Object> matchValues) {
+        return matchValues.size() == 1 ? matchValues.get(0) : matchValues;
+    }
+
+    private List<Grok.Match> getMatches(String value) {
+        for (Grok grok : groks) {
+            List<Grok.Match> captures = grok.matches(value);
+            if (CollectionUtils.isNotEmpty(captures)) {
                 return captures;
             }
         }
-        return Collections.EMPTY_MAP;
+        return Collections.emptyList();
     }
 
     public static class Factory implements Processor.Factory {
