@@ -83,6 +83,10 @@ Processors:
 	- excludeKeys
 	- trim
 	- trimKey
+	- valueSplit
+	- fieldSplit
+	- allowDuplicateValues
+	
 - Remove Field [removeField]
 	- path (dotted path, i.e: a.b.c)
    Example:
