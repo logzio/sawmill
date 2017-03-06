@@ -112,6 +112,9 @@ Processors:
 	- field
 	- targetField
 	- prefix
+- Split [split]
+        - field
+	- separator
   
 ## Conditions
 - in
