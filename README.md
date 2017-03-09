@@ -36,9 +36,9 @@ Simple configuration example:
 
 Processors:
 - grok [grok]
-         - field
-         - patterns - array
-         - overwrite - array
+	- field
+        - patterns - array
+        - overwrite - array
 Example:
 
    ```
