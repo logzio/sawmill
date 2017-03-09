@@ -35,6 +35,26 @@ Simple configuration example:
 
 
 Processors:
+- grok [grok]
+         - field
+         - patterns - array
+         - overwrite - array
+Example:
+
+   ```
+    {
+      "grok": {
+        "config": {
+          "field": "message",
+          "patterns": [
+            "^%{WORD:log_level}  ?\\[%{TIMESTAMP_ISO8601:timestamp}\\] %{NOTSPACE:class}( %{NUMBER:error_code})? (?<message>(.|\\r|\\n)*)",
+          "overwrite": ["message"]
+          ]
+        }
+      }
+    }
+    ```
+       
 - Add Field [addField]
 	- path (the path to the field to add, doted fqdn) 
 	- value 
