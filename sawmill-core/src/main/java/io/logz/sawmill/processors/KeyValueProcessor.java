@@ -7,21 +7,33 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joni.Matcher;
+import org.joni.NameEntry;
+import org.joni.Option;
+import org.joni.Regex;
+import org.joni.Region;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @ProcessorProvider(type = "kv", factory = KeyValueProcessor.Factory.class)
 public class KeyValueProcessor implements Processor {
 
+    public static final String KEY = "key";
+    public static final String DOUBLE_QUOTE = "double-quote";
+    public static final String SINGLE_QUOTE = "single-quote";
+    public static final String ROUND_BRACKETS = "round-brackets";
+    public static final String BRACKETS = "brackets";
+    public static final String ANGLE_BRACKETS = "angle-brackets";
+    public static final String NORMAL = "normal";
     private final String field;
     private final String targetField;
-    private final Pattern pattern;
+    private final Regex pattern;
     private final List<String> includeKeys;
     private final List<String> excludeKeys;
     private final boolean allowDuplicateValues;
@@ -68,14 +80,16 @@ public class KeyValueProcessor implements Processor {
      * @param valueSplit
      * @return KV Pattern
      */
-    private Pattern buildPattern(String fieldSplit, String valueSplit, boolean includeBrackets) {
-        String valueRxString = "(?:\"([^\"]+)\"|'([^']+)'";
+    private Regex buildPattern(String fieldSplit, String valueSplit, boolean includeBrackets) {
+        String valueRxString = "(?:\"(?<" + DOUBLE_QUOTE + ">[^\"]+)\"|'(?<" + SINGLE_QUOTE + ">[^']+)'";
         if (includeBrackets) {
-            valueRxString += "|\\(([^\\)]+)\\)|\\[([^\\]]+)\\]|<([^>]+)>";
+            valueRxString += "|\\((?<" + ROUND_BRACKETS + ">[^\\)]+)\\)|\\[(?<" + BRACKETS + ">[^\\]]+)\\]|<(?<" + ANGLE_BRACKETS + ">[^>]+)>";
         }
-        valueRxString += "|((?:\\\\ |[^" + fieldSplit + "])+))";
+        valueRxString += "|(?<" + NORMAL + ">(?:\\\\ |[^" + fieldSplit + "])+))";
 
-        return Pattern.compile("((?:\\\\ |[^" + fieldSplit + valueSplit + "])+)\\s*[" + valueSplit + "]\\s*" + valueRxString);
+        String patternString = "(?<" + KEY + ">(?:\\\\ |[^" + fieldSplit + valueSplit + "])+)\\s*[" + valueSplit + "]\\s*" + valueRxString;
+        byte[] bytes = patternString.getBytes();
+        return new Regex(bytes, 0, bytes.length, Option.MULTILINE);
     }
 
     @Override
@@ -117,12 +131,13 @@ public class KeyValueProcessor implements Processor {
         return ProcessResult.success();
     }
 
-    private String getKey(Matcher matcher) {
-        return prefix + trim(matcher.group(1), trimKey);
+    private String getKey(byte[] message, Region region) {
+        int matchNumber = pattern.nameToBackrefNumber(KEY.getBytes(), 0, KEY.getBytes().length, region);
+        return prefix + trim(extractString(message, region.beg[matchNumber], region.end[matchNumber]), trimKey);
     }
 
-    private Object getValue(Matcher matcher) {
-        Object value = getMatchedValue(matcher);
+    private Object getValue(byte[] message, Region region) {
+        Object value = getMatchedValue(message, region);
 
         if (recursive) {
             Map<String,Object> innerKv = parse((String) value);
@@ -137,11 +152,15 @@ public class KeyValueProcessor implements Processor {
     private Map<String,Object> parse(String message) {
         Map<String,Object> kvMap = new HashMap<>();
 
-        Matcher matcher = pattern.matcher(message);
+        byte[] messageAsBytes = message.getBytes();
+        Matcher matcher = pattern.matcher(messageAsBytes);
 
-        while (matcher.find()) {
-            String key = getKey(matcher);
-            Object value = getValue(matcher);
+        int result = matcher.search(0, messageAsBytes.length, Option.MULTILINE);
+
+        while (result != -1) {
+            Region region = matcher.getEagerRegion();
+            String key = getKey(messageAsBytes, region);
+            Object value = getValue(messageAsBytes, region);
 
             if (allowDuplicateValues) {
                 kvMap.compute(key, (k, oldVal) -> {
@@ -155,20 +174,37 @@ public class KeyValueProcessor implements Processor {
             } else {
                 kvMap.putIfAbsent(key, value);
             }
+
+            result = matcher.search(region.end[0], messageAsBytes.length, Option.MULTILINE);
         }
 
         return kvMap;
     }
 
-    private String getMatchedValue(Matcher matcher) {
+    private String getMatchedValue(byte[] message, Region region) {
+        Iterator<NameEntry> iterator = pattern.namedBackrefIterator();
+
+        // Skip the key
+        iterator.next();
+
         // Running all over the value options and take the one that captured
-        for (int i=2; i <= 7; i++ ) {
-            String value = matcher.group(i);
-            if (value != null) {
-                return value;
+        while (iterator.hasNext()) {
+            NameEntry entry = iterator.next();
+            for (int number : entry.getBackRefs()) {
+                if (region.beg[number] >= 0) {
+                    return extractString(message, region.beg[number], region.end[number]);
+                }
             }
         }
         return null;
+    }
+
+    private String extractString(byte[] original, int start, int end) {
+        try {
+            return new String(original, start, end - start, StandardCharsets.UTF_8);
+        } catch (StringIndexOutOfBoundsException e) {
+            return null;
+        }
     }
 
     private String trim(String key, String trimChars) {
