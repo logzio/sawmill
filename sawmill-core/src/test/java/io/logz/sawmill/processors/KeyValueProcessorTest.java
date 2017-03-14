@@ -48,7 +48,7 @@ public class KeyValueProcessorTest {
     @Test
     public void testNonKeyValues() {
         String field = "message";
-        Doc doc = createDoc(field, "this message is with out any kv");
+        Doc doc = createDoc(field, "this message is with out any kv key=");
 
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
@@ -82,6 +82,21 @@ public class KeyValueProcessorTest {
     public void testUnsupportedTypeField() {
         String field = "message";
         Doc doc = createDoc(field, 15);
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+
+        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+
+        ProcessResult processResult = kvProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isFalse();
+    }
+
+    @Test
+    public void testNullField() {
+        String field = "message";
+        Doc doc = createDoc(field, null);
 
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
