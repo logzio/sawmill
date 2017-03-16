@@ -30,6 +30,7 @@ Simple configuration example:
   ]
 }
 ```
+# NOTE: The Global Pipeline Disables Logstash, so do not use it unless there are no LS configs
 
 ## Processors
 
@@ -37,8 +38,8 @@ Simple configuration example:
 Processors:
 - grok [grok]
 	- field
-        - patterns - array
-        - overwrite - array
+        - patterns [array]
+        - overwrite [array]
 Example:
 
    ```
