@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createFactory;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -22,7 +23,7 @@ public class GrokProcessorTest {
 
     @BeforeClass
     public static void init() {
-        factory = new GrokProcessor.Factory();
+        factory = createFactory(GrokProcessor.class);
     }
 
     @Test

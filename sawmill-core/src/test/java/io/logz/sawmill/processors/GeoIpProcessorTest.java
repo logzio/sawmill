@@ -11,6 +11,8 @@ import java.util.Map;
 
 import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GeoIpProcessorTest {
@@ -20,10 +22,9 @@ public class GeoIpProcessorTest {
         String source = "ipString";
 
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("sourceField", source);
-        config.put("properties", Arrays.asList("ip", "country_name", "country_code2", "city_name"));
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor.Factory().create(config);
+        Map<String,Object> config = createConfig("sourceField", source,
+                "properties", Arrays.asList("ip", "country_name", "country_code2", "city_name"));
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 
@@ -44,7 +45,10 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+        Map<String, Object> config = createConfig("sourceField", source,
+                "tagsOnSuccess", Arrays.asList("geoip"));
+
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 
@@ -72,7 +76,10 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+        Map<String, Object> config = createConfig("sourceField", source,
+                "tagsOnSuccess", Arrays.asList("geoip"));
+
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 
@@ -87,7 +94,10 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+        Map<String, Object> config = createConfig("sourceField", source,
+                "tagsOnSuccess", Arrays.asList("geoip"));
+
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 
@@ -101,7 +111,10 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+        Map<String, Object> config = createConfig("sourceField", source,
+                "tagsOnSuccess", Arrays.asList("geoip"));
+
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 

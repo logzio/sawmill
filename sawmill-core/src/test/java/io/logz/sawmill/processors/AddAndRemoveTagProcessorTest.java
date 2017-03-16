@@ -7,13 +7,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AddAndRemoveTagProcessorTest {
     @Test
     public void testAddAndRemoveSingleTagWhileTagsFieldIsNotList() {
-        AddTagProcessor addTagProcessor = new AddTagProcessor(Arrays.asList("test_tag"));
-        RemoveTagProcessor removeTagProcessor = new RemoveTagProcessor(Arrays.asList("test_tag"));
+        AddTagProcessor addTagProcessor = createProcessor(AddTagProcessor.class, "tags", Arrays.asList("test_tag"));
+        RemoveTagProcessor removeTagProcessor = createProcessor(RemoveTagProcessor.class, "tags", Arrays.asList("test_tag"));
         Doc doc = createDoc("tags", "value");
 
         // Tests no exception thrown in case of none tags
@@ -32,8 +33,8 @@ public class AddAndRemoveTagProcessorTest {
     @Test
     public void testAddAndRemoveSeveralTagsWhileTagsFieldMissing() {
         List<String> tags = Arrays.asList("tag1", "tag2", "tag3");
-        AddTagProcessor addTagProcessor = new AddTagProcessor(tags);
-        RemoveTagProcessor removeTagProcessor = new RemoveTagProcessor(tags);
+        AddTagProcessor addTagProcessor = createProcessor(AddTagProcessor.class, "tags", tags);
+        RemoveTagProcessor removeTagProcessor = createProcessor(RemoveTagProcessor.class, "tags", tags);
         Doc doc = createDoc("field1", "value");
 
         assertThat(addTagProcessor.process(doc).isSucceeded()).isTrue();

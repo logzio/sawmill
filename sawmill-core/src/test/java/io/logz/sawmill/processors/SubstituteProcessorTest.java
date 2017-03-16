@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -21,14 +23,13 @@ public class SubstituteProcessorTest {
 
         String pattern = "\\$|@|!|\\\"|'";
         String replacement = ".";
-        Map<String, Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("pattern", pattern);
-        config.put("replacement", replacement);
+        Map<String, Object> config = createConfig("field", field,
+                "pattern", pattern,
+                "replacement", replacement);
 
         Doc doc = createDoc(field, message);
 
-        SubstituteProcessor substituteProcessor = new SubstituteProcessor.Factory().create(config);
+        SubstituteProcessor substituteProcessor = createProcessor(SubstituteProcessor.class, config);
 
         ProcessResult processResult = substituteProcessor.process(doc);
 
@@ -43,14 +44,14 @@ public class SubstituteProcessorTest {
 
         String pattern = "\\$|@|!|\\\"|'";
         String replacement = ".";
-        Map<String, Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("pattern", pattern);
-        config.put("replacement", replacement);
+
+        Map<String, Object> config = createConfig("field", field,
+                "pattern", pattern,
+                "replacement", replacement);
 
         Doc doc = createDoc("differentFieldName", message);
 
-        SubstituteProcessor substituteProcessor = new SubstituteProcessor.Factory().create(config);
+        SubstituteProcessor substituteProcessor = createProcessor(SubstituteProcessor.class, config);
 
         ProcessResult processResult = substituteProcessor.process(doc);
 
@@ -62,13 +63,12 @@ public class SubstituteProcessorTest {
         String field = "message";
 
         String pattern = "\\";
-        Map<String, Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("pattern", pattern);
-        config.put("replacement", "");
+        Map<String, Object> config = createConfig("field", field,
+                "pattern", pattern,
+                "replacement", "");
 
         Doc doc = createDoc(field, "value");
 
-        assertThatThrownBy(() -> new SubstituteProcessor.Factory().create(config)).isInstanceOf(ProcessorParseException.class);
+        assertThatThrownBy(() -> createProcessor(SubstituteProcessor.class, config)).isInstanceOf(ProcessorParseException.class);
     }
 }
