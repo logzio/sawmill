@@ -94,6 +94,20 @@ Example:
 	- targetField
 	- properties
 	- tagsOnSuccess
+   Example:
+   ```
+{
+  "geoip": {
+    "config": {
+      "sourceField": "ip",
+      "targetField": "geoip",
+      "tagOnSuccess": [
+        "apache-geoip"
+      ]
+    }
+  }
+}
+    ```
 - Json [json]
 	- field
 	- targetField
@@ -139,12 +153,12 @@ Example:
   
 ## If Conditions
 
-## Operators
+# Operators
 - and [array]
 - or [array]
-- not
+- not [array]
 
-## Conditions
+# Conditions
 - in
 	- path
 	- value
@@ -231,7 +245,7 @@ Complex If Statement
     ```
 	
 ## Additional Commands
-- stopOnFailure 
+- stopOnFailure [boolean]
     - false (default)  The pipeline will continue through the steps even if there is a processor failure
     - true - The pipeline will stop processing at the first processor that has a failure
     
