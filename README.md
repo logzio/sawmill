@@ -163,26 +163,25 @@ Example:
    
  Simple If statement:
    ```
-   {
-	"if": {
-		"condition": {
-			"hasValue": {
-				"field": "tags",
-				"possibleValues": [
-					"_jsonparsefailure"
-				]
-			}
-		},
-		"then": [{
-			"removeTag": {
-				"config": {
-					"tags": [
-						"_jsonparsefailure"
-					]
-				}
-			}
-		}]
-	}
+{
+  "if": {
+    "condition": {
+      "hasValue": {
+        "field": "tags"
+      },
+      "then": [
+        {
+          "removeTag": {
+            "config": {
+              "tags": [
+                "_jsonparsefailure"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
 }
    ```
 
