@@ -137,6 +137,13 @@ Example:
         - field
 	- separator
   
+## If Conditions
+
+## Operators
+- and [array]
+- or [array]
+- not
+
 ## Conditions
 - in
 	- path
@@ -151,6 +158,78 @@ Example:
 	- matchPartOfValue - default false
 - exists
 	- field
+	
+   Example:
+   
+ Simple If statement:
+   ```
+   {
+	"if": {
+		"condition": {
+			"hasValue": {
+				"field": "tags",
+				"possibleValues": [
+					"_jsonparsefailure"
+				]
+			}
+		},
+		"then": [{
+			"removeTag": {
+				"config": {
+					"tags": [
+						"_jsonparsefailure"
+					]
+				}
+			}
+		}]
+	}
+}
+   ```
+
+Complex If Statement
+   
+   ```
+{
+      "if": {
+        "condition": {
+          "and": [
+            {
+              "exists": {
+                "field": "clientip"
+              }
+            },
+            {
+              "not": [
+                {
+                  "hasValue": {
+                    "field": "clientip",
+                    "possibleValues": [
+                      "None",
+                      ""
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "then": [
+          {
+            "geoIp": {
+              "name": "geoip",
+              "config": {
+                "sourceField": "clientip",
+                "targetField": "geoip",
+                "tagsOnSuccess": [
+                  "apache-geoip"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+    ```
 	
 ## Additional Commands
 - stopOnFailure 
