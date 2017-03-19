@@ -33,7 +33,9 @@ public class OrCondition implements Condition {
         public Condition create(Map<String, Object> config, ConditionParser conditionParser) {
             Configuration configuration = JsonUtils.fromJsonMap(Configuration.class, config);
             List<ConditionDefinition> conditionDefinitions = configuration.getConditions();
-
+            if (conditionDefinitions == null || conditionDefinitions.size() == 0) {
+                throw new IllegalArgumentException("'or' condition must contain a valid list of conditions, with at least one condition");
+            }
             List<Condition> conditions = conditionDefinitions.stream().map(conditionParser::parse).collect(Collectors.toList());
 
             return new OrCondition(conditions);
