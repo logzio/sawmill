@@ -100,8 +100,8 @@ Example:
 - Key Value [kv]
 	- field
 	- targetField
-	- includeKeys
-	- excludeKeys
+	- includeKeys - [array]
+	- excludeKeys - [array]
 	- trim
 	- trimKey
 	- valueSplit
@@ -121,7 +121,7 @@ Example:
     }
     ```
 - Remove Tag [removeTag]
-	- tags - list of tags
+	- tags - list of tags - [array]
 - Rename Field [rename]
 	- from - the field name to rename
 	- to - the new name of that field
@@ -143,7 +143,7 @@ Example:
 	- value
 - hasValue
 	- field
-	- possibleValues
+	- possibleValues [array]
 - matchRegex
 	- field
 	- pattern
