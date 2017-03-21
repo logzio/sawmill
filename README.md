@@ -111,6 +111,22 @@ Example:
 - Json [json]
 	- field
 	- targetField
+	   ```
+{
+  "steps": [
+    {
+      "json": {
+        "config": {
+          "field": "message",
+          "targetField": "params"
+        }
+      }
+    }
+  ]
+}
+    ```
+	
+	
 - Key Value [kv]
 	- field
 	- targetField
