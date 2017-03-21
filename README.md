@@ -42,15 +42,17 @@ Simple configuration example:
 Example:
 ```json
 {
-	"grok": {
-		"config": {
-			"field": "message",
-			"patterns": [
-				"^%{WORD:log_level}  ?\\[%{TIMESTAMP_ISO8601:timestamp}\\] %{NOTSPACE:class}( %{NUMBER:error_code})? (?<message>(.|\\r|\\n)*)"
-			],
-			"overwrite": ["message"]
-		}
-	}
+  "grok": {
+    "config": {
+      "field": "message",
+      "patterns": [
+        "^%{WORD:log_level}  ?\\\\[%{TIMESTAMP_ISO8601:timestamp}\\\\] %{NOTSPACE:class}( %{NUMBER:error_code})? %{GREEDYDATA:message}"
+      ],
+      "overwrite": [
+        "message"
+      ]
+    }
+  }
 }
 ```
        
@@ -74,15 +76,15 @@ Example:
 Example: 
 ```json
 {
-	"date": {
-		"config": {
-			"field": "timestamp",
-			"targetField": "timestamp",
-			"formats": [
-				"ISO8601"
-			]
-		}
-	}
+  "date": {
+    "config": {
+      "field": "timestamp",
+      "targetField": "timestamp",
+      "formats": [
+        "ISO8601"
+      ]
+    }
+  }
 }
 ```
 	
@@ -91,21 +93,20 @@ Example:
 - Geo IP [geoIp]
 	- sourceField
 	- targetField
-	- properties
-	- tagsOnSuccess
+	- tagsOnSuccess [array]
 	
 Example:
 ```json
 {
-	"geoip": {
-		"config": {
-			"sourceField": "ip",
-			"targetField": "geoip",
-			"tagOnSuccess": [
-				"apache-geoip"
-			]
-		}
-	}
+  "geoip": {
+    "config": {
+      "sourceField": "ip",
+      "targetField": "geoip",
+      "tagsOnSuccess": [
+        "geo-ip"
+      ]
+    }
+  }
 }
 ```
    
@@ -117,16 +118,12 @@ Example:
 
 ```json
 {
-  "steps": [
-    {
-      "json": {
-        "config": {
-          "field": "message",
-          "targetField": "params"
-        }
-      }
+  "json": {
+    "config": {
+      "field": "message",
+      "targetField": "json"
     }
-  ]
+  }
 }
 ```
 	
