@@ -30,31 +30,29 @@ Simple configuration example:
   ]
 }
 ```
-# NOTE: The Global Pipeline Disables Logstash, so do not use it unless there are no LS configs
+## NOTE: The Global Pipeline Disables Logstash, so do not use it unless there are no LS configs
 
 ## Processors
 
-
-Processors:
 - grok [grok]
 	- field
         - patterns [array]
         - overwrite [array]
+	
 Example:
-
-   ```
-    {
-      "grok": {
-        "config": {
-          "field": "message",
-          "patterns": [
-            "^%{WORD:log_level}  ?\\[%{TIMESTAMP_ISO8601:timestamp}\\] %{NOTSPACE:class}( %{NUMBER:error_code})? (?<message>(.|\\r|\\n)*)",
-          "overwrite": ["message"]
-          ]
-        }
-      }
-    }
-   ```
+```json
+{
+	"grok": {
+		"config": {
+			"field": "message",
+			"patterns": [
+				"^%{WORD:log_level}  ?\\[%{TIMESTAMP_ISO8601:timestamp}\\] %{NOTSPACE:class}( %{NUMBER:error_code})? (?<message>(.|\\r|\\n)*)"
+			],
+			"overwrite": ["message"]
+		}
+	}
+}
+```
        
 - Add Field [addField]
 	- path (the path to the field to add, doted fqdn) 
@@ -72,21 +70,21 @@ Example:
 	- targetField
 	- formats - An array,  one of these: https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
 	- timeZone - one of these: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
-   Example:
-   
-   ```
-   {
-      "date": {
-        "config": {
-          "field": "timestamp",
-          "targetField": "timestamp",
-          "formats": [
-            "ISO8601"
-          ]
-        }
-      }
-    }
-   ```
+	
+Example: 
+```json
+{
+	"date": {
+		"config": {
+			"field": "timestamp",
+			"targetField": "timestamp",
+			"formats": [
+				"ISO8601"
+			]
+		}
+	}
+}
+```
 	
 - Drop [drop]
 	- percentage, default to 100 which is full drop, can be used to throttle
@@ -95,28 +93,29 @@ Example:
 	- targetField
 	- properties
 	- tagsOnSuccess
-   Example:
-   
-   ```
+	
+Example:
+```json
 {
-  "geoip": {
-    "config": {
-      "sourceField": "ip",
-      "targetField": "geoip",
-      "tagOnSuccess": [
-        "apache-geoip"
-      ]
-    }
-  }
+	"geoip": {
+		"config": {
+			"sourceField": "ip",
+			"targetField": "geoip",
+			"tagOnSuccess": [
+				"apache-geoip"
+			]
+		}
+	}
 }
-   ```
+```
    
 - Json [json]
 	- field
 	- targetField
+	
 Example:
 
-   ```
+```json
 {
   "steps": [
     {
@@ -129,8 +128,7 @@ Example:
     }
   ]
 }
-   ```
-	
+```
 	
 - Key Value [kv]
 	- field
@@ -145,17 +143,18 @@ Example:
 	
 - Remove Field [removeField]
 	- path (dotted path, i.e: a.b.c)
-   Example:
+	
+Example:
    
-   ```
-   {
-      "removeField": {
-        "config": {
-          "path": "timestamp"
-        }
-      }
+```json
+{
+  "removeField": {
+    "config": {
+      "path": "timestamp"
     }
-   ```
+  }
+}
+```
    
 - Remove Tag [removeTag]
 	- tags - list of tags - [array]
@@ -174,14 +173,14 @@ Example:
         - field
 	- separator
   
-## If Conditions
+# If Conditions
 
-# Operators
+## Operators
 - and [array]
 - or [array]
 - not [array]
 
-# Conditions
+## Conditions
 - in
 	- path
 	- value
@@ -196,11 +195,11 @@ Example:
 - exists
 	- field
 	
-   Example:
+Example:
    
  Simple If statement:
  
-   ```
+```json
 {
   "if": {
     "condition": {
@@ -221,52 +220,45 @@ Example:
     }
   }
 }
-   ```
+```
 
 Complex If Statement
    
-   ```
+```json
 {
-      "if": {
-        "condition": {
-          "and": [
-            {
-              "exists": {
-                "field": "clientip"
-              }
-            },
-            {
-              "not": [
-                {
-                  "hasValue": {
-                    "field": "clientip",
-                    "possibleValues": [
-                      "None",
-                      ""
-                    ]
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        "then": [
-          {
-            "geoIp": {
-              "name": "geoip",
-              "config": {
-                "sourceField": "clientip",
-                "targetField": "geoip",
-                "tagsOnSuccess": [
-                  "apache-geoip"
-                ]
-              }
-            }
+  "if": {
+    "condition": {
+      "and": [{
+        "exists": {
+          "field": "clientip"
+        }
+      }, {
+        "not": [{
+          "hasValue": {
+            "field": "clientip",
+            "possibleValues": [
+              "None",
+              ""
+            ]
           }
-        ]
+        }]
+      }]
+    },
+    "then": [{
+      "geoIp": {
+        "name": "geoip",
+        "config": {
+          "sourceField": "clientip",
+          "targetField": "geoip",
+          "tagsOnSuccess": [
+            "apache-geoip"
+          ]
+        }
       }
-    }
-   ```
+    }]
+  }
+}
+```
 	
 ## Additional Commands
 - stopOnFailure [boolean]
