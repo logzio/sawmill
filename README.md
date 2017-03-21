@@ -54,7 +54,7 @@ Example:
         }
       }
     }
-    ```
+   ```
        
 - Add Field [addField]
 	- path (the path to the field to add, doted fqdn) 
@@ -73,6 +73,7 @@ Example:
 	- formats - An array,  one of these: https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
 	- timeZone - one of these: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
    Example:
+   
    ```
    {
       "date": {
@@ -85,7 +86,7 @@ Example:
         }
       }
     }
-    ```
+   ```
 	
 - Drop [drop]
 	- percentage, default to 100 which is full drop, can be used to throttle
@@ -95,6 +96,7 @@ Example:
 	- properties
 	- tagsOnSuccess
    Example:
+   
    ```
 {
   "geoip": {
@@ -108,9 +110,12 @@ Example:
   }
 }
    ```
+   
 - Json [json]
 	- field
 	- targetField
+Example:
+
    ```
 {
   "steps": [
@@ -141,6 +146,7 @@ Example:
 - Remove Field [removeField]
 	- path (dotted path, i.e: a.b.c)
    Example:
+   
    ```
    {
       "removeField": {
@@ -149,7 +155,8 @@ Example:
         }
       }
     }
-    ```
+   ```
+   
 - Remove Tag [removeTag]
 	- tags - list of tags - [array]
 - Rename Field [rename]
@@ -192,6 +199,7 @@ Example:
    Example:
    
  Simple If statement:
+ 
    ```
 {
   "if": {
@@ -258,7 +266,7 @@ Complex If Statement
         ]
       }
     }
-    ```
+   ```
 	
 ## Additional Commands
 - stopOnFailure [boolean]
