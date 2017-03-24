@@ -3,6 +3,8 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.Template;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
@@ -10,29 +12,33 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-@ProcessorProvider(type = "removeField", factory = RemoveFieldProcessor.Factory.class)
+@ProcessorProvider(type = "removeField", factory = RemoveFieldProcessor.Factory.class, services = TemplateService.class)
 public class RemoveFieldProcessor implements Processor {
-    private final String path;
+    private final Template path;
 
-    public RemoveFieldProcessor(String path) {
+    public RemoveFieldProcessor(Template path) {
         this.path = checkNotNull(path, "path cannot be null");
     }
 
     @Override
     public ProcessResult process(Doc doc) {
-        doc.removeField(path);
+        doc.removeField(path.render(doc));
         return ProcessResult.success();
     }
 
     public static class Factory implements Processor.Factory {
-        public Factory() {
+        private final TemplateService templateService;
+
+        public Factory(TemplateService templateService) {
+            this.templateService = templateService;
         }
 
         @Override
         public Processor create(Map<String,Object> config) {
             RemoveFieldProcessor.Configuration removeFieldConfig = JsonUtils.fromJsonMap(RemoveFieldProcessor.Configuration.class, config);
+            Template path = templateService.createTemplate(removeFieldConfig.getPath());
 
-            return new RemoveFieldProcessor(removeFieldConfig.getPath());
+            return new RemoveFieldProcessor(path);
         }
     }
 

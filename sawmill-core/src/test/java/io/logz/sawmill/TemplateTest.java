@@ -15,14 +15,14 @@ public class TemplateTest {
 
     @BeforeClass
     public static void init() {
-        template = TemplateFactory.compileTemplate("{{" + SALUD_FIELD + "}} señor {{" + NAME_FIELD + "}}, Have a good day").get();
+        template = new TemplateService().createTemplate("{{" + SALUD_FIELD + "}} señor {{" + NAME_FIELD + "}}, Have a good day");
     }
 
     @Test
     public void testMapContextWithAllNeededFields() {
         Object context = ImmutableMap.of(NAME_FIELD, "Robles", SALUD_FIELD, "Buenos Dias");
 
-        String value = template.execute(context);
+        String value = template.render(context);
 
         assertThat(value).isEqualTo("Buenos Dias señor Robles, Have a good day");
     }
@@ -31,7 +31,7 @@ public class TemplateTest {
     public void testMapContextWithoutAllFieldsFields() {
         Object context = ImmutableMap.of("anotherField", "Robles", SALUD_FIELD, "Buenos Dias");
 
-        String value = template.execute(context);
+        String value = template.render(context);
 
         assertThat(value).isEqualTo("Buenos Dias señor , Have a good day");
     }
@@ -40,7 +40,7 @@ public class TemplateTest {
     public void testNullContext() {
         Object context = null;
 
-        String value = template.execute(context);
+        String value = template.render(context);
 
         assertThat(value).isEqualTo(" señor , Have a good day");
     }
@@ -49,7 +49,7 @@ public class TemplateTest {
     public void testListContext() {
         Object context = Arrays.asList(NAME_FIELD, "Robles", SALUD_FIELD, "Buenos");
 
-        String value = template.execute(context);
+        String value = template.render(context);
 
         assertThat(value).isEqualTo(" señor , Have a good day");
     }
@@ -61,7 +61,7 @@ public class TemplateTest {
             String salud = "Buenos Dias";
         };
 
-        String value = template.execute(context);
+        String value = template.render(context);
 
         assertThat(value).isEqualTo("Buenos Dias señor Robles, Have a good day");
     }

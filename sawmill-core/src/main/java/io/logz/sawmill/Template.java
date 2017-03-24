@@ -12,7 +12,7 @@ public class Template {
         this.mustache = mustache;
     }
 
-    public String execute(Object context) {
+    public String render(Object context) {
         if (context == null) {
             context = Collections.EMPTY_MAP;
         }

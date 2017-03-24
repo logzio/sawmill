@@ -1,14 +1,21 @@
 package io.logz.sawmill.utils;
 
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.ProcessorFactoriesLoader;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 
+import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static io.logz.sawmill.utils.FactoryUtils.createFactory;
 
 public class FactoryUtils {
+    public static final TemplateService templateService = new TemplateService();
+
     public static <T extends Processor> T createProcessor(Class<? extends Processor> clazz, Object... objects) {
         Map<String, Object> config = createConfig(objects);
         return createProcessor(clazz, config);
@@ -22,7 +29,7 @@ public class FactoryUtils {
     public static <T extends Processor.Factory> T createFactory(Class<? extends Processor> clazz) {
         ProcessorProvider annotation = clazz.getAnnotation(ProcessorProvider.class);
         try {
-            return (T) annotation.factory().getConstructor().newInstance();
+            return (T) ProcessorFactoriesLoader.getInstance().getFactory(annotation);
         } catch (Exception e) {
             throw new RuntimeException();
         }
