@@ -18,6 +18,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
+import java.time.format.SignStyle;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,6 +99,13 @@ public class DateProcessor implements Processor {
 
     static {
         dateTimePatternToFormatter.put("ISO8601", iso8601);
+        dateTimePatternToFormatter.put("UNIX", new DateTimeFormatterBuilder()
+                .appendValue(ChronoField.INSTANT_SECONDS, 1, 19, SignStyle.NEVER)
+                .toFormatter());
+        dateTimePatternToFormatter.put("UNIX_MS", new DateTimeFormatterBuilder()
+                .appendValue(ChronoField.INSTANT_SECONDS, 1, 19, SignStyle.NEVER)
+                .appendValue(ChronoField.MILLI_OF_SECOND, 3)
+                .toFormatter());
     }
 
     private final String field;
@@ -115,13 +124,17 @@ public class DateProcessor implements Processor {
         this.formatters = new ArrayList<>();
 
         formats.forEach(format -> {
-            if (format.toUpperCase().startsWith("UNIX")) return;
             try {
                 dateTimePatternToFormatter.computeIfAbsent(format, k -> DateTimeFormatter.ofPattern(format));
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException(String.format("failed to create date processor, format [%s] is not valid", format), e);
             }
-            formatters.add(dateTimePatternToFormatter.get(format));
+            DateTimeFormatter formatter = dateTimePatternToFormatter.get(format);
+            if (format.toUpperCase().startsWith("UNIX")) {
+                formatter = formatter.withZone(timeZone == null ? ZoneId.of("UTC") : timeZone);
+            }
+
+            formatters.add(formatter);
         });
     }
 
