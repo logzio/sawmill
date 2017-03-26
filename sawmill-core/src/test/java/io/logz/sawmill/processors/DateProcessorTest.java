@@ -39,6 +39,20 @@ public class DateProcessorTest {
     }
 
     @Test
+    public void testUnixMsFormatString() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("Europe/Paris");
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
+        Doc doc = createDoc(field, String.valueOf(zonedDateTime.toInstant().toEpochMilli()));
+
+        DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX_MS"), zoneId);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+    }
+
+    @Test
     public void testUnixFormat() {
         String field = "datetime";
         String targetField = "@timestamp";
@@ -52,6 +66,20 @@ public class DateProcessorTest {
                 "timeZone", zoneId.toString());
 
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+    }
+
+    @Test
+    public void testUnixFormatString() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("Europe/Paris");
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId).truncatedTo(ChronoUnit.SECONDS);
+        Doc doc = createDoc(field, String.valueOf(zonedDateTime.toInstant().toEpochMilli() / 1000));
+
+        DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX"), zoneId);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
         assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
@@ -215,6 +243,20 @@ public class DateProcessorTest {
                 "formats", Arrays.asList("UNIX"));
 
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+    }
+
+    @Test
+    public void testUnixFormatStringWithoutTimezoneDefaultIsUTC() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("UTC");
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId).truncatedTo(ChronoUnit.SECONDS);
+        Doc doc = createDoc(field, String.valueOf(zonedDateTime.toInstant().toEpochMilli() / 1000));
+
+        DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX"), null);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
         assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
