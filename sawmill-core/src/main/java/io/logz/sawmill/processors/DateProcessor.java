@@ -100,10 +100,10 @@ public class DateProcessor implements Processor {
     static {
         dateTimePatternToFormatter.put("ISO8601", iso8601);
         dateTimePatternToFormatter.put("UNIX", new DateTimeFormatterBuilder()
-                .appendValue(ChronoField.INSTANT_SECONDS, 1, 19, SignStyle.NEVER)
+                .appendValue(ChronoField.INSTANT_SECONDS, 1, 10, SignStyle.NEVER)
                 .toFormatter());
         dateTimePatternToFormatter.put("UNIX_MS", new DateTimeFormatterBuilder()
-                .appendValue(ChronoField.INSTANT_SECONDS, 1, 19, SignStyle.NEVER)
+                .appendValue(ChronoField.INSTANT_SECONDS, 1, 10, SignStyle.NEVER)
                 .appendValue(ChronoField.MILLI_OF_SECOND, 3)
                 .toFormatter());
     }
