@@ -9,13 +9,14 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 
-@ProcessorProvider(type = "removeTag", factory = RemoveTagProcessor.Factory.class, services = TemplateService.class)
+@ProcessorProvider(type = "removeTag", factory = RemoveTagProcessor.Factory.class)
 public class RemoveTagProcessor implements Processor {
     private final List<Template> tags;
 
@@ -34,6 +35,7 @@ public class RemoveTagProcessor implements Processor {
     public static class Factory implements Processor.Factory {
         private final TemplateService templateService;
 
+        @Inject
         public Factory(TemplateService templateService) {
             this.templateService = templateService;
         }

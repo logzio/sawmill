@@ -5,11 +5,8 @@ import io.logz.sawmill.ProcessorFactoriesLoader;
 import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 
-import java.lang.reflect.Constructor;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import static io.logz.sawmill.utils.FactoryUtils.createFactory;
 

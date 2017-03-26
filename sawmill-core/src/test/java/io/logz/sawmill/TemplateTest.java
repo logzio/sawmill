@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
+import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class TemplateTest {
@@ -19,50 +20,47 @@ public class TemplateTest {
     }
 
     @Test
-    public void testMapContextWithAllNeededFields() {
-        Object context = ImmutableMap.of(NAME_FIELD, "Robles", SALUD_FIELD, "Buenos Dias");
+    public void testDocWithAllNeededFields() {
+        Doc doc = createDoc(NAME_FIELD, "Robles", SALUD_FIELD, "Buenos Dias");
 
-        String value = template.render(context);
+        String value = template.render(doc);
 
         assertThat(value).isEqualTo("Buenos Dias señor Robles, Have a good day");
     }
 
     @Test
-    public void testMapContextWithoutAllFieldsFields() {
-        Object context = ImmutableMap.of("anotherField", "Robles", SALUD_FIELD, "Buenos Dias");
+    public void testDocWithoutAllFields() {
+        Doc doc = createDoc("anotherField", "Robles", SALUD_FIELD, "Buenos Dias");
 
-        String value = template.render(context);
+        String value = template.render(doc);
 
         assertThat(value).isEqualTo("Buenos Dias señor , Have a good day");
     }
 
     @Test
+    public void testDocWithMapField() {
+        Doc doc = createDoc("anotherField", "Robles", SALUD_FIELD, ImmutableMap.of("map", "field"));
+
+        String value = template.render(doc);
+
+        assertThat(value).isEqualTo("{map&#61;field} señor , Have a good day");
+    }
+
+    @Test
+    public void testDocWithListField() {
+        Doc doc = createDoc("anotherField", "Robles", SALUD_FIELD, Arrays.asList("list", "field"));
+
+        String value = template.render(doc);
+
+        assertThat(value).isEqualTo("[list, field] señor , Have a good day");
+    }
+
+    @Test
     public void testNullContext() {
-        Object context = null;
+        Doc doc = null;
 
-        String value = template.render(context);
-
-        assertThat(value).isEqualTo(" señor , Have a good day");
-    }
-
-    @Test
-    public void testListContext() {
-        Object context = Arrays.asList(NAME_FIELD, "Robles", SALUD_FIELD, "Buenos");
-
-        String value = template.render(context);
+        String value = template.render(doc);
 
         assertThat(value).isEqualTo(" señor , Have a good day");
-    }
-
-    @Test
-    public void testClassContext() {
-        Object context = new Object() {
-            String name = "Robles";
-            String salud = "Buenos Dias";
-        };
-
-        String value = template.render(context);
-
-        assertThat(value).isEqualTo("Buenos Dias señor Robles, Have a good day");
     }
 }

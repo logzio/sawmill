@@ -8,8 +8,8 @@ import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-@ProcessorProvider(type = "appendList", factory = AppendListProcessor.Factory.class, services = TemplateService.class)
+@ProcessorProvider(type = "appendList", factory = AppendListProcessor.Factory.class)
 public class AppendListProcessor implements Processor {
 
     private final Template path;
@@ -40,6 +40,7 @@ public class AppendListProcessor implements Processor {
     public static class Factory implements Processor.Factory {
         private final TemplateService templateService;
 
+        @Inject
         public Factory(TemplateService templateService) {
             this.templateService = templateService;
         }

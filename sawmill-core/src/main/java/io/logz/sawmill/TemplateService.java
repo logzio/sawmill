@@ -6,7 +6,7 @@ import io.logz.sawmill.exceptions.SawmillException;
 
 import java.io.StringReader;
 
-public class TemplateService implements Service {
+public class TemplateService {
     private final DefaultMustacheFactory mustacheFactory;
 
     public TemplateService() {

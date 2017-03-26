@@ -6,9 +6,11 @@ import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -18,7 +20,7 @@ public class ProcessorFactoriesLoader {
     private static final Logger logger = LoggerFactory.getLogger(ProcessorFactoriesLoader.class);
     private static ProcessorFactoriesLoader instance;
     private final Reflections reflections;
-    private final Map<Class<? extends Service>, Service> services;
+    private final Map<Class<?>, Object> services;
 
     private ProcessorFactoriesLoader() {
         this(new TemplateService());
@@ -63,8 +65,14 @@ public class ProcessorFactoriesLoader {
 
     public Processor.Factory getFactory(ProcessorProvider annotation) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException, NoSuchMethodException {
         Class<? extends Processor.Factory> factoryType = annotation.factory();
-        Class<? extends Service>[] servicesToInject = annotation.services();
-        Object[] servicesInstance = Stream.of(servicesToInject).map(services::get).toArray();
-        return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
+        Optional<? extends Constructor<?>> injectConstructor = Stream.of(factoryType.getConstructors())
+                .filter(constructor -> constructor.isAnnotationPresent(Inject.class)).findFirst();
+        if (injectConstructor.isPresent()) {
+            Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
+            Object[] servicesInstance = Stream.of(servicesToInject).map(services::get).toArray();
+            return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
+        } else {
+            return factoryType.getConstructor().newInstance();
+        }
     }
 }

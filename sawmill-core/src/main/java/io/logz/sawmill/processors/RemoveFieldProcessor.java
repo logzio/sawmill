@@ -8,11 +8,12 @@ import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
+import javax.inject.Inject;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-@ProcessorProvider(type = "removeField", factory = RemoveFieldProcessor.Factory.class, services = TemplateService.class)
+@ProcessorProvider(type = "removeField", factory = RemoveFieldProcessor.Factory.class)
 public class RemoveFieldProcessor implements Processor {
     private final Template path;
 
@@ -29,6 +30,7 @@ public class RemoveFieldProcessor implements Processor {
     public static class Factory implements Processor.Factory {
         private final TemplateService templateService;
 
+        @Inject
         public Factory(TemplateService templateService) {
             this.templateService = templateService;
         }

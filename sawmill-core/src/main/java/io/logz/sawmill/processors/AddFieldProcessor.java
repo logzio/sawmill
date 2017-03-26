@@ -6,36 +6,34 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.Template;
 import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
-import io.logz.sawmill.exceptions.ProcessorConfigurationException;
-import io.logz.sawmill.exceptions.SawmillException;
 import io.logz.sawmill.utilities.JsonUtils;
 
+import javax.inject.Inject;
 import java.util.Map;
-import java.util.Optional;
+import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-@ProcessorProvider(type = "addField", factory = AddFieldProcessor.Factory.class, services = TemplateService.class)
+@ProcessorProvider(type = "addField", factory = AddFieldProcessor.Factory.class)
 public class AddFieldProcessor implements Processor {
     private final Template path;
-    private final Optional<Object> value;
-    private final Optional<Template> templateValue;
+    private final Function<Doc, Object> getValueFunction;
 
-    public AddFieldProcessor(Template path, Optional<Object> value, Optional<Template> templateValue) {
+    public AddFieldProcessor(Template path, Function<Doc, Object> getValueFunction) {
         this.path = checkNotNull(path, "path cannot be null");
-        this.value = value;
-        this.templateValue = templateValue;
+        this.getValueFunction = getValueFunction;
     }
 
     @Override
     public ProcessResult process(Doc doc) {
-        doc.addField(path.render(doc), value.orElse(templateValue.get().render(doc)));
+        doc.addField(path.render(doc), getValueFunction.apply(doc));
         return ProcessResult.success();
     }
 
     public static class Factory implements Processor.Factory {
         private final TemplateService templateService;
-        
+
+        @Inject
         public Factory(TemplateService templateService) {
             this.templateService = templateService;
         }
@@ -45,17 +43,18 @@ public class AddFieldProcessor implements Processor {
             AddFieldProcessor.Configuration addFieldConfig = JsonUtils.fromJsonMap(AddFieldProcessor.Configuration.class, config);
 
             Template path = templateService.createTemplate(addFieldConfig.getPath());
-            Optional<Object> value = Optional.of(addFieldConfig.getValue());
-            Optional<Template> templateValue = Optional.empty();
+            Object value = addFieldConfig.getValue();
 
-            if (value.get() instanceof String) {
-                templateValue = Optional.of(templateService.createTemplate((String) value.get()));
-                value = Optional.empty();
-            } else if (!value.get().getClass().isPrimitive()) {
-                throw new ProcessorConfigurationException(String.format("addField does not support [%s]. support primitive types only", value.get().getClass()));
+            return new AddFieldProcessor(path, createGetValueFunction(value));
+        }
+
+        private Function<Doc, Object> createGetValueFunction(Object value) {
+            if (value instanceof String) {
+                Template valueTemplate = templateService.createTemplate((String) value);
+                return valueTemplate::render;
+            } else {
+                return (ignoredDoc) -> value;
             }
-
-            return new AddFieldProcessor(path, value, templateValue);
         }
     }
 

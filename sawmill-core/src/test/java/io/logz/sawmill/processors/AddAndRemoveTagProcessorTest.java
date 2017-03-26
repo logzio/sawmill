@@ -50,4 +50,24 @@ public class AddAndRemoveTagProcessorTest {
         }
         assertThat((String) doc.getField("field1")).isEqualTo("value");
     }
+
+    @Test
+    public void testAddAndRemoveTagWhileTagsAreTemplate() {
+        AddTagProcessor addTagProcessor = createProcessor(AddTagProcessor.class, "tags", Arrays.asList("{{field}}1"));
+        RemoveTagProcessor removeTagProcessor = createProcessor(RemoveTagProcessor.class, "tags", Arrays.asList("{{field}}1"));
+        Doc doc = createDoc("tags", "value",
+                "field", "specialTag");
+
+        // Tests no exception thrown in case of none tags
+        assertThat(removeTagProcessor.process(doc).isSucceeded()).isTrue();
+
+        assertThat(addTagProcessor.process(doc).isSucceeded()).isTrue();
+
+        assertThat(((List)doc.getField("tags")).contains("value")).isTrue();
+        assertThat(((List)doc.getField("tags")).contains("specialTag1")).isTrue();
+
+        assertThat(removeTagProcessor.process(doc).isSucceeded()).isTrue();
+
+        assertThat(((List)doc.getField("tags")).contains("specialTag1")).isFalse();
+    }
 }

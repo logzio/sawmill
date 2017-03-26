@@ -36,4 +36,21 @@ public class AddAndRemoveFieldProcessorTest {
 
         assertThat(removeFieldProcessor.process(doc).isSucceeded()).isTrue();
     }
+
+    @Test
+    public void testAddAndRemoveFieldWithTemplate() {
+        String path = "message{{field}}";
+        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class, "path", path, "value", "shalom{{field}}");
+        RemoveFieldProcessor removeFieldProcessor = createProcessor(RemoveFieldProcessor.class, "path", path);
+
+        Doc doc = createDoc("field", "Hola");
+
+        assertThat(addFieldProcessor.process(doc).isSucceeded()).isTrue();
+
+        assertThat((String) doc.getField("messageHola")).isEqualTo("shalomHola");
+
+        assertThat(removeFieldProcessor.process(doc).isSucceeded()).isTrue();
+
+        assertThatThrownBy(() ->  doc.getField("messageHola")).isInstanceOf(IllegalStateException.class);
+    }
 }

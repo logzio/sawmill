@@ -1,6 +1,5 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import org.junit.Test;
