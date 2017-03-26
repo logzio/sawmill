@@ -48,9 +48,9 @@ public class ProcessorFactoriesLoader {
         Set<Class<?>> processors = reflections.getTypesAnnotatedWith(ProcessorProvider.class);
         for (Class<?> processor : processors) {
             try {
-                ProcessorProvider annotation = processor.getAnnotation(ProcessorProvider.class);
-                String typeName = annotation.type();
-                processorFactoryRegistry.register(typeName, getFactory(annotation));
+                ProcessorProvider processorProvider = processor.getAnnotation(ProcessorProvider.class);
+                String typeName = processorProvider.type();
+                processorFactoryRegistry.register(typeName, getFactory(processorProvider));
                 logger.info("{} processor factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
                 processorsLoaded++;
             } catch (Exception e) {
@@ -63,8 +63,8 @@ public class ProcessorFactoriesLoader {
         logger.info("{} processor factories loaded, took {}ms", processorsLoaded, stopwatch.elapsed(MILLISECONDS));
     }
 
-    public Processor.Factory getFactory(ProcessorProvider annotation) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException, NoSuchMethodException {
-        Class<? extends Processor.Factory> factoryType = annotation.factory();
+    public Processor.Factory getFactory(ProcessorProvider processorProvider) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException, NoSuchMethodException {
+        Class<? extends Processor.Factory> factoryType = processorProvider.factory();
         Optional<? extends Constructor<?>> injectConstructor = Stream.of(factoryType.getConstructors())
                 .filter(constructor -> constructor.isAnnotationPresent(Inject.class)).findFirst();
         if (injectConstructor.isPresent()) {
