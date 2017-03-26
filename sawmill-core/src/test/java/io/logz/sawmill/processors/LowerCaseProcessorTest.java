@@ -1,11 +1,12 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import org.junit.Test;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class LowerCaseProcessorTest {
@@ -16,7 +17,7 @@ public class LowerCaseProcessorTest {
 
         Doc doc = createDoc(field, value);
 
-        LowerCaseProcessor lowerCaseProcessor = new LowerCaseProcessor.Factory().create(ImmutableMap.of("field", field));
+        LowerCaseProcessor lowerCaseProcessor = createProcessor(LowerCaseProcessor.class, createConfig("field", field));
 
         ProcessResult processResult = lowerCaseProcessor.process(doc);
 
@@ -31,7 +32,7 @@ public class LowerCaseProcessorTest {
 
         Doc doc = createDoc(field, value);
 
-        LowerCaseProcessor lowerCaseProcessor = new LowerCaseProcessor.Factory().create(ImmutableMap.of("field", field));
+        LowerCaseProcessor lowerCaseProcessor = createProcessor(LowerCaseProcessor.class, createConfig("field", field));
 
         ProcessResult processResult = lowerCaseProcessor.process(doc);
 
@@ -46,7 +47,7 @@ public class LowerCaseProcessorTest {
 
         Doc doc = createDoc("anotherField", value);
 
-        LowerCaseProcessor lowerCaseProcessor = new LowerCaseProcessor.Factory().create(ImmutableMap.of("field", field));
+        LowerCaseProcessor lowerCaseProcessor = createProcessor(LowerCaseProcessor.class, createConfig("field", field));
 
         ProcessResult processResult = lowerCaseProcessor.process(doc);
 

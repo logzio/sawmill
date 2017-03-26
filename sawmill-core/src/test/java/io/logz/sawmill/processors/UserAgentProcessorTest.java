@@ -4,10 +4,11 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class UserAgentProcessorTest {
@@ -18,10 +19,9 @@ public class UserAgentProcessorTest {
         String uaString = "\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36\"";
         Doc doc = createDoc(field, uaString);
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("targetField", targetField);
-        UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField);
+        UserAgentProcessor uaProceesor = createProcessor(UserAgentProcessor.class, config);
 
         ProcessResult processResult = uaProceesor.process(doc);
 
@@ -51,10 +51,9 @@ public class UserAgentProcessorTest {
         String uaString = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36";
         Doc doc = createDoc(field, uaString);
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("prefix", prefix);
-        UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
+        Map<String,Object> config = createConfig("field", field,
+                "prefix", prefix);
+        UserAgentProcessor uaProceesor = createProcessor(UserAgentProcessor.class, config);
 
         ProcessResult processResult = uaProceesor.process(doc);
 
@@ -80,10 +79,9 @@ public class UserAgentProcessorTest {
         String uaString = "invalid user-agent: dsafkjl";
         Doc doc = createDoc(field, uaString);
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("targetField", targetField);
-        UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField);
+        UserAgentProcessor uaProceesor = createProcessor(UserAgentProcessor.class, config);
 
         ProcessResult processResult = uaProceesor.process(doc);
 

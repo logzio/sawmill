@@ -4,7 +4,7 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
-import io.logz.sawmill.exceptions.ProcessorParseException;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.FieldType;
 import io.logz.sawmill.utilities.JsonUtils;
 
@@ -61,7 +61,7 @@ public class ConvertFieldProcessor implements Processor {
             ConvertFieldProcessor.Configuration convertFieldConfig = JsonUtils.fromJsonMap(ConvertFieldProcessor.Configuration.class, config);
 
             if (convertFieldConfig.getType() == null) {
-                throw new ProcessorParseException("failed to parse convert processor, could not resolve field type");
+                throw new ProcessorConfigurationException("failed to parse convert processor, could not resolve field type");
             }
 
             return new ConvertFieldProcessor(convertFieldConfig.getPath(), convertFieldConfig.getType());

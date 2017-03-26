@@ -4,7 +4,11 @@ import io.logz.sawmill.Doc;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
+import java.util.Map;
+
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -15,7 +19,9 @@ public class RenameFieldProcessorTest {
         String nestedToField = RandomStringUtils.randomAlphanumeric(5) + "." + RandomStringUtils.randomAlphanumeric(5);
         Doc doc = createDoc(fromField, "value");
 
-        RenameFieldProcessor renameFieldProcessor = new RenameFieldProcessor(fromField, nestedToField);
+        Map<String, Object> config = createConfig("from", fromField,
+                "to", nestedToField);
+        RenameFieldProcessor renameFieldProcessor = createProcessor(RenameFieldProcessor.class, config);
 
         assertThat(renameFieldProcessor.process(doc).isSucceeded()).isTrue();
 
@@ -29,7 +35,9 @@ public class RenameFieldProcessorTest {
         String toField = RandomStringUtils.randomAlphanumeric(5);
         Doc doc = createDoc("differentField", "value");
 
-        RenameFieldProcessor renameFieldProcessor = new RenameFieldProcessor(fromField, toField);
+        Map<String, Object> config = createConfig("from", fromField,
+                "to", toField);
+        RenameFieldProcessor renameFieldProcessor = createProcessor(RenameFieldProcessor.class, config);
 
         assertThat(renameFieldProcessor.process(doc).isSucceeded()).isFalse();
 

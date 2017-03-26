@@ -4,7 +4,7 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
-import io.logz.sawmill.exceptions.ProcessorParseException;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -198,7 +198,7 @@ public class DateProcessor implements Processor {
             DateProcessor.Configuration dateConfig = JsonUtils.fromJsonMap(Configuration.class, config);
 
             if (CollectionUtils.isEmpty(dateConfig.getFormats())) {
-                throw new ProcessorParseException("cannot create date processor without any format");
+                throw new ProcessorConfigurationException("cannot create date processor without any format");
             }
 
             String field = dateConfig.getField();

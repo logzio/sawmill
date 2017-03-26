@@ -1,6 +1,5 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import org.junit.Test;
@@ -9,6 +8,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SplitProcessorTest {
@@ -19,7 +20,7 @@ public class SplitProcessorTest {
 
         Doc doc = createDoc(field, value);
 
-        SplitProcessor splitProcessor = new SplitProcessor.Factory().create(ImmutableMap.of("field", field, "separator", ","));
+        SplitProcessor splitProcessor = createProcessor(SplitProcessor.class, createConfig("field", field, "separator", ","));
 
         ProcessResult processResult = splitProcessor.process(doc);
 
@@ -35,7 +36,7 @@ public class SplitProcessorTest {
 
         Doc doc = createDoc(field, value);
 
-        SplitProcessor splitProcessor = new SplitProcessor.Factory().create(ImmutableMap.of("field", field, "separator", separator));
+        SplitProcessor splitProcessor = createProcessor(SplitProcessor.class, createConfig("field", field, "separator", separator));
 
         ProcessResult processResult = splitProcessor.process(doc);
 
@@ -52,7 +53,7 @@ public class SplitProcessorTest {
 
         Doc doc = createDoc(field, value);
 
-        SplitProcessor splitProcessor = new SplitProcessor.Factory().create(ImmutableMap.of("field", field, "separator", separator));
+        SplitProcessor splitProcessor = createProcessor(SplitProcessor.class, createConfig("field", field, "separator", separator));
 
         ProcessResult processResult = splitProcessor.process(doc);
 
@@ -68,7 +69,7 @@ public class SplitProcessorTest {
 
         Doc doc = createDoc(field, value);
 
-        SplitProcessor splitProcessor = new SplitProcessor.Factory().create(ImmutableMap.of("field", field, "separator", ","));
+        SplitProcessor splitProcessor = createProcessor(SplitProcessor.class, createConfig("field", field, "separator", ","));
 
         ProcessResult processResult = splitProcessor.process(doc);
 
@@ -83,7 +84,7 @@ public class SplitProcessorTest {
 
         Doc doc = createDoc("anotherField", value);
 
-        SplitProcessor splitProcessor = new SplitProcessor.Factory().create(ImmutableMap.of("field", field, "separator", ","));
+        SplitProcessor splitProcessor = createProcessor(SplitProcessor.class, createConfig("field", field, "separator", ","));
 
         ProcessResult processResult = splitProcessor.process(doc);
 

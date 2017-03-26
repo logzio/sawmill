@@ -6,11 +6,12 @@ import org.junit.Test;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class KeyValueProcessorTest {
@@ -29,10 +30,9 @@ public class KeyValueProcessorTest {
         String field = "message";
         Doc doc = createDoc(field, getDefaultMessage());
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
+        Map<String,Object> config = createConfig("field", field);
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -50,10 +50,9 @@ public class KeyValueProcessorTest {
         String field = "message";
         Doc doc = createDoc(field, "this message is with out any kv key=");
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
+        Map<String,Object> config = createConfig("field", field);
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         Map<String, Object> originalSource = doc.getSource();
 
@@ -68,10 +67,9 @@ public class KeyValueProcessorTest {
         String field = "message";
         Doc doc = createDoc("differentField", "this message is with out any kv");
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
+        Map<String,Object> config = createConfig("field", field);
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -83,10 +81,9 @@ public class KeyValueProcessorTest {
         String field = "message";
         Doc doc = createDoc(field, 15);
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
+        Map<String,Object> config = createConfig("field", field);
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -98,10 +95,9 @@ public class KeyValueProcessorTest {
         String field = "message";
         Doc doc = createDoc(field, null);
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
+        Map<String,Object> config = createConfig("field", field);
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -114,11 +110,10 @@ public class KeyValueProcessorTest {
         String targetField = "kv";
         Doc doc = createDoc(field, getDefaultMessage());
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("targetField", targetField);
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField);
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -138,11 +133,10 @@ public class KeyValueProcessorTest {
         String field = "message";
         Doc doc = createDoc(field, getDefaultMessage());
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("recursive", true);
+        Map<String,Object> config = createConfig("field", field,
+                "recursive", true);
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -163,13 +157,12 @@ public class KeyValueProcessorTest {
         String field = "message";
         Doc doc = createDoc(field, getDefaultMessage());
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("trimKey", "%");
-        config.put("trim", "!");
-        config.put("prefix", "KV");
+        Map<String,Object> config = createConfig("field", field,
+                "trimKey", "%",
+                "trim", "!",
+                "prefix", "KV");
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -190,13 +183,12 @@ public class KeyValueProcessorTest {
         String valueSplit = "~";
         Doc doc = createDoc(field, getMessage(fieldSplit, valueSplit));
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("fieldSplit", fieldSplit);
-        config.put("valueSplit", valueSplit);
-        config.put("includeKeys", Arrays.asList("brackets", "roundBrackets"));
+        Map<String,Object> config = createConfig("field", field,
+                "fieldSplit", fieldSplit,
+                "valueSplit", valueSplit,
+                "includeKeys", Arrays.asList("brackets", "roundBrackets"));
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -215,13 +207,12 @@ public class KeyValueProcessorTest {
 
         Doc doc = createDoc(field, getDefaultMessage());
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("trimKey", "%");
-        config.put("trim", "!");
-        config.put("excludeKeys", Arrays.asList("brackets", "complex"));
+        Map<String,Object> config = createConfig("field", field,
+                "trimKey", "%",
+                "trim", "!",
+                "excludeKeys", Arrays.asList("brackets", "complex"));
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -240,10 +231,9 @@ public class KeyValueProcessorTest {
 
         Doc doc = createDoc(field, Arrays.asList(getDefaultMessage(), "anotherKV=anotherMagic"));
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
+        Map<String,Object> config = createConfig("field", field);
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -262,10 +252,9 @@ public class KeyValueProcessorTest {
         String field = "message";
         Doc doc = createDoc(field, KEY_VALUE_MESSAGE_WITH_DUPLICATE_KEYS);
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
+        Map<String,Object> config = createConfig("field", field);
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
@@ -278,11 +267,10 @@ public class KeyValueProcessorTest {
         String field = "message";
         Doc doc = createDoc(field, KEY_VALUE_MESSAGE_WITH_DUPLICATE_KEYS);
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("allowDuplicateValues", false);
+        Map<String,Object> config = createConfig("field", field,
+                "allowDuplicateValues", false);
 
-        KeyValueProcessor kvProcessor = new KeyValueProcessor.Factory().create(config);
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
 
         ProcessResult processResult = kvProcessor.process(doc);
 
