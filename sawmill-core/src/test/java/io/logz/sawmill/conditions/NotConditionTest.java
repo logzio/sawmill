@@ -1,6 +1,7 @@
 package io.logz.sawmill.conditions;
 
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -32,7 +33,7 @@ public class NotConditionTest {
     public void testInvalidNotConfiguration() {
         NotCondition.Factory factory = new NotCondition.Factory();
         assertThatThrownBy(() -> factory.create(emptyMap(), null))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ProcessorConfigurationException.class)
                 .hasMessageContaining("'Not' condition must contain a valid list of conditions, with at least one condition");
     }
 
