@@ -48,10 +48,14 @@ public class GrokProcessor implements Processor {
 
     private void compileExpressions(List<String> matchExpressions, Map<String, String> patternsBank) {
         matchExpressions.forEach(expression -> {
-            Grok grok = new Grok(patternsBank, expression);
+            Grok grok;
+            try {
+                grok = new Grok(patternsBank, expression);
+            } catch (RuntimeException e) {
+                throw new ProcessorConfigurationException("Failed to create grok for expression ["+expression+"]", e);
+            }
             this.groks.add(grok);
         });
-
     }
 
     @Override

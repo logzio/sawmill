@@ -3,6 +3,7 @@ package io.logz.sawmill.conditions;
 import io.logz.sawmill.Condition;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.annotations.ConditionProvider;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.parser.ConditionDefinition;
 import io.logz.sawmill.parser.ConditionParser;
 import io.logz.sawmill.utilities.JsonUtils;
@@ -33,7 +34,9 @@ public class NotCondition implements Condition {
         public Condition create(Map<String, Object> config, ConditionParser conditionParser) {
             Configuration configuration = JsonUtils.fromJsonMap(Configuration.class, config);
             List<ConditionDefinition> conditionDefinitions = configuration.getConditions();
-
+            if (conditionDefinitions == null || conditionDefinitions.size() == 0) {
+                throw new ProcessorConfigurationException("'Not' condition must contain a valid list of conditions, with at least one condition");
+            }
             List<Condition> conditions = conditionDefinitions.stream().map(conditionParser::parse).collect(Collectors.toList());
 
             return new NotCondition(conditions);
