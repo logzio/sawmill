@@ -12,11 +12,12 @@ import java.util.Map;
 
 import static io.logz.sawmill.processors.GrokProcessorTest.APACHE_LOG_SAMPLE;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createFactory;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GrokDebuggerProcessorTest {
 
-    public static GrokDebuggerProcessor.Factory factory = new GrokDebuggerProcessor.Factory();
+    public static GrokDebuggerProcessor.Factory factory = createFactory(GrokDebuggerProcessor.class);
 
     @Test
     public void testValueOffsets() {

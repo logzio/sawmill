@@ -2,7 +2,7 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
-import io.logz.sawmill.exceptions.ProcessorParseException;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createFactory;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -22,7 +23,7 @@ public class GrokProcessorTest {
 
     @BeforeClass
     public static void init() {
-        factory = new GrokProcessor.Factory();
+        factory = createFactory(GrokProcessor.class);
     }
 
     @Test
@@ -232,7 +233,7 @@ public class GrokProcessorTest {
         Map<String,Object> config = new HashMap<>();
         config.put("field", "someField");
 
-        assertThatThrownBy(() -> factory.create(config)).isInstanceOf(ProcessorParseException.class);
+        assertThatThrownBy(() -> factory.create(config)).isInstanceOf(ProcessorConfigurationException.class);
     }
 
     @Test

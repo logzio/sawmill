@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class JsonProcessorTest {
@@ -33,7 +35,7 @@ public class JsonProcessorTest {
 
         Doc doc = createDoc(field, VALID_JSON);
 
-        JsonProcessor jsonProcessor = new JsonProcessor(field, targetField);
+        JsonProcessor jsonProcessor = createProcessor(JsonProcessor.class, createConfig("field", field, "targetField", targetField));
 
         ProcessResult processResult = jsonProcessor.process(doc);
 
@@ -49,7 +51,7 @@ public class JsonProcessorTest {
 
         Doc doc = createDoc(field, VALID_JSON);
 
-        JsonProcessor jsonProcessor = new JsonProcessor(field, null);
+        JsonProcessor jsonProcessor = createProcessor(JsonProcessor.class, createConfig("field", field));
 
         ProcessResult processResult = jsonProcessor.process(doc);
 
@@ -65,7 +67,7 @@ public class JsonProcessorTest {
 
         Doc doc = createDoc(field, INVALID_JSON);
 
-        JsonProcessor jsonProcessor = new JsonProcessor(field, null);
+        JsonProcessor jsonProcessor = createProcessor(JsonProcessor.class, createConfig("field", field));
 
         ProcessResult processResult = jsonProcessor.process(doc);
 
@@ -79,7 +81,7 @@ public class JsonProcessorTest {
 
         Doc doc = createDoc("message", VALID_JSON);
 
-        JsonProcessor jsonProcessor = new JsonProcessor(fieldNotExists, null);
+        JsonProcessor jsonProcessor = createProcessor(JsonProcessor.class, createConfig("field", fieldNotExists));
 
         ProcessResult processResult = jsonProcessor.process(doc);
 
