@@ -267,4 +267,18 @@ public class GrokProcessorTest {
 
         assertThat(doc2.hasField("extra_fields")).isFalse();
     }
+
+    @Test
+    public void testInvalidExpression() {
+        String field = "message";
+        List<String> invalidPatterns = Arrays.asList("%{COMBINEDAPACHELOG}+%[GREEDYDATA:extra_fields_with_wrong_bracket");
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", invalidPatterns);
+        config.put("ignoreMissing", false);
+        assertThatThrownBy(() -> factory.create(config))
+                .isInstanceOf(ProcessorConfigurationException.class)
+                .hasMessageContaining("Failed to create grok for expression");
+    }
 }

@@ -4,7 +4,6 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
-import io.logz.sawmill.exceptions.SawmillException;
 import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.utilities.Grok;
 import io.logz.sawmill.utilities.JsonUtils;
@@ -53,7 +52,7 @@ public class GrokProcessor implements Processor {
             try {
                 grok = new Grok(patternsBank, expression);
             } catch (RuntimeException e) {
-                throw new SawmillException("Failed to create grok for expression ["+expression+"]", e);
+                throw new ProcessorConfigurationException("Failed to create grok for expression ["+expression+"]", e);
             }
             this.groks.add(grok);
         });
