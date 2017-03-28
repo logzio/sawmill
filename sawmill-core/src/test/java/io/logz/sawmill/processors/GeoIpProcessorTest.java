@@ -41,18 +41,19 @@ public class GeoIpProcessorTest {
     public void testValidIp() {
         String ip = "187.162.70.166";
         String source = "ipString";
-        String target = "geoip";
+        String target = "{{geoipField}}";
 
         Map<String, Object> config = createConfig("sourceField", source,
+                "targetField", target,
                 "tagsOnSuccess", Arrays.asList("geoip"));
 
         GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
-        Doc doc = createDoc(source, ip);
+        Doc doc = createDoc(source, ip, "geoipField", "geo");
 
         assertThat(geoIpProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat(doc.hasField(target)).isTrue();
-        Map<String, Object> geoIp = doc.getField(target);
+        assertThat(doc.hasField("geo")).isTrue();
+        Map<String, Object> geoIp = doc.getField("geo");
         assertThat(geoIp.get("country_name")).isEqualTo("Mexico");
         assertThat(geoIp.get("country_code2")).isEqualTo("MX");
         assertThat(geoIp.get("continent_code")).isEqualTo("NA");

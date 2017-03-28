@@ -107,8 +107,8 @@ public class KeyValueProcessorTest {
     @Test
     public void testWithTargetField() {
         String field = "message";
-        String targetField = "kv";
-        Doc doc = createDoc(field, getDefaultMessage());
+        String targetField = "{{kvField}}";
+        Doc doc = createDoc(field, getDefaultMessage(), "kvField", "kv");
 
         Map<String,Object> config = createConfig("field", field,
                 "targetField", targetField);
@@ -118,8 +118,8 @@ public class KeyValueProcessorTest {
         ProcessResult processResult = kvProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isTrue();
-        assertThat(doc.hasField(targetField)).isTrue();
-        Map<Object,String> kv = doc.getField(targetField);
+        assertThat(doc.hasField("kv")).isTrue();
+        Map<Object,String> kv = doc.getField("kv");
         assertThat(kv.get("simple")).isEqualTo("value");
         assertThat(kv.get("brackets")).isEqualTo("with space");
         assertThat(kv.get("roundBrackets")).isEqualTo("with two spaces");

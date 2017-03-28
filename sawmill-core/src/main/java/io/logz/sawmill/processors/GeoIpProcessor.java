@@ -10,11 +10,14 @@ import com.maxmind.geoip2.model.CityResponse;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.Template;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -50,11 +53,11 @@ public class GeoIpProcessor implements Processor {
     }
 
     private final String sourceField;
-    private final String targetField;
+    private final Template targetField;
     private final List<Property> properties;
     private final List<String> tagsOnSuccess;
 
-    public GeoIpProcessor(String sourceField, String targetField, List<Property> properties, List<String> tagsOnSuccess) {
+    public GeoIpProcessor(String sourceField, Template targetField, List<Property> properties, List<String> tagsOnSuccess) {
         checkState(CollectionUtils.isNotEmpty(properties), "properties cannot be empty");
         this.sourceField = checkNotNull(sourceField, "source field cannot be null");
         this.targetField = checkNotNull(targetField, "target field cannot be null");
@@ -86,7 +89,7 @@ public class GeoIpProcessor implements Processor {
         }
 
         if (geoIp != null) {
-            doc.addField(targetField, geoIp);
+            doc.addField(targetField.render(doc), geoIp);
             doc.appendList("tags", tagsOnSuccess);
         }
 
@@ -113,7 +116,11 @@ public class GeoIpProcessor implements Processor {
     }
 
     public static class Factory implements Processor.Factory {
-        public Factory() {
+        private final TemplateService templateService;
+
+        @Inject
+        public Factory(TemplateService templateService) {
+            this.templateService = templateService;
         }
 
         @Override
@@ -121,7 +128,7 @@ public class GeoIpProcessor implements Processor {
             GeoIpProcessor.Configuration geoIpConfig = JsonUtils.fromJsonMap(Configuration.class, config);
 
             return new GeoIpProcessor(geoIpConfig.getSourceField(),
-                    geoIpConfig.getTargetField(),
+                    templateService.createTemplate(geoIpConfig.getTargetField()),
                     geoIpConfig.getProperties(),
                     geoIpConfig.getTagsOnSuccess());
         }

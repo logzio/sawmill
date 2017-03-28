@@ -4,14 +4,18 @@ import com.google.common.io.Resources;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.Template;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.lang3.StringUtils;
 import ua_parser.CachingParser;
 import ua_parser.Client;
 import ua_parser.OS;
 import ua_parser.Parser;
 import ua_parser.UserAgent;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,11 +25,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @ProcessorProvider(type = "userAgent", factory = UserAgentProcessor.Factory.class)
 public class UserAgentProcessor implements Processor {
     private final String field;
-    private final String targetField;
+    private final Template targetField;
     private final String prefix;
     private final Parser uaParser;
 
-    public UserAgentProcessor(String field, String targetField, String prefix, Parser uaParser) {
+    public UserAgentProcessor(String field, Template targetField, String prefix, Parser uaParser) {
         this.field = checkNotNull(field, "field cannot be null");
         this.targetField = targetField;
         this.prefix = prefix != null ? prefix : "";
@@ -63,7 +67,7 @@ public class UserAgentProcessor implements Processor {
         }
 
         if (targetField != null) {
-            doc.addField(targetField, userAgent);
+            doc.addField(targetField.render(doc), userAgent);
         } else {
             userAgent.entrySet().forEach(property -> {
                 doc.addField(prefix + property.getKey(), property.getValue());
@@ -118,8 +122,12 @@ public class UserAgentProcessor implements Processor {
 
     public static class Factory implements Processor.Factory {
         private final Parser uaParser;
+        private final TemplateService templateService;
 
-        public Factory() {
+        @Inject
+        public Factory(TemplateService templateService) {
+            this.templateService = templateService;
+
             try {
                 uaParser = new CachingParser(Resources.getResource("regexes.yaml").openStream());
             } catch (IOException e) {
@@ -131,8 +139,9 @@ public class UserAgentProcessor implements Processor {
         public UserAgentProcessor create(Map<String,Object> config) {
             UserAgentProcessor.Configuration userAgentConfig = JsonUtils.fromJsonMap(UserAgentProcessor.Configuration.class, config);
 
+            Template targetField = StringUtils.isEmpty(userAgentConfig.getTargetField()) ? null : templateService.createTemplate(userAgentConfig.getTargetField());
             return new UserAgentProcessor(userAgentConfig.getField(),
-                    userAgentConfig.getTargetField(),
+                    targetField,
                     userAgentConfig.getPrefix(),
                     uaParser);
         }
