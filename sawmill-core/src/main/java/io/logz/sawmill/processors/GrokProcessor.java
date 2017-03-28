@@ -5,6 +5,7 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorParseException;
+import io.logz.sawmill.exceptions.SawmillException;
 import io.logz.sawmill.utilities.Grok;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,10 +49,14 @@ public class GrokProcessor implements Processor {
 
     private void compileExpressions(List<String> matchExpressions, Map<String, String> patternsBank) {
         matchExpressions.forEach(expression -> {
-            Grok grok = new Grok(patternsBank, expression);
+            Grok grok;
+            try {
+                grok = new Grok(patternsBank, expression);
+            } catch (RuntimeException e) {
+                throw new SawmillException("Failed to create grok for expression ["+expression+"]", e);
+            }
             this.groks.add(grok);
         });
-
     }
 
     @Override
