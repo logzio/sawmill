@@ -29,6 +29,23 @@ public class JsonProcessorTest {
     @Test
     public void testValidJsonWithTarget() {
         String field = "message";
+        String targetField = "json";
+
+        Map jsonMap = JsonUtils.fromJsonString(Map.class, VALID_JSON);
+
+        Doc doc = createDoc(field, VALID_JSON);
+
+        JsonProcessor jsonProcessor = createProcessor(JsonProcessor.class, createConfig("field", field, "targetField", targetField));
+
+        ProcessResult processResult = jsonProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat((Map) doc.getField(targetField)).isEqualTo(jsonMap);
+    }
+
+    @Test
+    public void testValidJsonWithTemplateTarget() {
+        String field = "message";
         String targetField = "{{jsonField}}";
 
         Map jsonMap = JsonUtils.fromJsonString(Map.class, VALID_JSON);
