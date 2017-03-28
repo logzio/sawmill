@@ -137,6 +137,7 @@ Example:
 	- valueSplit
 	- fieldSplit
 	- allowDuplicateValues
+	- prefix
 	
 - Remove Field [removeField]
 	- path (dotted path, i.e: a.b.c)
