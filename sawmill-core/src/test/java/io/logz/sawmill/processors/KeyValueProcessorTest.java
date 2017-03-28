@@ -129,6 +129,30 @@ public class KeyValueProcessorTest {
     }
 
     @Test
+    public void testWithTemplateTargetField() {
+        String field = "message";
+        String targetField = "{{kvField}}";
+        Doc doc = createDoc(field, getDefaultMessage(), "kvField", "kv");
+
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField);
+
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
+
+        ProcessResult processResult = kvProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat(doc.hasField("kv")).isTrue();
+        Map<Object,String> kv = doc.getField("kv");
+        assertThat(kv.get("simple")).isEqualTo("value");
+        assertThat(kv.get("brackets")).isEqualTo("with space");
+        assertThat(kv.get("roundBrackets")).isEqualTo("with two spaces");
+        assertThat(kv.get("angleBrackets")).isEqualTo("without");
+        assertThat(kv.get("%trim%")).isEqualTo("!value!");
+        assertThat(kv.get("complex")).isEqualTo("innerKey=innerValue withBrackets=(another innerValue)");
+    }
+
+    @Test
     public void testRecursive() {
         String field = "message";
         Doc doc = createDoc(field, getDefaultMessage());

@@ -3,6 +3,8 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.Template;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -13,6 +15,7 @@ import org.joni.Option;
 import org.joni.Regex;
 import org.joni.Region;
 
+import javax.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,7 +36,7 @@ public class KeyValueProcessor implements Processor {
     public static final String NORMAL = "normal";
     public static final int MAX_MATCHES = 1000;
     private final String field;
-    private final String targetField;
+    private final Template targetField;
     private final Regex pattern;
     private final List<String> includeKeys;
     private final List<String> excludeKeys;
@@ -44,7 +47,7 @@ public class KeyValueProcessor implements Processor {
     private final String trimKey;
 
     public KeyValueProcessor(String field,
-                             String targetField,
+                             Template targetField,
                              List<String> includeKeys,
                              List<String> excludeKeys,
                              String fieldSplit,
@@ -124,7 +127,7 @@ public class KeyValueProcessor implements Processor {
         }
 
         if (targetField != null) {
-            doc.addField(targetField, kvMap);
+            doc.addField(targetField.render(doc), kvMap);
         } else {
             kvMap.forEach(doc::addField);
         }
@@ -228,15 +231,20 @@ public class KeyValueProcessor implements Processor {
     }
 
     public static class Factory implements Processor.Factory {
-        public Factory() {
+        private final TemplateService templateService;
+
+        @Inject
+        public Factory(TemplateService templateService) {
+            this.templateService = templateService;
         }
 
         @Override
         public KeyValueProcessor create(Map<String,Object> config) {
             KeyValueProcessor.Configuration keyValueConfig = JsonUtils.fromJsonMap(KeyValueProcessor.Configuration.class, config);
 
+            Template targetField = StringUtils.isEmpty(keyValueConfig.getTargetField()) ? null : templateService.createTemplate(keyValueConfig.getTargetField());
             return new KeyValueProcessor(keyValueConfig.getField(),
-                    keyValueConfig.getTargetField(),
+                    targetField,
                     keyValueConfig.getIncludeKeys(),
                     keyValueConfig.getExcludeKeys(),
                     keyValueConfig.getFieldSplit(),
