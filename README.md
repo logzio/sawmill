@@ -36,8 +36,8 @@ Simple configuration example:
 
 - grok [grok]
 	- field
-        - patterns [array]
-        - overwrite [array]
+	- patterns [array]
+	- overwrite [array]
 	
 Example:
 ```json
@@ -56,13 +56,13 @@ Example:
 }
 ```
        
-- Add Field [addField]
+- Add Field [addField] - Can also be used to "replace" a field value - supports "templates"
 	- path (the path to the field to add, doted fqdn) 
 	- value 
-- Append List [appendList]
+- Append List [appendList] - Supports "templates"
 	- path (the path to the field to add, doted fqdn) 
 	- values - array of values to add, i.e. values: ["val1","val2"]
-- Add Tag [addTag]
+- Add Tag [addTag] - Supports "templates"
 	- tags - array of tags to add, i.e. tags: ["tag1","tag2"]
 - Convert Field [convert]
 	- path
@@ -139,7 +139,7 @@ Example:
 	- allowDuplicateValues
 	- prefix
 	
-- Remove Field [removeField]
+- Remove Field [removeField] - Supports "templates"
 	- path (dotted path, i.e: a.b.c)
 	
 Example:
@@ -154,7 +154,7 @@ Example:
 }
 ```
    
-- Remove Tag [removeTag]
+- Remove Tag [removeTag] - Supports "templates"
 	- tags - list of tags - [array]
 - Rename Field [rename]
 	- from - the field name to rename
@@ -170,6 +170,8 @@ Example:
 - Split [split]
         - field
 	- separator
+- LowerCase [lowerCase]
+	- field
   
 # If Conditions
 
@@ -188,7 +190,7 @@ Example:
 - matchRegex
 	- field
 	- pattern
-	- caseInsensitive - default false
+		- caseInsensitive - default false
 	- matchPartOfValue - default false
 - exists
 	- field
@@ -260,8 +262,24 @@ Complex If Statement
 	
 ## Additional Commands
 - stopOnFailure [boolean]
-    - false (default)  The pipeline will continue through the steps even if there is a processor failure
-    - true - The pipeline will stop processing at the first processor that has a failure
+	- false (default)  The pipeline will continue through the steps even if there is a processor failure
+    	- true - The pipeline will stop processing at the first processor that has a failure
+
+- Templates is the ability to add data from other fields to a new field name or value.  
+	- You can call the value of another field using "mustache" syntax  EG:  {{field_name}}
+	- The bleow example is how to add a field called "timestamp" with the prevous values of the "date" and "time" fields
+```json
+    {
+      "addField": {
+        "config": {
+          "path": "timestamp",
+          "value": "{{date}} {{time}}"
+        }
+      }
+    }
+
+```
+
     
 	
 
