@@ -33,13 +33,15 @@ public class GrokProcessor implements Processor {
     private final List<Grok> groks;
     private final List<String> overwrite;
     private final boolean ignoreMissing;
+    private final String tagOnFailure;
 
-    public GrokProcessor(String field, List<String> matchExpressions, Map<String, String> patternsBank, List<String> overwrite, boolean ignoreMissing) {
+    public GrokProcessor(String field, List<String> matchExpressions, Map<String, String> patternsBank, List<String> overwrite, boolean ignoreMissing, String tagOnFailure) {
         checkState(CollectionUtils.isNotEmpty(matchExpressions), "patterns cannot be empty");
         this.field = checkNotNull(field, "field cannot be null");
         this.expressions = matchExpressions;
         this.overwrite = overwrite != null ? overwrite : EMPTY_LIST;
         this.ignoreMissing = ignoreMissing;
+        this.tagOnFailure = tagOnFailure;
 
         this.groks = new ArrayList<>();
 
@@ -71,7 +73,7 @@ public class GrokProcessor implements Processor {
         List<Grok.Match> matches = getMatches(fieldValue);
 
         if (CollectionUtils.isEmpty(matches)) {
-            doc.appendList("tags", "_grokparsefailure");
+            doc.appendList("tags", tagOnFailure);
             return ProcessResult.failure(String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", fieldValue, field, expressions));
         }
 
@@ -179,7 +181,8 @@ public class GrokProcessor implements Processor {
                     grokConfig.getPatterns(),
                     patternsBank,
                     grokConfig.getOverwrite(),
-                    grokConfig.getIgnoreMissing());
+                    grokConfig.getIgnoreMissing(),
+                    grokConfig.getTagOnFailure());
         }
     }
 
@@ -188,14 +191,16 @@ public class GrokProcessor implements Processor {
         private List<String> patterns;
         private List<String> overwrite = EMPTY_LIST;
         private boolean ignoreMissing = true;
+        private String tagOnFailure = "_grokparsefailure";
 
         public Configuration() { }
 
-        public Configuration(String field, List<String> patterns, List<String> overwrite, boolean ignoreMissing) {
+        public Configuration(String field, List<String> patterns, List<String> overwrite, boolean ignoreMissing, String tagOnFailure) {
             this.field = field;
             this.patterns = patterns;
             this.overwrite = overwrite;
             this.ignoreMissing = ignoreMissing;
+            this.tagOnFailure = tagOnFailure;
         }
 
         public String getField() {
@@ -212,6 +217,10 @@ public class GrokProcessor implements Processor {
 
         public boolean getIgnoreMissing() {
             return ignoreMissing;
+        }
+
+        public String getTagOnFailure() {
+            return tagOnFailure;
         }
     }
 }

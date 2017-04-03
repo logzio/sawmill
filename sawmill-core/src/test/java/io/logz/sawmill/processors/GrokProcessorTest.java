@@ -194,6 +194,26 @@ public class GrokProcessorTest {
     }
 
     @Test
+    public void testGrokParseFailureWithCustomTag() {
+        String field = "message";
+        List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
+        String tagOnFailure = "parsedfailed :(";
+
+        Doc doc = createDoc(field, "not apache log");
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", patterns);
+        config.put("tagOnFailure", tagOnFailure);
+        GrokProcessor grokProcessor = factory.create(config);
+
+        ProcessResult processResult = grokProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isFalse();
+        assertThat((List)doc.getField("tags")).isEqualTo(Arrays.asList(tagOnFailure));
+    }
+
+    @Test
     public void testIgnoreMissing() {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}");
