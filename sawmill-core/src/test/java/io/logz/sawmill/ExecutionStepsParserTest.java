@@ -35,7 +35,7 @@ public class ExecutionStepsParserTest {
 
         ConditionFactoryRegistry conditionFactoryRegistry = new ConditionFactoryRegistry();
         conditionFactoryRegistry.register("testCondition", new TestCondition.Factory());
-        ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
+        ConditionalFactoriesLoader.getInstance().loadAnnotatedConditions(conditionFactoryRegistry);
 
         executionStepsParser = new ExecutionStepsParser(processorFactoryRegistry, conditionFactoryRegistry);
     }

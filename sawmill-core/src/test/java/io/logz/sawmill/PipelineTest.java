@@ -26,7 +26,7 @@ public class PipelineTest {
 
         conditionFactoryRegistry = new ConditionFactoryRegistry();
         conditionFactoryRegistry.register("testCondition", new TestCondition.Factory());
-        ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
+        ConditionalFactoriesLoader.getInstance().loadAnnotatedConditions(conditionFactoryRegistry);
 
         factory = new Pipeline.Factory(processorFactoryRegistry, conditionFactoryRegistry);
     }
