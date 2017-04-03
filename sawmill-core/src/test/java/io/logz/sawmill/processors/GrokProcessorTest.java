@@ -197,20 +197,20 @@ public class GrokProcessorTest {
     public void testGrokParseFailureWithCustomTag() {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
-        String tagOnFailure = "parsedfailed :(";
+        List<String> tagsOnFailure = Arrays.asList("parsedfailed :(", "reallysad");
 
         Doc doc = createDoc(field, "not apache log");
 
         Map<String,Object> config = new HashMap<>();
         config.put("field", field);
         config.put("patterns", patterns);
-        config.put("tagOnFailure", tagOnFailure);
+        config.put("tagsOnFailure", tagsOnFailure);
         GrokProcessor grokProcessor = factory.create(config);
 
         ProcessResult processResult = grokProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isFalse();
-        assertThat((List)doc.getField("tags")).isEqualTo(Arrays.asList(tagOnFailure));
+        assertThat((List)doc.getField("tags")).isEqualTo(tagsOnFailure);
     }
 
     @Test
