@@ -7,7 +7,6 @@ Simple configuration example:
   "steps": [
     {
       "grok": {
-        "name": "grok message",
         "config": {
           "field": "message",
           "overwrite": [
@@ -21,7 +20,6 @@ Simple configuration example:
     },
     {
       "removeField": {
-        "name": "remove message field after grok",
         "config": {
           "path": "message"
         }
@@ -98,7 +96,7 @@ Example:
 Example:
 ```json
 {
-  "geoip": {
+  "geoIp": {
     "config": {
       "sourceField": "ip",
       "targetField": "geoip",
@@ -204,7 +202,10 @@ Example:
   "if": {
     "condition": {
       "hasValue": {
-        "field": "tags"
+        "field": "tags",
+	"possibleValues":[
+	  "_jsonparsefailure"
+	]
       },
       "then": [
         {
