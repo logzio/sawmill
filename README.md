@@ -179,10 +179,10 @@ Example:
 - not [array]
 
 ## Conditions
-- in
+- in  (this is used to find a value in a field that is an array like tags)
 	- path
 	- value
-- hasValue
+- hasValue (this finds a match of a string field)
 	- field
 	- possibleValues [array]
 - matchRegex
