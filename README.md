@@ -187,8 +187,8 @@ Example:
 	- possibleValues [array]
 - matchRegex
 	- field
-	- pattern
-		- caseInsensitive - default false
+	- regex
+	- caseInsensitive - default false
 	- matchPartOfValue - default false
 - exists
 	- field
