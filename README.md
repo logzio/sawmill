@@ -28,7 +28,7 @@ Simple configuration example:
   ]
 }
 ```
-## NOTE: The Global Pipeline Disables Logstash, so do not use it unless there are no LS configs
+## NOTE: The Global Pipeline Disables Logstash, so do not use it unless there are no LS configs 
 
 ## Processors
 
