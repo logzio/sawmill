@@ -3,18 +3,21 @@ package io.logz.sawmill;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-public class PipelineExecutionTimeWatchdog {
+public class PipelineExecutionTimeWatchdog implements Closeable {
     public static final int THRESHOLD_CHECK_FACTOR = 10;
 
     private static final Logger logger = LoggerFactory.getLogger(PipelineExecutionTimeWatchdog.class);
@@ -24,6 +27,7 @@ public class PipelineExecutionTimeWatchdog {
     private final Consumer<WatchedPipeline> overtimeOp;
     private final PipelineExecutionMetricsTracker metricsTracker;
     private final AtomicLong executionIdGenerator;
+    private ScheduledExecutorService timer;
 
     public PipelineExecutionTimeWatchdog(long thresholdTimeMs, PipelineExecutionMetricsTracker metricsTracker, Consumer<WatchedPipeline> overtimeOp) {
         this.thresholdTimeMs = thresholdTimeMs;
@@ -35,7 +39,7 @@ public class PipelineExecutionTimeWatchdog {
     }
 
     private void initWatchdog(long periodMs) {
-        ScheduledExecutorService timer = Executors.newScheduledThreadPool(1);
+        timer = Executors.newScheduledThreadPool(1);
         timer.scheduleAtFixedRate(this::alertOvertimeExecutions, 0, periodMs, MILLISECONDS);
     }
 
@@ -69,5 +73,17 @@ public class PipelineExecutionTimeWatchdog {
 
     public void removeExecution(long id) {
         currentlyRunning.remove(id);
+    }
+
+    @Override
+    public void close() {
+        try {
+            timer.shutdown();
+            timer.awaitTermination(1, TimeUnit.SECONDS);
+            timer.shutdownNow();
+
+        } catch (InterruptedException e) {
+            Thread.interrupted();
+        }
     }
 }

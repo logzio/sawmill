@@ -17,10 +17,12 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.infra.BenchmarkParams;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -62,6 +64,11 @@ public class SawmillBenchmark {
 
         setupSawmill();
         setupInput();
+    }
+
+    @TearDown
+    public void tearDown() {
+        watchdog.close();
     }
 
     private void setupInput() {
