@@ -4,9 +4,12 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class TemplateTest {
@@ -62,5 +65,24 @@ public class TemplateTest {
         String value = template.render(doc);
 
         assertThat(value).isEqualTo(" señor , Have a good day");
+    }
+
+    @Test
+    public void testDateTemplate() {
+        String dateFormat = "dd.mm.yyyy";
+        Template template = new TemplateService().createTemplate("Today is {{#date}}" + dateFormat + "{{/date}}");
+        Doc doc = createDoc("field1", "value1");
+
+        String expectedDate = new SimpleDateFormat(dateFormat).format(new Date());
+        assertThat(template.render(doc)).isEqualTo("Today is " + expectedDate);
+    }
+
+    @Test
+    public void testInvalidDateTemplate() {
+        String dateFormat = "hello";
+        Template template = new TemplateService().createTemplate("Today is {{#date}}" + dateFormat + "{{/date}}");
+        Doc doc = createDoc("field1", "value1");
+
+        assertThatThrownBy(() -> template.render(doc)).isInstanceOf(IllegalArgumentException.class);
     }
 }

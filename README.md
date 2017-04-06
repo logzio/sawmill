@@ -268,13 +268,14 @@ Complex If Statement
 
 - Templates is the ability to add data from other fields to a new field name or value.  
 	- You can call the value of another field using "mustache" syntax  EG:  {{field_name}}
-	- The bleow example is how to add a field called "timestamp" with the prevous values of the "date" and "time" fields
+	- Date template could be used to put the current date in a desired format
+	- The below example is how to add a field called "timestamp" with the previous values of the "date" and "time" fields, and the current year
 ```json
     {
       "addField": {
         "config": {
           "path": "timestamp",
-          "value": "{{date}} {{time}}"
+          "value": "{{date}} {{time}} {{#date}}yyyy{{/date}}"
         }
       }
     }
