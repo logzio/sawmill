@@ -62,10 +62,10 @@ public class GeoIpProcessorTest {
         assertThat(geoIp.get("city_name")).isEqualTo("Mexico City");
         assertThat(geoIp.get("ip")).isEqualTo(ip);
         assertThat(geoIp.get("timezone")).isEqualTo("America/Mexico_City");
-        assertThat(geoIp.get("postal_code")).isEqualTo("06300");
-        assertThat(geoIp.get("longitude")).isEqualTo(-99.1386d);
-        assertThat(geoIp.get("latitude")).isEqualTo(19.4342d);
-        assertThat(geoIp.get("location")).isEqualTo(Arrays.asList(-99.1386d, 19.4342d));
+        assertThat(geoIp.get("postal_code")).isEqualTo("63009");
+        assertThat(geoIp.get("longitude")).isEqualTo(-99.1439d);
+        assertThat(geoIp.get("latitude")).isEqualTo(19.4357d);
+        assertThat(geoIp.get("location")).isEqualTo(Arrays.asList(-99.1439d, 19.4357d));
         assertThat(((List)doc.getField("tags")).contains("geoip")).isTrue();
     }
 
