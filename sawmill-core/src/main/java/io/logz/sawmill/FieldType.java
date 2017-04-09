@@ -1,31 +1,32 @@
 package io.logz.sawmill;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Longs;
-import org.weakref.jmx.internal.guava.base.Objects;
 
 public enum FieldType {
     INT {
         @Override
         public Object convertFrom(Object value) {
-            return Objects.firstNonNull(Longs.tryParse(value.toString()), 0);
+            return MoreObjects.firstNonNull(Longs.tryParse(value.toString()), 0);
         }
     },
     LONG {
         @Override
         public Object convertFrom(Object value) {
-            return Objects.firstNonNull(Longs.tryParse(value.toString()), 0L);
+            return MoreObjects.firstNonNull(Longs.tryParse(value.toString()), 0L);
         }
     },
     FLOAT {
         @Override
         public Object convertFrom(Object value) {
-            return Objects.firstNonNull(Doubles.tryParse(value.toString()), 0F);
+            return MoreObjects.firstNonNull(Doubles.tryParse(value.toString()), 0F);
         }
     },
     DOUBLE {
         @Override
-        public Object convertFrom(Object value) { return Objects.firstNonNull(Doubles.tryParse(value.toString()), 0D); }
+        public Object convertFrom(Object value) {
+            return MoreObjects.firstNonNull(Doubles.tryParse(value.toString()), 0D); }
     },
     STRING {
         @Override

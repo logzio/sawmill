@@ -2,6 +2,7 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.FieldType;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -26,36 +27,38 @@ public class ConvertFieldProcessorTest {
 
     @Test
     public void testConvertToBoolean() {
-        testConversion("bool", FieldType.BOOLEAN, "yes", true);
+        testConversion("yes", true);
     }
 
     @Test
     public void testConvertToDouble() {
-        testConversion("double", FieldType.DOUBLE, "1.55", 1.55d);
+        testConversion("1.55", 1.55d);
     }
 
     @Test
-    public void testConvertToDoubleStringToZero() {
-        testConversion("double", FieldType.DOUBLE, "-", 0D);
+    public void testConvertToDoubleDefaultIsZero() {
+        testConversion("-", 0D);
     }
 
     @Test
     public void testConvertToLong() {
-        testConversion("long", FieldType.LONG, "12345", 12345L);
+        testConversion( "12345", 12345L);
     }
 
     @Test
-    public void testConvertToLongStringToZero() {
-        testConversion("long", FieldType.LONG, "-", 0L);
+    public void testConvertToLongDefaultIsZero() {
+        testConversion("-", 0L);
     }
 
     @Test
     public void testConvertToString() {
-        testConversion("string", FieldType.STRING, 12345, "12345");
+        testConversion(12345, "12345");
     }
 
-    private <T> void testConversion(String path, FieldType type, Object value, T result) {
-        Map<String,Object> config = createConfig("path", path, "type", type.toString());
+    private <T> void testConversion( Object value, T result) {
+        String resultClassName = result.getClass().getSimpleName().toLowerCase();
+        String path = RandomStringUtils.random(5);
+        Map<String,Object> config = createConfig("path", path, "type", resultClassName);
         ConvertFieldProcessor convertFieldProcessor = createProcessor(ConvertFieldProcessor.class, config);
 
         Doc doc = createDoc(path, value);
