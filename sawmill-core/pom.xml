@@ -50,6 +50,10 @@
         <dependency>
             <groupId>com.github.spullara.mustache.java</groupId>
             <artifactId>compiler</artifactId>
+ 		</dependency>
+		<dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jruby.joni</groupId>

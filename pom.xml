@@ -77,6 +77,11 @@
                 <artifactId>compiler</artifactId>
                 <version>0.9.2</version>
             </dependency>
+  			<dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-csv</artifactId>
+                <version>1.4</version>
+            </dependency>
             <dependency>
                 <groupId>org.jruby.joni</groupId>
                 <artifactId>joni</artifactId>
