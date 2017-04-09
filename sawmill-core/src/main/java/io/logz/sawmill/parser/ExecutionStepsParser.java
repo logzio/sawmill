@@ -58,9 +58,13 @@ public class ExecutionStepsParser {
         Processor processor = processorParser.parse(processorExecutionStepDefinition.getProcessorDefinition());
         Optional<List<ExecutionStepDefinition>> onFailureExecutionStepDefinitions =
                 processorExecutionStepDefinition.getOnFailureExecutionStepDefinitionList();
-        List<ExecutionStep> executionSteps = onFailureExecutionStepDefinitions.isPresent() ? parse(onFailureExecutionStepDefinitions.get(), idGenerator) : null;
+        List<ExecutionStep> failureExecutionSteps = onFailureExecutionStepDefinitions.isPresent() ? parse(onFailureExecutionStepDefinitions.get(), idGenerator) : null;
 
-        return new ProcessorExecutionStep(processorId, processor, executionSteps);
+        Optional<List<ExecutionStepDefinition>> onSuccessExecutionStepDefinitions =
+                processorExecutionStepDefinition.getOnSuccessExecutionStepDefinitionList();
+        List<ExecutionStep> successExecutionSteps = onSuccessExecutionStepDefinitions.isPresent() ? parse(onSuccessExecutionStepDefinitions.get(), idGenerator) : null;
+
+        return new ProcessorExecutionStep(processorId, processor, failureExecutionSteps, successExecutionSteps);
     }
 
     private String getProcessorName(ProcessorExecutionStepDefinition processorExecutionStepDefinition, IdGenerator idGenerator) {

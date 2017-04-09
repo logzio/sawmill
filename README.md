@@ -7,21 +7,19 @@ Simple configuration example:
   "steps": [
     {
       "grok": {
-        "name": "grok message",
         "config": {
           "field": "message",
           "overwrite": [
             "message"
           ],
           "patterns": [
-            "(%{IPORHOST:client_ip}|-) %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \\\"(?:%{WORD:verb} %{NOTSPACE:request}(?: HTTP/%{NUMBER:httpversion})?|%{DATA:rawrequest})\\\" %{NUMBER:response:int} (?:%{NUMBER:bytes:float}|-) B %{DATA:thread} %{NUMBER:response_time:float} ms %{DATA:servername} %{DATA:client_id:int}(\\;%{NOTSPACE})? %{DATA:device_id} %{DATA}"
+            "(%{IPORHOST:client_ip}|-) %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \\\"(?:%{WORD:verb} %{NOTSPACE:request}(?: HTTP/%{NUMBER:httpversion:float})?|%{DATA:rawrequest})\\\" %{NUMBER:response:int} (?:%{NUMBER:bytes:float}|-) B %{DATA:thread} %{NUMBER:response_time:float} ms %{DATA:servername} %{DATA:client_id:int}(\\;%{NOTSPACE})? %{DATA:device_id} %{DATA}"
           ]
         }
       }
     },
     {
       "removeField": {
-        "name": "remove message field after grok",
         "config": {
           "path": "message"
         }
@@ -30,39 +28,39 @@ Simple configuration example:
   ]
 }
 ```
-# NOTE: The Global Pipeline Disables Logstash, so do not use it unless there are no LS configs
+## NOTE: The Global Pipeline Disables Logstash, so do not use it unless there are no LS configs
 
 ## Processors
 
-
-Processors:
 - grok [grok]
 	- field
-        - patterns [array]
-        - overwrite [array]
+	- patterns [array]
+	- overwrite [array]
+	
 Example:
-
-   ```
-    {
-      "grok": {
-        "config": {
-          "field": "message",
-          "patterns": [
-            "^%{WORD:log_level}  ?\\[%{TIMESTAMP_ISO8601:timestamp}\\] %{NOTSPACE:class}( %{NUMBER:error_code})? (?<message>(.|\\r|\\n)*)",
-          "overwrite": ["message"]
-          ]
-        }
-      }
+```json
+{
+  "grok": {
+    "config": {
+      "field": "message",
+      "patterns": [
+        "^%{WORD:log_level}  ?\\\\[%{TIMESTAMP_ISO8601:timestamp}\\\\] %{NOTSPACE:class}( %{NUMBER:error_code})? %{GREEDYDATA:message}"
+      ],
+      "overwrite": [
+        "message"
+      ]
     }
-    ```
+  }
+}
+```
        
-- Add Field [addField]
+- Add Field [addField] - Can also be used to "replace" a field value - supports "templates"
 	- path (the path to the field to add, doted fqdn) 
 	- value 
-- Append List [appendList]
+- Append List [appendList] - Supports "templates"
 	- path (the path to the field to add, doted fqdn) 
 	- values - array of values to add, i.e. values: ["val1","val2"]
-- Add Tag [addTag]
+- Add Tag [addTag] - Supports "templates"
 	- tags - array of tags to add, i.e. tags: ["tag1","tag2"]
 - Convert Field [convert]
 	- path
@@ -72,45 +70,61 @@ Example:
 	- targetField
 	- formats - An array,  one of these: https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
 	- timeZone - one of these: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
-   Example:
-   ```
-   {
-      "date": {
-        "config": {
-          "field": "timestamp",
-          "targetField": "timestamp",
-          "formats": [
-            "ISO8601"
-          ]
-        }
-      }
+	
+Example: 
+```json
+{
+  "date": {
+    "config": {
+      "field": "timestamp",
+      "targetField": "timestamp",
+      "formats": [
+        "ISO8601"
+      ]
     }
-    ```
+  }
+}
+```
 	
 - Drop [drop]
 	- percentage, default to 100 which is full drop, can be used to throttle
 - Geo IP [geoIp]
 	- sourceField
 	- targetField
-	- properties
-	- tagsOnSuccess
-   Example:
-   ```
+	- tagsOnSuccess [array]
+	
+Example:
+```json
 {
-  "geoip": {
+  "geoIp": {
     "config": {
       "sourceField": "ip",
       "targetField": "geoip",
-      "tagOnSuccess": [
-        "apache-geoip"
+      "tagsOnSuccess": [
+        "geo-ip"
       ]
     }
   }
 }
-    ```
+```
+   
 - Json [json]
 	- field
 	- targetField
+	
+Example:
+
+```json
+{
+  "json": {
+    "config": {
+      "field": "message",
+      "targetField": "json"
+    }
+  }
+}
+```
+	
 - Key Value [kv]
 	- field
 	- targetField
@@ -121,20 +135,24 @@ Example:
 	- valueSplit
 	- fieldSplit
 	- allowDuplicateValues
+	- prefix
 	
-- Remove Field [removeField]
+- Remove Field [removeField] - Supports "templates"
 	- path (dotted path, i.e: a.b.c)
-   Example:
-   ```
-   {
-      "removeField": {
-        "config": {
-          "path": "timestamp"
-        }
-      }
+	
+Example:
+   
+```json
+{
+  "removeField": {
+    "config": {
+      "path": "timestamp"
     }
-    ```
-- Remove Tag [removeTag]
+  }
+}
+```
+   
+- Remove Tag [removeTag] - Supports "templates"
 	- tags - list of tags - [array]
 - Rename Field [rename]
 	- from - the field name to rename
@@ -150,38 +168,44 @@ Example:
 - Split [split]
         - field
 	- separator
+- LowerCase [lowerCase]
+	- field
   
-## If Conditions
+# If Conditions
 
-# Operators
+## Operators
 - and [array]
 - or [array]
 - not [array]
 
-# Conditions
-- in
+## Conditions
+- in  (this is used to find a value in a field that is an array like tags)
 	- path
 	- value
-- hasValue
+- hasValue (this finds a match of a string field)
 	- field
 	- possibleValues [array]
 - matchRegex
 	- field
-	- pattern
+	- regex
 	- caseInsensitive - default false
 	- matchPartOfValue - default false
 - exists
 	- field
 	
-   Example:
+Example:
    
  Simple If statement:
-   ```
+ 
+```json
 {
   "if": {
     "condition": {
       "hasValue": {
-        "field": "tags"
+        "field": "tags",
+	"possibleValues":[
+	  "_jsonparsefailure"
+	]
       },
       "then": [
         {
@@ -197,57 +221,66 @@ Example:
     }
   }
 }
-   ```
+```
 
 Complex If Statement
    
-   ```
+```json
 {
-      "if": {
-        "condition": {
-          "and": [
-            {
-              "exists": {
-                "field": "clientip"
-              }
-            },
-            {
-              "not": [
-                {
-                  "hasValue": {
-                    "field": "clientip",
-                    "possibleValues": [
-                      "None",
-                      ""
-                    ]
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        "then": [
-          {
-            "geoIp": {
-              "name": "geoip",
-              "config": {
-                "sourceField": "clientip",
-                "targetField": "geoip",
-                "tagsOnSuccess": [
-                  "apache-geoip"
-                ]
-              }
-            }
+  "if": {
+    "condition": {
+      "and": [{
+        "exists": {
+          "field": "clientip"
+        }
+      }, {
+        "not": [{
+          "hasValue": {
+            "field": "clientip",
+            "possibleValues": [
+              "None",
+              ""
+            ]
           }
-        ]
+        }]
+      }]
+    },
+    "then": [{
+      "geoIp": {
+        "name": "geoip",
+        "config": {
+          "sourceField": "clientip",
+          "targetField": "geoip",
+          "tagsOnSuccess": [
+            "apache-geoip"
+          ]
+        }
       }
-    }
-    ```
+    }]
+  }
+}
+```
 	
 ## Additional Commands
 - stopOnFailure [boolean]
-    - false (default)  The pipeline will continue through the steps even if there is a processor failure
-    - true - The pipeline will stop processing at the first processor that has a failure
+	- false (default)  The pipeline will continue through the steps even if there is a processor failure
+    	- true - The pipeline will stop processing at the first processor that has a failure
+
+- Templates is the ability to add data from other fields to a new field name or value.  
+	- You can call the value of another field using "mustache" syntax  EG:  {{field_name}}
+	- The bleow example is how to add a field called "timestamp" with the prevous values of the "date" and "time" fields
+```json
+    {
+      "addField": {
+        "config": {
+          "path": "timestamp",
+          "value": "{{date}} {{time}}"
+        }
+      }
+    }
+
+```
+
     
 	
 

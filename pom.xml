@@ -6,7 +6,7 @@
 
     <groupId>io.logz.sawmill</groupId>
     <artifactId>sawmill</artifactId>
-    <version>1.1.15</version>
+    <version>1.1.17</version>
     <modules>
         <module>sawmill-core</module>
         <module>sawmill-benchmark</module>
@@ -67,7 +67,17 @@
 
     <dependencyManagement>
         <dependencies>
+                   <dependency>
+                <groupId>javax.inject</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>1</version>
+            </dependency>
             <dependency>
+                <groupId>com.github.spullara.mustache.java</groupId>
+                <artifactId>compiler</artifactId>
+                <version>0.9.2</version>
+            </dependency>
+  			<dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-csv</artifactId>
                 <version>1.4</version>

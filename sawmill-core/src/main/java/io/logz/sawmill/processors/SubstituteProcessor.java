@@ -4,7 +4,7 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
-import io.logz.sawmill.exceptions.ProcessorParseException;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;
@@ -52,7 +52,7 @@ public class SubstituteProcessor implements Processor {
             try {
                 pattern = Pattern.compile(subConfig.getPattern());
             } catch (PatternSyntaxException e) {
-                throw new ProcessorParseException("cannot create gsub processor with invalid pattern");
+                throw new ProcessorConfigurationException("cannot create gsub processor with invalid pattern");
             }
 
             return new SubstituteProcessor(subConfig.getField(), pattern, subConfig.getReplacement());

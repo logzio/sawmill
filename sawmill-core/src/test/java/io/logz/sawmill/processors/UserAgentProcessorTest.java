@@ -4,31 +4,31 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class UserAgentProcessorTest {
     @Test
     public void testValidUserAgent() {
         String field = "agent";
-        String targetField = "user_agent";
+        String targetField = "{{uaField}}";
         String uaString = "\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36\"";
-        Doc doc = createDoc(field, uaString);
+        Doc doc = createDoc(field, uaString, "uaField", "ua");
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("targetField", targetField);
-        UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField);
+        UserAgentProcessor uaProceesor = createProcessor(UserAgentProcessor.class, config);
 
         ProcessResult processResult = uaProceesor.process(doc);
 
         assertThat(processResult.isSucceeded()).isTrue();
-        assertThat(doc.hasField(targetField)).isTrue();
+        assertThat(doc.hasField("ua")).isTrue();
 
-        Map<String,String> userAgent = doc.getField(targetField);
+        Map<String,String> userAgent = doc.getField("ua");
 
         assertThat(userAgent.get("name")).isEqualTo("Chrome");
         assertThat(userAgent.get("major")).isEqualTo("54");
@@ -51,10 +51,9 @@ public class UserAgentProcessorTest {
         String uaString = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36";
         Doc doc = createDoc(field, uaString);
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("prefix", prefix);
-        UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
+        Map<String,Object> config = createConfig("field", field,
+                "prefix", prefix);
+        UserAgentProcessor uaProceesor = createProcessor(UserAgentProcessor.class, config);
 
         ProcessResult processResult = uaProceesor.process(doc);
 
@@ -80,10 +79,9 @@ public class UserAgentProcessorTest {
         String uaString = "invalid user-agent: dsafkjl";
         Doc doc = createDoc(field, uaString);
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("field", field);
-        config.put("targetField", targetField);
-        UserAgentProcessor uaProceesor = new UserAgentProcessor.Factory().create(config);
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField);
+        UserAgentProcessor uaProceesor = createProcessor(UserAgentProcessor.class, config);
 
         ProcessResult processResult = uaProceesor.process(doc);
 

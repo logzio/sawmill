@@ -2,7 +2,7 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
-import io.logz.sawmill.exceptions.ProcessorParseException;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createFactory;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -22,7 +23,7 @@ public class GrokProcessorTest {
 
     @BeforeClass
     public static void init() {
-        factory = new GrokProcessor.Factory();
+        factory = createFactory(GrokProcessor.class);
     }
 
     @Test
@@ -232,7 +233,7 @@ public class GrokProcessorTest {
         Map<String,Object> config = new HashMap<>();
         config.put("field", "someField");
 
-        assertThatThrownBy(() -> factory.create(config)).isInstanceOf(ProcessorParseException.class);
+        assertThatThrownBy(() -> factory.create(config)).isInstanceOf(ProcessorConfigurationException.class);
     }
 
     @Test
@@ -261,9 +262,24 @@ public class GrokProcessorTest {
 
         grokProcessor.process(doc1);
 
-        Doc doc2 = createDoc("message", "194.239.185.67 - - [26/Jan/2017:14:32:46 +0100] \"GET /religionsfaget/udskoling/typo3temp/Assets/464cb9f3a6.css?1467394170 HTTP/1.1\" 200 1196 \"http://www.clioonline.dk/religionsfaget/udskoling/emner/religioner/islam/islams-trosgrundlag/\" \"Mozilla/5.0 (X11; CrOS armv7l 8872.76.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.105 Safari/537.36\"");
+        Doc doc2 = createDoc("message", "194.239.185.67 - - [26/Jan/2017:14:32:46 +0100] \"GET /religionsfaget/udskoling/typo3temp/Assets/464cb9f3a6.css?1467394170 HTTP/1\" 200 1196 \"http://www.clioonline.dk/religionsfaget/udskoling/emner/religioner/islam/islams-trosgrundlag/\" \"Mozilla/5.0 (X11; CrOS armv7l 8872.76.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.105 Safari/537.36\"");
         grokProcessor.process(doc2);
 
         assertThat(doc2.hasField("extra_fields")).isFalse();
+        assertThat(doc2.getField("httpversion").toString()).isEqualTo("1.0");
+    }
+
+    @Test
+    public void testInvalidExpression() {
+        String field = "message";
+        List<String> invalidPatterns = Arrays.asList("%{COMBINEDAPACHELOG}+%[GREEDYDATA:extra_fields_with_wrong_bracket");
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", invalidPatterns);
+        config.put("ignoreMissing", false);
+        assertThatThrownBy(() -> factory.create(config))
+                .isInstanceOf(ProcessorConfigurationException.class)
+                .hasMessageContaining("Failed to create grok for expression");
     }
 }

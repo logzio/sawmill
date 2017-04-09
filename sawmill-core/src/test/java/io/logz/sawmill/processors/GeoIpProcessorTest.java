@@ -13,12 +13,13 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GeoIpProcessorTest {
@@ -34,7 +35,6 @@ public class GeoIpProcessorTest {
         } catch (IOException e) {
             throw new RuntimeException("failed to load geoip database", e);
         }
-
     }
 
     @Test
@@ -42,10 +42,10 @@ public class GeoIpProcessorTest {
         String ip = "187.162.70.166";
         String source = "ipString";
 
-        Map<String,Object> config = new HashMap<>();
-        config.put("sourceField", source);
-        config.put("properties", Arrays.asList("ip", "country_name", "country_code2", "city_name"));
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor.Factory().create(config);
+
+        Map<String,Object> config = createConfig("sourceField", source,
+                "properties", Arrays.asList("ip", "country_name", "country_code2", "city_name"));
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 
@@ -64,19 +64,24 @@ public class GeoIpProcessorTest {
     public void testValidIp() throws IOException, GeoIp2Exception {
         String ip = "187.162.70.166";
         String source = "ipString";
-        String target = "geoip";
+        String target = "{{geoipField}}";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+        Map<String, Object> config = createConfig("sourceField", source,
+                "targetField", target,
+                "tagsOnSuccess", Arrays.asList("geoip"));
 
-        Doc doc = createDoc(source, ip);
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
+
+        Doc doc = createDoc(source, ip, "geoipField", "geo");
+
         assertThat(geoIpProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat(doc.hasField(target)).isTrue();
-
-        Map<String, Object> geoIp = doc.getField(target);
+        assertThat(doc.hasField("geo")).isTrue();
+        Map<String, Object> geoIp = doc.getField("geo");
         CityResponse response = databaseReader.city(InetAddresses.forString(ip));
         GeoIpProcessor.Property.ALL_PROPERTIES.stream().forEach(property -> {
             assertThat(geoIp.get(property.toString())).isEqualTo(property.getValue(response));
         });
+        assertThat(((List)doc.getField("tags")).contains("geoip")).isTrue();
     }
 
     @Test
@@ -85,7 +90,10 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+        Map<String, Object> config = createConfig("sourceField", source,
+                "tagsOnSuccess", Arrays.asList("geoip"));
+
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 
@@ -100,7 +108,10 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+        Map<String, Object> config = createConfig("sourceField", source,
+                "tagsOnSuccess", Arrays.asList("geoip"));
+
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 
@@ -114,7 +125,10 @@ public class GeoIpProcessorTest {
         String source = "ipString";
         String target = "geoip";
 
-        GeoIpProcessor geoIpProcessor = new GeoIpProcessor(source, target, ALL_PROPERTIES, Arrays.asList("geoip"));
+        Map<String, Object> config = createConfig("sourceField", source,
+                "tagsOnSuccess", Arrays.asList("geoip"));
+
+        GeoIpProcessor geoIpProcessor = createProcessor(GeoIpProcessor.class, config);
 
         Doc doc = createDoc(source, ip);
 

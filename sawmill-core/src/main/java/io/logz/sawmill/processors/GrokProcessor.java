@@ -4,7 +4,7 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
-import io.logz.sawmill.exceptions.ProcessorParseException;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.utilities.Grok;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,10 +48,14 @@ public class GrokProcessor implements Processor {
 
     private void compileExpressions(List<String> matchExpressions, Map<String, String> patternsBank) {
         matchExpressions.forEach(expression -> {
-            Grok grok = new Grok(patternsBank, expression);
+            Grok grok;
+            try {
+                grok = new Grok(patternsBank, expression);
+            } catch (RuntimeException e) {
+                throw new ProcessorConfigurationException("Failed to create grok for expression ["+expression+"]", e);
+            }
             this.groks.add(grok);
         });
-
     }
 
     @Override
@@ -168,7 +172,7 @@ public class GrokProcessor implements Processor {
             GrokProcessor.Configuration grokConfig = JsonUtils.fromJsonMap(GrokProcessor.Configuration.class, config);
 
             if (CollectionUtils.isEmpty(grokConfig.getPatterns())) {
-                throw new ProcessorParseException("cannot create grok without any pattern");
+                throw new ProcessorConfigurationException("cannot create grok without any pattern");
             }
 
             return new GrokProcessor(grokConfig.getField(),

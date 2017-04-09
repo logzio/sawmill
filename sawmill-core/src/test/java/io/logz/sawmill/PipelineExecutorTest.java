@@ -64,6 +64,45 @@ public class PipelineExecutorTest {
     }
 
     @Test
+    public void testOnSuccessPipelineExecution() {
+        Pipeline pipeline = createPipeline(
+                createExecutionStepWithOnSuccessSteps(
+                        createAddFieldProcessor("newField1", "value1"),
+                        createAddFieldExecutionStep("newField2", "value2"),
+                        createAddFieldExecutionStep("newField3", "value3")));
+
+        Doc doc = createDoc("id", "testPipelineExecution", "message", "hola");
+
+        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
+
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
+        assertThat(doc.getSource().get("newField2")).isEqualTo("value2");
+        assertThat(doc.getSource().get("newField3")).isEqualTo("value3");
+        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
+    }
+
+    @Test
+    public void testOnSuccessNotWorkingOnFailPipelineExecution() {
+        Pipeline pipeline = createStopOnFailurePipeline(
+                createAddFieldExecutionStep("newField1", "value1"),
+                createFailAlwaysExecutionStep(null,
+                        Arrays.asList(createAddFieldExecutionStep("newField2", "value2"), createAddFieldExecutionStep("newField3", "value3"))
+                ));
+        Doc doc = createDoc("id", "testOnFailureExecutionSteps", "message", "hola");
+
+        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isFalse();
+
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
+        assertThat(doc.getSource().get("newField2")).isNull();
+        assertThat(doc.getSource().get("newField3")).isNull();
+        assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(0);
+    }
+
+
+    @Test
     public void testOnFailureExecutionSteps() {
         Pipeline pipeline = createStopOnFailurePipeline(
                 createAddFieldExecutionStep("newField1", "value1"),
@@ -281,6 +320,10 @@ public class PipelineExecutorTest {
         };
     }
 
+    private ProcessorExecutionStep createExecutionStepWithOnSuccessSteps(Processor processor, ExecutionStep... onSuccessSteps) {
+        return new ProcessorExecutionStep("success1", processor, null, Arrays.asList(onSuccessSteps));
+    }
+
     private ProcessorExecutionStep createUnexpectedFailAlwaysExecutionStep() {
         return new ProcessorExecutionStep("failHard1", (Doc doc) -> {
             throw new RuntimeException("test failure");
@@ -296,7 +339,11 @@ public class PipelineExecutorTest {
     }
 
     private ProcessorExecutionStep createFailAlwaysExecutionStep(ExecutionStep... onFailureExecutionSteps) {
-        return new ProcessorExecutionStep("fail1", createFailAlwaysProcessor(), Arrays.asList(onFailureExecutionSteps));
+        return createFailAlwaysExecutionStep(Arrays.asList(onFailureExecutionSteps), null);
+    }
+
+    private ProcessorExecutionStep createFailAlwaysExecutionStep(List<ExecutionStep> onFailureExecutionSteps, List<ExecutionStep> onSuccessExecutionSteps) {
+        return new ProcessorExecutionStep("fail1", createFailAlwaysProcessor(), onFailureExecutionSteps, onSuccessExecutionSteps);
     }
 
     private ExecutionStep createDropExecutionStep() {

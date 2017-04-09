@@ -3,9 +3,13 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
+import io.logz.sawmill.Template;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.lang3.StringUtils;
 
+import javax.inject.Inject;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -13,9 +17,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @ProcessorProvider(type = "json", factory = JsonProcessor.Factory.class)
 public class JsonProcessor implements Processor {
     private final String field;
-    private final String targetField;
+    private final Template targetField;
 
-    public JsonProcessor(String field, String targetField) {
+    public JsonProcessor(String field, Template targetField) {
         this.field = checkNotNull(field, "field cannot be null");
         this.targetField = targetField;
     }
@@ -37,7 +41,7 @@ public class JsonProcessor implements Processor {
         }
 
         if (targetField != null) {
-            doc.addField(targetField, jsonMap);
+            doc.addField(targetField.render(doc), jsonMap);
         } else {
             jsonMap.entrySet().forEach(entry -> {
                 doc.addField(entry.getKey(), entry.getValue());
@@ -47,14 +51,19 @@ public class JsonProcessor implements Processor {
     }
 
     public static class Factory implements Processor.Factory {
-        public Factory() {
+        private final TemplateService templateService;
+
+        @Inject
+        public Factory(TemplateService templateService) {
+            this.templateService = templateService;
         }
 
         @Override
         public Processor create(Map<String,Object> config) {
             JsonProcessor.Configuration jsonConfig = JsonUtils.fromJsonMap(JsonProcessor.Configuration.class, config);
 
-            return new JsonProcessor(jsonConfig.getField(), jsonConfig.getTargetField());
+            Template targetField = StringUtils.isEmpty(jsonConfig.getTargetField()) ? null : templateService.createTemplate(jsonConfig.getTargetField());
+            return new JsonProcessor(jsonConfig.getField(), targetField);
         }
     }
 
