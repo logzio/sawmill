@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @ProcessorProvider(type = "csv", factory = CsvProcessor.Factory.class)
 public class CsvProcessor implements Processor {
     private final String field;
@@ -38,11 +40,11 @@ public class CsvProcessor implements Processor {
                         boolean autoGenerateColumnNames,
                         boolean skipEmptyColumns,
                         Map<String, FieldType> convert) {
-        this.field = field;
+        this.field = checkNotNull(field, "field cannot be null");
         this.targetField = targetField;
-        this.separator = separator;
-        this.quoteChar = quoteChar;
-        this.columns = columns;
+        this.separator = checkNotNull(separator, "separator cannot be null");
+        this.quoteChar = checkNotNull(quoteChar, "quoteChar cannot be null");
+        this.columns = checkNotNull(columns, "columns cannot be null");
         this.autoGenerateColumnNames = autoGenerateColumnNames;
         this.skipEmptyColumns = skipEmptyColumns;
         this.convert = convert;
@@ -55,12 +57,11 @@ public class CsvProcessor implements Processor {
         }
 
         Map<String, Object> csv = new HashMap<>();
-        CSVParser csvParser;
         List<CSVRecord> records;
-        String csvString = doc.getField(this.field);
+        String csvString = doc.getField(field);
 
         try {
-             csvParser = CSVParser.parse(csvString,
+            CSVParser csvParser = CSVParser.parse(csvString,
                      CSVFormat.DEFAULT
                              .withDelimiter(getChar(separator))
                              .withQuote(getChar(quoteChar))
