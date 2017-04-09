@@ -4,9 +4,14 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class TemplateTest {
@@ -62,5 +67,24 @@ public class TemplateTest {
         String value = template.render(doc);
 
         assertThat(value).isEqualTo(" señor , Have a good day");
+    }
+
+    @Test
+    public void testDateTemplate() {
+        String dateFormat = "dd.mm.yyyy";
+        Template template = new TemplateService().createTemplate("Today is {{#date}}" + dateFormat + "{{/date}}");
+        Doc doc = createDoc("field1", "value1");
+
+        String expectedDate =  DateTimeFormatter.ofPattern(dateFormat).format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneOffset.UTC));
+        assertThat(template.render(doc)).isEqualTo("Today is " + expectedDate);
+    }
+
+    @Test
+    public void testInvalidDateTemplate() {
+        String dateFormat = "hello";
+        Template template = new TemplateService().createTemplate("Today is {{#date}}" + dateFormat + "{{/date}}");
+        Doc doc = createDoc("field1", "value1");
+
+        assertThatThrownBy(() -> template.render(doc)).isInstanceOf(IllegalArgumentException.class);
     }
 }
