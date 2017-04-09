@@ -1,6 +1,7 @@
 package io.logz.sawmill;
 
 import com.github.mustachejava.Mustache;
+
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
