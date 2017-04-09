@@ -2,8 +2,10 @@ package io.logz.sawmill;
 
 import com.github.mustachejava.TemplateFunction;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class DateTemplateHandler {
 
@@ -12,6 +14,6 @@ public class DateTemplateHandler {
     }
 
     private String getCurrentDateByFormat(String dateFormat) {
-        return new SimpleDateFormat(dateFormat).format(new Date());
+        return DateTimeFormatter.ofPattern(dateFormat).format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneOffset.UTC));
     }
 }

@@ -4,9 +4,11 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Date;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -73,7 +75,7 @@ public class TemplateTest {
         Template template = new TemplateService().createTemplate("Today is {{#date}}" + dateFormat + "{{/date}}");
         Doc doc = createDoc("field1", "value1");
 
-        String expectedDate = new SimpleDateFormat(dateFormat).format(new Date());
+        String expectedDate =  DateTimeFormatter.ofPattern(dateFormat).format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneOffset.UTC));
         assertThat(template.render(doc)).isEqualTo("Today is " + expectedDate);
     }
 
