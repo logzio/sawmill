@@ -13,14 +13,15 @@ import org.junit.rules.TemporaryFolder;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 
-/**
- * Created by roiravhon on 4/6/17.
- */
 public class BenchmarkTest {
+
+    private static final Logger logger = LoggerFactory.getLogger(BenchmarkTest.class);
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
@@ -38,8 +39,8 @@ public class BenchmarkTest {
         File sourceResults = new File(tempFolder.getRoot(), "result.json");
         Files.copy(sourceResults, new File(targetDir(), "result.json"));
 
-        System.out.println("\n\nTest Output:");
-        System.out.println(FileUtils.readFileToString(sourceResults, Charsets.UTF_8));
+        logger.info("Test Output:");
+        logger.info(FileUtils.readFileToString(sourceResults, Charsets.UTF_8));
     }
 
     // Not the cleanest way to get the target dir to save the result
