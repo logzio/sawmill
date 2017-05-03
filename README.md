@@ -166,7 +166,7 @@ Example:
 	- targetField
 	- prefix
 - Split [split]
-        - field
+	- field
 	- separator
 - LowerCase [lowerCase]
 	- field
