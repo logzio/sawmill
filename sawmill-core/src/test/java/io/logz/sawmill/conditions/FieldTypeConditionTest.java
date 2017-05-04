@@ -37,10 +37,6 @@ public class FieldTypeConditionTest {
 
         assertThatThrownBy(() -> new FieldTypeCondition("path", null)).isInstanceOf(ProcessorConfigurationException.class)
                 .hasMessageContaining("failed to parse fieldType condition, could not resolve field type");
-
-
-
-
     }
 
     @Test
