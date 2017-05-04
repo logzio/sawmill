@@ -17,7 +17,7 @@ import java.util.function.Predicate;
 public class FieldTypeCondition implements Condition {
 
     private final String path;
-    private final String type;
+    private final Predicate<Object> typePredicate;
     private static final ImmutableMap<String, Predicate<Object>> typeEvaluators = ImmutableMap.of(
             "string", value -> value instanceof String,
             "long", value -> value instanceof Long || value instanceof Integer,
@@ -38,12 +38,12 @@ public class FieldTypeCondition implements Condition {
         if (!supportedTypes.contains(type.toLowerCase())) throw new ProcessorConfigurationException("type ["+type+"] must be one of " + supportedTypes);
 
         this.path = path;
-        this.type = type;
+        this.typePredicate = typeEvaluators.get(type.toLowerCase());
     }
 
     @Override
     public boolean evaluate(Doc doc) {
-        return doc.hasField(path) && typeEvaluators.get(type.toLowerCase()).test(doc.getField(path));
+        return doc.hasField(path) && typePredicate.test(doc.getField(path));
     }
 
     public static class Factory implements Condition.Factory {

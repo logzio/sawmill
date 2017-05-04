@@ -108,7 +108,7 @@ public class FieldTypeConditionTest {
     }
 
     @Test
-    public void testFieldTypeJson() {
+    public void testFieldTypeJsonObject() {
         FieldTypeCondition isJsonCondition = new FieldTypeCondition("testField", "JsonObject");
 
         verifyFalse(isJsonCondition, "otherField","otherValue");
