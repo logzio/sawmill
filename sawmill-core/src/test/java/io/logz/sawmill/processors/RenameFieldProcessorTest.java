@@ -43,4 +43,36 @@ public class RenameFieldProcessorTest {
 
         assertThatThrownBy(() -> doc.getField(toField)).isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    public void testRenameWithTemplateInFrom() {
+        Doc doc = createDoc("field-a", "field-b",
+                            "field-b", "value-of-c");
+        String fromField = "{{field-a}}";
+
+        Map<String, Object> config = createConfig("from", fromField,
+                "to", "field-c");
+
+        RenameFieldProcessor renameFieldProcessor = createProcessor(RenameFieldProcessor.class, config);
+
+        assertThat(renameFieldProcessor.process(doc).isSucceeded()).isTrue();
+
+        assertThat((String)doc.getField("field-c")).isEqualTo("value-of-c");
+    }
+
+    @Test
+    public void testRenameWithTemplateInTo() {
+        Doc doc = createDoc("field-a", "field-b",
+                            "field-c", "value-of-c");
+
+        String fromField = "field-c";
+        Map<String, Object> config = createConfig("from", fromField,
+                "to", "{{field-a}}");
+
+        RenameFieldProcessor renameFieldProcessor = createProcessor(RenameFieldProcessor.class, config);
+
+        assertThat(renameFieldProcessor.process(doc).isSucceeded()).isTrue();
+
+        assertThat((String)doc.getField("field-b")).isEqualTo("value-of-c");
+    }
 }
