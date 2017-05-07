@@ -194,7 +194,7 @@ Example:
 	- field
 - fieldType
 	- path
-	- type (One of the following: string,long, double, list, jsonobject)
+	- type (One of the following: string,long, double, list, jsonObject)
 	
 Example:
    
