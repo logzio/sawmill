@@ -25,6 +25,14 @@ public class JsonProcessorTest {
             "   \"list1\": [\"string1\",\"string2\"]" +
             "}";
     public static final String INVALID_JSON = "{ this is: invalid json }";
+    public static final String VALID_JSON_WITH_MESSAGE_FIELD = "{" +
+            "   \"message\":\"value\"," +
+            "   \"map1\": {" +
+            "       \"field2\": 10," +
+            "       \"field3\": \"value\"" +
+            "   }," +
+            "   \"list1\": [\"string1\",\"string2\"]" +
+            "}";;
 
     @Test
     public void testValidJsonWithTarget() {
@@ -41,6 +49,7 @@ public class JsonProcessorTest {
 
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat((Map) doc.getField(targetField)).isEqualTo(jsonMap);
+        assertThat(doc.hasField(field)).isFalse();
     }
 
     @Test
@@ -59,6 +68,7 @@ public class JsonProcessorTest {
 
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat((Map) doc.getField("json")).isEqualTo(jsonMap);
+        assertThat(doc.hasField(field)).isFalse();
     }
 
     @Test
@@ -77,6 +87,26 @@ public class JsonProcessorTest {
         jsonMap.entrySet().forEach(entry -> {
             assertThat((Object) doc.getField(entry.getKey())).isEqualTo(entry.getValue());
         });
+        assertThat(doc.hasField(field)).isFalse();
+    }
+
+    @Test
+    public void testValidJsonOverrideSourceField() {
+        String field = "message";
+
+        Map<String,Object> jsonMap = JsonUtils.fromJsonString(Map.class, VALID_JSON_WITH_MESSAGE_FIELD);
+
+        Doc doc = createDoc(field, VALID_JSON_WITH_MESSAGE_FIELD);
+
+        JsonProcessor jsonProcessor = createProcessor(JsonProcessor.class, createConfig("field", field));
+
+        ProcessResult processResult = jsonProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat(doc.hasField(field)).isTrue();
+        jsonMap.entrySet().forEach(entry -> {
+            assertThat((Object) doc.getField(entry.getKey())).isEqualTo(entry.getValue());
+        });
     }
 
     @Test
@@ -91,6 +121,7 @@ public class JsonProcessorTest {
 
         assertThat(processResult.isSucceeded()).isFalse();
         assertThat((List)doc.getField("tags")).isEqualTo(Arrays.asList("_jsonparsefailure"));
+        assertThat(doc.hasField(field)).isTrue();
     }
 
     @Test
