@@ -192,6 +192,9 @@ Example:
 	- matchPartOfValue - default false
 - exists
 	- field
+- fieldType
+	- path
+	- type (One of the following: string,long, double, list, jsonobject)
 	
 Example:
    
