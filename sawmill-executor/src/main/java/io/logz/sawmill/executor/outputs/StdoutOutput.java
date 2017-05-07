@@ -5,6 +5,7 @@ import io.logz.sawmill.executor.Output;
 import io.logz.sawmill.executor.annotations.OutputProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
+import java.util.List;
 import java.util.Map;
 
 @OutputProvider(type = "stdout", factory = StdoutOutput.Factory.class)
@@ -17,7 +18,7 @@ public class StdoutOutput implements Output {
     }
 
     @Override
-    public void send(Doc doc) {
+    public void send(List<Doc> docs) {
 
     }
 

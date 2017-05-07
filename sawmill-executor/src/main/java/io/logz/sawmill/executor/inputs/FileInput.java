@@ -7,6 +7,8 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -31,7 +33,7 @@ public class FileInput implements Input{
     }
 
     @Override
-    public Doc listen() {
+    public List<Doc> listen() {
         return null;
     }
 
