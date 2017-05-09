@@ -1,9 +1,6 @@
 package io.logz.sawmill.executor;
 
-import io.logz.sawmill.Doc;
-import io.logz.sawmill.ExecutionResult;
 import io.logz.sawmill.Pipeline;
-import io.logz.sawmill.PipelineExecutor;
 import io.logz.sawmill.executor.parser.ExecutionPlanDefinition;
 import io.logz.sawmill.executor.parser.ExecutionPlanDefinitionJsonParser;
 import io.logz.sawmill.executor.parser.InputParser;

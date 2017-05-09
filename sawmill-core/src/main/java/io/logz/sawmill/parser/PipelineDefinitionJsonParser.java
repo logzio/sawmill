@@ -5,11 +5,9 @@ import com.google.common.collect.ImmutableMap;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigRenderOptions;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.apache.commons.collections4.MapUtils;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.logz.sawmill.utilities.JsonUtils.getBoolean;
@@ -19,7 +17,6 @@ import static io.logz.sawmill.utilities.JsonUtils.getString;
 import static io.logz.sawmill.utilities.JsonUtils.getTheOnlyKeyFrom;
 import static io.logz.sawmill.utilities.JsonUtils.isValueList;
 import static io.logz.sawmill.utilities.JsonUtils.isValueMap;
-import static io.logz.sawmill.utilities.JsonUtils.toJsonString;
 
 public class PipelineDefinitionJsonParser {
 

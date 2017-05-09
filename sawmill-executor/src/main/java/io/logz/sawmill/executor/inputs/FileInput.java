@@ -5,36 +5,45 @@ import io.logz.sawmill.executor.Input;
 import io.logz.sawmill.executor.annotations.InputProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.EMPTY_LIST;
 
 @InputProvider(type = "file", factory = FileInput.Factory.class)
 public class FileInput implements Input{
     private final String codec;
     private final String delimiter;
     private final String path;
-    private final String startPosition;
-    private final List<String> exclude;
 
     public FileInput(String path,
-                     String startPosition,
                      String delimiter,
-                     String codec,
-                     List<String> exclude) {
+                     String codec) {
         this.path = checkNotNull(path, "path cannot be empty");
-        this.startPosition = startPosition;
         this.delimiter = delimiter;
         this.codec = codec;
-        this.exclude = exclude;
     }
 
     @Override
     public List<Doc> listen() {
-        return null;
+        try {
+            Path path = Paths.get(new URI(this.path));
+            return Files.lines(path).map(line -> {
+                Map<String, Object> source = new HashMap<>();
+                source.put("message", line);
+                return new Doc(source);
+            }).collect(Collectors.toList());
+        } catch (Exception e) {
+            return EMPTY_LIST;
+        }
+
     }
 
     public static class Factory implements Input.Factory {
@@ -43,10 +52,8 @@ public class FileInput implements Input{
             FileInput.Configuration fileConfig = JsonUtils.fromJsonMap(FileInput.Configuration.class, config);
 
             return new FileInput(fileConfig.getPath(),
-                    fileConfig.getStartPosition(),
                     fileConfig.getDelimiter(),
-                    fileConfig.getCodec(),
-                    fileConfig.getExclude());
+                    fileConfig.getCodec());
         }
     }
 
@@ -54,8 +61,6 @@ public class FileInput implements Input{
         private String codec = "plain";
         private String delimiter = "\n";
         private String path;
-        private String startPosition = "end";
-        private List<String> exclude;
 
         public Configuration() {
         }
@@ -72,12 +77,5 @@ public class FileInput implements Input{
             return path;
         }
 
-        public String getStartPosition() {
-            return startPosition;
-        }
-
-        public List<String> getExclude() {
-            return exclude;
-        }
     }
 }

@@ -11,15 +11,12 @@ import java.util.Map;
 @OutputProvider(type = "stdout", factory = StdoutOutput.Factory.class)
 public class StdoutOutput implements Output {
 
-    private final String codec;
-
-    public StdoutOutput(String codec) {
-        this.codec = codec;
+    public StdoutOutput() {
     }
 
     @Override
     public void send(List<Doc> docs) {
-
+        docs.forEach(doc -> System.out.println(doc.getSource().toString()));
     }
 
     public static class Factory implements Output.Factory {
@@ -28,18 +25,10 @@ public class StdoutOutput implements Output {
         public StdoutOutput create(Map<String, Object> config) {
             StdoutOutput.Configuration stdoutConfig = JsonUtils.fromJsonMap(StdoutOutput.Configuration.class, config);
 
-            return new StdoutOutput(stdoutConfig.getCodec());
+            return new StdoutOutput();
         }
     }
 
     public static class Configuration implements Output.Configuration {
-        private String codec = "plain";
-
-        public Configuration() {
-        }
-
-        public String getCodec() {
-            return codec;
-        }
     }
 }

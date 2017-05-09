@@ -8,47 +8,45 @@ import io.logz.sawmill.PipelineExecutionMetricsTracker;
 import io.logz.sawmill.PipelineExecutionTimeWatchdog;
 import io.logz.sawmill.PipelineExecutor;
 
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class SawmillExecutor {
     private static final long WARNING_THRESHOLD_TIME_MS = 1000;
     private final PipelineExecutionMetricsTracker pipelineMetrics;
     private final PipelineExecutor pipelineExecutor;
-    private final ExecutionPlan executionPlan;
-    private final ExecutorService executor;
 
-    public SawmillExecutor(String config) {
-        this.pipelineMetrics = new PipelineExecutionMetricsMBean();
-        PipelineExecutionTimeWatchdog watchdog = new PipelineExecutionTimeWatchdog(WARNING_THRESHOLD_TIME_MS,
-                pipelineMetrics, null);
-
-        this.pipelineExecutor = new PipelineExecutor(watchdog, pipelineMetrics);
-        this.executionPlan = new ExecutionPlan.Factory().create(config);
-        this.executor = Executors.newFixedThreadPool(1);
-
+    public SawmillExecutor() {
+        this(new PipelineExecutionMetricsMBean());
     }
 
-    public void start() {
+    public SawmillExecutor(PipelineExecutionMetricsTracker pipelineMetrics) {
+        this(pipelineMetrics, new PipelineExecutionTimeWatchdog(WARNING_THRESHOLD_TIME_MS,
+                pipelineMetrics, null));
+    }
+
+    public SawmillExecutor(PipelineExecutionMetricsTracker pipelineMetrics,
+                           PipelineExecutionTimeWatchdog watchdog) {
+        this.pipelineMetrics = pipelineMetrics;
+        this.pipelineExecutor = new PipelineExecutor(watchdog, pipelineMetrics);
+    }
+
+    public void execute(ExecutionPlan executionPlan) {
         Input input = executionPlan.getInput();
         Pipeline pipeline = executionPlan.getPipeline();
         Output output = executionPlan.getOutput();
 
-        Future<Doc> future = executor.submit(input.listen());
+        List<Doc> docs = input.listen();
 
-        try {
-            ExecutionResult executionResult = pipelineExecutor.execute(pipeline, future.get());
+        Map<Doc, ExecutionResult> executionResults = docs.stream().collect(Collectors.toMap(Function.identity(), doc -> pipelineExecutor.execute(pipeline, doc)));
 
-            if (executionResult.isSucceeded()) {
-                output.send(future.get());
-            }
-        } catch (InterruptedException e) {
+        List<Doc> succeededDocs = executionResults.entrySet().stream()
+                .filter(entry -> !entry.getValue().isDropped())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
 
-        } catch (ExecutionException e) {
-
-        }
+        output.send(succeededDocs);
     }
 }

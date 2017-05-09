@@ -1,7 +1,6 @@
 package io.logz.sawmill;
 
 import com.github.mustachejava.Mustache;
-import com.google.common.base.Ascii;
 
 import java.io.StringWriter;
 import java.util.Collections;
