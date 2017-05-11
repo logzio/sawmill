@@ -4,6 +4,7 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.executor.Input;
 import io.logz.sawmill.executor.annotations.InputProvider;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.net.URI;
 import java.nio.file.Files;
@@ -15,26 +16,22 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.EMPTY_LIST;
 
 @InputProvider(type = "file", factory = FileInput.Factory.class)
 public class FileInput implements Input{
-    private final String codec;
-    private final String delimiter;
     private final String path;
 
-    public FileInput(String path,
-                     String delimiter,
-                     String codec) {
-        this.path = checkNotNull(path, "path cannot be empty");
-        this.delimiter = delimiter;
-        this.codec = codec;
+    public FileInput(String path) {
+        checkState(StringUtils.isNotEmpty(path), "path cannot be empty");
+        this.path = path;
     }
 
     @Override
     public List<Doc> listen() {
         try {
-            Path path = Paths.get(new URI(this.path));
+            Path path = Paths.get(new URI("file:///" + this.path));
             return Files.lines(path).map(line -> {
                 Map<String, Object> source = new HashMap<>();
                 source.put("message", line);
@@ -51,26 +48,14 @@ public class FileInput implements Input{
         public FileInput create(Map<String, Object> config) {
             FileInput.Configuration fileConfig = JsonUtils.fromJsonMap(FileInput.Configuration.class, config);
 
-            return new FileInput(fileConfig.getPath(),
-                    fileConfig.getDelimiter(),
-                    fileConfig.getCodec());
+            return new FileInput(fileConfig.getPath());
         }
     }
 
     public static class Configuration implements Input.Configuration {
-        private String codec = "plain";
-        private String delimiter = "\n";
         private String path;
 
         public Configuration() {
-        }
-
-        public String getCodec() {
-            return codec;
-        }
-
-        public String getDelimiter() {
-            return delimiter;
         }
 
         public String getPath() {

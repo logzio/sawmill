@@ -10,7 +10,7 @@ public class OutputJsonParser {
     public OutputDefinition parse(Map<String, Object> configMap) {
         Map<String, Object> outputMap = getMap(configMap, "output", true);
         String type = getTheOnlyKeyFrom(outputMap);
-        Map<String, Object> outputConfig = getMap(configMap, type, true);
+        Map<String, Object> outputConfig = getMap(outputMap, type, true);
 
         return new OutputDefinition(type, outputConfig);
     }

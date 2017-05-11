@@ -10,7 +10,7 @@ public class InputJsonParser {
     public InputDefinition parse(Map<String, Object> configMap) {
         Map<String, Object> inputMap = getMap(configMap, "input", true);
         String type = getTheOnlyKeyFrom(inputMap);
-        Map<String, Object> inputConfig = getMap(configMap, type, true);
+        Map<String, Object> inputConfig = getMap(inputMap, type, true);
 
         return new InputDefinition(type, inputConfig);
     }
