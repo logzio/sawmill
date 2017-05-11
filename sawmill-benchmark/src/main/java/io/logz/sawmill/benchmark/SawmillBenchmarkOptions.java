@@ -1,7 +1,6 @@
 package io.logz.sawmill.benchmark;
 
 import io.logz.sawmill.utilities.JsonUtils;
-import jdk.nashorn.internal.runtime.regexp.joni.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.results.format.ResultFormatType;
