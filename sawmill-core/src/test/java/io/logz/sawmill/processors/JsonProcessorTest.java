@@ -22,7 +22,8 @@ public class JsonProcessorTest {
             "       \"field2\": 10," +
             "       \"field3\": \"value\"" +
             "   }," +
-            "   \"list1\": [\"string1\",\"string2\"]" +
+            "   \"list1\": [\"string1\",\"string2\"]," +
+            "   \"field2\": \"valueWith\\Backslashes\"" +
             "}";
     public static final String INVALID_JSON = "{ this is: invalid json }";
     public static final String VALID_JSON_WITH_MESSAGE_FIELD = "{" +
@@ -84,9 +85,9 @@ public class JsonProcessorTest {
         ProcessResult processResult = jsonProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isTrue();
-        jsonMap.entrySet().forEach(entry -> {
-            assertThat((Object) doc.getField(entry.getKey())).isEqualTo(entry.getValue());
-        });
+        jsonMap.entrySet().forEach(entry ->
+            assertThat((Object) doc.getField(entry.getKey())).isEqualTo(entry.getValue())
+        );
         assertThat(doc.hasField(field)).isFalse();
     }
 
