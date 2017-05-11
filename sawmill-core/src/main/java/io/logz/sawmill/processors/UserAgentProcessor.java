@@ -1,6 +1,5 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.io.Resources;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
@@ -8,15 +7,13 @@ import io.logz.sawmill.Template;
 import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
+import io.logz.sawmill.utilities.UserAgentParserProvider;
 import org.apache.commons.lang3.StringUtils;
-import ua_parser.CachingParser;
 import ua_parser.Client;
 import ua_parser.OS;
-import ua_parser.Parser;
 import ua_parser.UserAgent;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,13 +24,13 @@ public class UserAgentProcessor implements Processor {
     private final String field;
     private final Template targetField;
     private final String prefix;
-    private final Parser uaParser;
+    private final UserAgentParserProvider uaParserProvider;
 
-    public UserAgentProcessor(String field, Template targetField, String prefix, Parser uaParser) {
+    public UserAgentProcessor(String field, Template targetField, String prefix, UserAgentParserProvider userAgentParserProvider) {
         this.field = checkNotNull(field, "field cannot be null");
         this.targetField = targetField;
         this.prefix = prefix != null ? prefix : "";
-        this.uaParser = checkNotNull(uaParser);
+        this.uaParserProvider = checkNotNull(userAgentParserProvider);
     }
 
     @Override
@@ -44,7 +41,7 @@ public class UserAgentProcessor implements Processor {
 
         String uaString = doc.getField(field);
 
-        Client client = uaParser.parse(uaString);
+        Client client = uaParserProvider.provide().parse(uaString);
 
         Map<String, String> userAgent = new HashMap<>();
         if (client.userAgent != null) {
@@ -121,18 +118,13 @@ public class UserAgentProcessor implements Processor {
     }
 
     public static class Factory implements Processor.Factory {
-        private final Parser uaParser;
+        private final UserAgentParserProvider uaParserProvider;
         private final TemplateService templateService;
 
         @Inject
         public Factory(TemplateService templateService) {
             this.templateService = templateService;
-
-            try {
-                uaParser = new CachingParser(Resources.getResource("regexes.yaml").openStream());
-            } catch (IOException e) {
-                throw new RuntimeException("failed to load regexes file from resources", e);
-            }
+            uaParserProvider = new UserAgentParserProvider();
         }
 
         @Override
@@ -143,7 +135,7 @@ public class UserAgentProcessor implements Processor {
             return new UserAgentProcessor(userAgentConfig.getField(),
                     targetField,
                     userAgentConfig.getPrefix(),
-                    uaParser);
+                    uaParserProvider);
         }
     }
 

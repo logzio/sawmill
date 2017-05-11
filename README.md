@@ -7,21 +7,19 @@ Simple configuration example:
   "steps": [
     {
       "grok": {
-        "name": "grok message",
         "config": {
           "field": "message",
           "overwrite": [
             "message"
           ],
           "patterns": [
-            "(%{IPORHOST:client_ip}|-) %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \\\"(?:%{WORD:verb} %{NOTSPACE:request}(?: HTTP/%{NUMBER:httpversion})?|%{DATA:rawrequest})\\\" %{NUMBER:response:int} (?:%{NUMBER:bytes:float}|-) B %{DATA:thread} %{NUMBER:response_time:float} ms %{DATA:servername} %{DATA:client_id:int}(\\;%{NOTSPACE})? %{DATA:device_id} %{DATA}"
+            "(%{IPORHOST:client_ip}|-) %{USER:ident} %{USER:auth} \\[%{HTTPDATE:timestamp}\\] \\\"(?:%{WORD:verb} %{NOTSPACE:request}(?: HTTP/%{NUMBER:httpversion:float})?|%{DATA:rawrequest})\\\" %{NUMBER:response:int} (?:%{NUMBER:bytes:float}|-) B %{DATA:thread} %{NUMBER:response_time:float} ms %{DATA:servername} %{DATA:client_id:int}(\\;%{NOTSPACE})? %{DATA:device_id} %{DATA}"
           ]
         }
       }
     },
     {
       "removeField": {
-        "name": "remove message field after grok",
         "config": {
           "path": "message"
         }
@@ -98,7 +96,7 @@ Example:
 Example:
 ```json
 {
-  "geoip": {
+  "geoIp": {
     "config": {
       "sourceField": "ip",
       "targetField": "geoip",
@@ -168,7 +166,7 @@ Example:
 	- targetField
 	- prefix
 - Split [split]
-        - field
+	- field
 	- separator
 - LowerCase [lowerCase]
 	- field
@@ -181,19 +179,22 @@ Example:
 - not [array]
 
 ## Conditions
-- in
+- in  (this is used to find a value in a field that is an array like tags)
 	- path
 	- value
-- hasValue
+- hasValue (this finds a match of a string field)
 	- field
 	- possibleValues [array]
 - matchRegex
 	- field
-	- pattern
-		- caseInsensitive - default false
+	- regex
+	- caseInsensitive - default false
 	- matchPartOfValue - default false
 - exists
 	- field
+- fieldType
+	- path
+	- type (One of the following: string,long, double, list, jsonObject)
 	
 Example:
    
@@ -204,7 +205,10 @@ Example:
   "if": {
     "condition": {
       "hasValue": {
-        "field": "tags"
+        "field": "tags",
+	"possibleValues":[
+	  "_jsonparsefailure"
+	]
       },
       "then": [
         {
@@ -267,13 +271,14 @@ Complex If Statement
 
 - Templates is the ability to add data from other fields to a new field name or value.  
 	- You can call the value of another field using "mustache" syntax  EG:  {{field_name}}
-	- The bleow example is how to add a field called "timestamp" with the prevous values of the "date" and "time" fields
+	- Date template could be used to put the current date in a desired format
+	- The below example is how to add a field called "timestamp" with the previous values of the "date" and "time" fields, and the current year
 ```json
     {
       "addField": {
         "config": {
           "path": "timestamp",
-          "value": "{{date}} {{time}}"
+          "value": "{{date}} {{time}} {{#date}}yyyy{{/date}}"
         }
       }
     }

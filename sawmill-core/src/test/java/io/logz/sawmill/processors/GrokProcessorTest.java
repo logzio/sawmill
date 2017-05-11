@@ -194,6 +194,26 @@ public class GrokProcessorTest {
     }
 
     @Test
+    public void testGrokParseFailureWithCustomTag() {
+        String field = "message";
+        List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
+        List<String> tagsOnFailure = Arrays.asList("parsedfailed :(", "reallysad");
+
+        Doc doc = createDoc(field, "not apache log");
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", patterns);
+        config.put("tagsOnFailure", tagsOnFailure);
+        GrokProcessor grokProcessor = factory.create(config);
+
+        ProcessResult processResult = grokProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isFalse();
+        assertThat((List)doc.getField("tags")).isEqualTo(tagsOnFailure);
+    }
+
+    @Test
     public void testIgnoreMissing() {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}");
@@ -262,10 +282,11 @@ public class GrokProcessorTest {
 
         grokProcessor.process(doc1);
 
-        Doc doc2 = createDoc("message", "194.239.185.67 - - [26/Jan/2017:14:32:46 +0100] \"GET /religionsfaget/udskoling/typo3temp/Assets/464cb9f3a6.css?1467394170 HTTP/1.1\" 200 1196 \"http://www.clioonline.dk/religionsfaget/udskoling/emner/religioner/islam/islams-trosgrundlag/\" \"Mozilla/5.0 (X11; CrOS armv7l 8872.76.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.105 Safari/537.36\"");
+        Doc doc2 = createDoc("message", "194.239.185.67 - - [26/Jan/2017:14:32:46 +0100] \"GET /religionsfaget/udskoling/typo3temp/Assets/464cb9f3a6.css?1467394170 HTTP/1\" 200 1196 \"http://www.clioonline.dk/religionsfaget/udskoling/emner/religioner/islam/islams-trosgrundlag/\" \"Mozilla/5.0 (X11; CrOS armv7l 8872.76.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.105 Safari/537.36\"");
         grokProcessor.process(doc2);
 
         assertThat(doc2.hasField("extra_fields")).isFalse();
+        assertThat(doc2.getField("httpversion").toString()).isEqualTo("1.0");
     }
 
     @Test

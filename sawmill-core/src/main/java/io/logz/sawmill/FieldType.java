@@ -1,5 +1,6 @@
 package io.logz.sawmill;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Longs;
 
@@ -7,26 +8,25 @@ public enum FieldType {
     INT {
         @Override
         public Object convertFrom(Object value) {
-            return Longs.tryParse(value.toString());
+            return MoreObjects.firstNonNull(Longs.tryParse(value.toString()), 0);
         }
     },
     LONG {
         @Override
         public Object convertFrom(Object value) {
-            return Longs.tryParse(value.toString());
+            return MoreObjects.firstNonNull(Longs.tryParse(value.toString()), 0L);
         }
     },
     FLOAT {
         @Override
         public Object convertFrom(Object value) {
-            return Doubles.tryParse(value.toString());
+            return MoreObjects.firstNonNull(Doubles.tryParse(value.toString()), 0F);
         }
     },
     DOUBLE {
         @Override
         public Object convertFrom(Object value) {
-            return Doubles.tryParse(value.toString());
-        }
+            return MoreObjects.firstNonNull(Doubles.tryParse(value.toString()), 0D); }
     },
     STRING {
         @Override

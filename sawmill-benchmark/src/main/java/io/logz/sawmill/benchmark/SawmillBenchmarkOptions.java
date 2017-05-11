@@ -1,5 +1,7 @@
 package io.logz.sawmill.benchmark;
 
+import io.logz.sawmill.utilities.JsonUtils;
+import jdk.nashorn.internal.runtime.regexp.joni.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.results.format.ResultFormatType;
@@ -31,7 +33,7 @@ public class SawmillBenchmarkOptions implements Serializable {
 
     public Options toJmhOptions() {
         jmhOptions.params = new HashMap<String, String>() {{
-            put("pipelineConfig", pipeline.toString());
+            put("pipelineConfig", JsonUtils.toJsonString(pipeline));
             put("thresholdTimeMs", execution.getThresholdTimeMs());
             put("docsPath", input.getDocsPath());
             put("docType", input.getDocType());

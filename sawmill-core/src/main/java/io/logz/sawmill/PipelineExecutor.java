@@ -96,6 +96,10 @@ public class PipelineExecutor {
 
         if (processResult.isSucceeded()) {
             pipelineExecutionMetricsTracker.processorFinishedSuccessfully(pipelineId, processorName, processorTook);
+            Optional<List<ExecutionStep>> onSuccessExecutionSteps = executionStep.getOnSuccessExecutionSteps();
+            if (onSuccessExecutionSteps.isPresent()) {
+                return executeSteps(onSuccessExecutionSteps.get(), pipeline, doc, pipelineStopwatch);
+            }
             return ExecutionResult.success();
         } else if (processResult.isDropped()) {
             return ExecutionResult.dropped();

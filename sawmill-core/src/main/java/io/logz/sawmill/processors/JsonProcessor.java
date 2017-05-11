@@ -31,7 +31,7 @@ public class JsonProcessor implements Processor {
         }
 
         Map<String, Object> jsonMap;
-        String jsonString = doc.getField(this.field);
+        String jsonString = doc.getField(field);
 
         try {
             jsonMap = JsonUtils.fromJsonString(Map.class, jsonString);
@@ -40,12 +40,12 @@ public class JsonProcessor implements Processor {
             return ProcessResult.failure(String.format("failed to parse json, couldn't deserialize from json [%s]", jsonString));
         }
 
+        doc.removeField(field);
+
         if (targetField != null) {
             doc.addField(targetField.render(doc), jsonMap);
         } else {
-            jsonMap.entrySet().forEach(entry -> {
-                doc.addField(entry.getKey(), entry.getValue());
-            });
+            jsonMap.forEach(doc::addField);
         }
         return ProcessResult.success();
     }

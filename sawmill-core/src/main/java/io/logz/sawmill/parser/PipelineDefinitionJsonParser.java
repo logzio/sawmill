@@ -87,6 +87,9 @@ public class PipelineDefinitionJsonParser {
         List<Map<String, Object>> onFailure = getList(config, "onFailure", false);
         List<ExecutionStepDefinition> onFailureExecutionStepDefinitions = parseExecutionStepDefinitionList(onFailure);
 
-        return new ProcessorExecutionStepDefinition(processorDefinition, name, onFailureExecutionStepDefinitions);
+        List<Map<String, Object>> onSuccess = getList(config, "onSuccess", false);
+        List<ExecutionStepDefinition> onSuccessExecutionStepDefinitions = parseExecutionStepDefinitionList(onSuccess);
+
+        return new ProcessorExecutionStepDefinition(processorDefinition, name, onFailureExecutionStepDefinitions, onSuccessExecutionStepDefinitions);
     }
 }

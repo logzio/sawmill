@@ -8,9 +8,11 @@ import java.io.StringReader;
 
 public class TemplateService {
     private final DefaultMustacheFactory mustacheFactory;
+    private final DateTemplateHandler dateTemplateHandler;
 
     public TemplateService() {
         this.mustacheFactory = new DefaultMustacheFactory();
+        this.dateTemplateHandler = new DateTemplateHandler();
     }
 
     public Template createTemplate(String template) {
@@ -21,6 +23,6 @@ public class TemplateService {
 
         Mustache mustache = mustacheFactory.compile(stringReader, "");
 
-        return new Template(mustache);
+        return new Template(mustache, dateTemplateHandler);
     }
 }

@@ -76,6 +76,23 @@ public class ExecutionStepsParserTest {
     }
 
     @Test
+    public void testParseOnSuccessExecutionStep() {
+        List<ExecutionStepDefinition> executionStepDefinitionList = Collections.singletonList(
+                createAddTagStepDefinition(null, null, Collections.singletonList(createAddTagStepDefinition()))
+        );
+
+        List<ExecutionStep> executionSteps = executionStepsParser.parse(executionStepDefinitionList);
+
+        ProcessorExecutionStep processorExecutionStep = (ProcessorExecutionStep) executionSteps.get(0);
+        List<ExecutionStep> onSuccessExecutionSteps = processorExecutionStep.getOnSuccessExecutionSteps().get();
+
+        assertThat(onSuccessExecutionSteps.size()).isEqualTo(1);
+
+        ProcessorExecutionStep onSuccessExecutionStep = (ProcessorExecutionStep) onSuccessExecutionSteps.get(0);
+        assertThat(onSuccessExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
+    }
+
+    @Test
     public void testParseConditionalExecutionStep() {
         List<ExecutionStepDefinition> executionStepDefinitionList = Collections.singletonList(
                 new ConditionalExecutionStepDefinition(
@@ -194,7 +211,14 @@ public class ExecutionStepsParserTest {
     }
 
     private ProcessorExecutionStepDefinition createAddTagStepDefinition(String name, List<ExecutionStepDefinition> onFailureExecutionStepDefinitions) {
-        return new ProcessorExecutionStepDefinition(createAddTagProcessorDefinition(), name, onFailureExecutionStepDefinitions);
+        return createAddTagStepDefinition(name, onFailureExecutionStepDefinitions, null);
+    }
+
+    private ProcessorExecutionStepDefinition createAddTagStepDefinition(String name,
+                                                                        List<ExecutionStepDefinition> onFailureExecutionStepDefinitions,
+                                                                        List<ExecutionStepDefinition> onSuccessExecutionStepDefinitions) {
+        return new ProcessorExecutionStepDefinition(createAddTagProcessorDefinition(), name,
+                onFailureExecutionStepDefinitions, onSuccessExecutionStepDefinitions);
     }
 
     private ProcessorDefinition createAddTagProcessorDefinition() {

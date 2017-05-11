@@ -8,8 +8,6 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static io.logz.sawmill.utils.FactoryUtils.createFactory;
-
 public class FactoryUtils {
     public static final TemplateService templateService = new TemplateService();
 

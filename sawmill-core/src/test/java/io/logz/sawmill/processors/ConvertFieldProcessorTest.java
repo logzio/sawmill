@@ -2,6 +2,7 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.FieldType;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -26,65 +27,44 @@ public class ConvertFieldProcessorTest {
 
     @Test
     public void testConvertToBoolean() {
-        String path = "bool";
-        FieldType type = FieldType.BOOLEAN;
-
-        Map<String,Object> config = createConfig("path", path, "type", type.toString());
-
-        ConvertFieldProcessor convertFieldProcessor = createProcessor(ConvertFieldProcessor.class, config);
-
-        Doc doc = createDoc(path, "yes");
-
-        assertThat(convertFieldProcessor.process(doc).isSucceeded()).isTrue();
-
-        assertThat((Boolean) doc.getField(path)).isTrue();
+        testConversion("yes", true);
     }
 
     @Test
     public void testConvertToDouble() {
-        String path = "double";
-        FieldType type = FieldType.DOUBLE;
+        testConversion("1.55", 1.55d);
+    }
 
-        Map<String,Object> config = createConfig("path", path, "type", type.toString());
-
-        ConvertFieldProcessor convertFieldProcessor = createProcessor(ConvertFieldProcessor.class, config);
-
-        Doc doc = createDoc(path, "1.55");
-
-        assertThat(convertFieldProcessor.process(doc).isSucceeded()).isTrue();
-
-        assertThat((Double) doc.getField(path)).isEqualTo(1.55d);
+    @Test
+    public void testConvertToDoubleDefaultIsZero() {
+        testConversion("-", 0D);
     }
 
     @Test
     public void testConvertToLong() {
-        String path = "long";
-        FieldType type = FieldType.LONG;
+        testConversion( "12345", 12345L);
+    }
 
-        Map<String,Object> config = createConfig("path", path, "type", type.toString());
-
-        ConvertFieldProcessor convertFieldProcessor = createProcessor(ConvertFieldProcessor.class, config);
-
-        Doc doc = createDoc(path, "12345");
-
-        assertThat(convertFieldProcessor.process(doc).isSucceeded()).isTrue();
-
-        assertThat((Long) doc.getField(path)).isEqualTo(12345l);
+    @Test
+    public void testConvertToLongDefaultIsZero() {
+        testConversion("-", 0L);
     }
 
     @Test
     public void testConvertToString() {
-        String path = "string";
-        FieldType type = FieldType.STRING;
+        testConversion(12345, "12345");
+    }
 
-        Map<String,Object> config = createConfig("path", path, "type", type.toString());
-
+    private <T> void testConversion( Object value, T result) {
+        String resultClassName = result.getClass().getSimpleName().toLowerCase();
+        String path = RandomStringUtils.random(5);
+        Map<String,Object> config = createConfig("path", path, "type", resultClassName);
         ConvertFieldProcessor convertFieldProcessor = createProcessor(ConvertFieldProcessor.class, config);
 
-        Doc doc = createDoc(path, 12345);
+        Doc doc = createDoc(path, value);
 
         assertThat(convertFieldProcessor.process(doc).isSucceeded()).isTrue();
 
-        assertThat((String) doc.getField(path)).isEqualTo("12345");
+        assertThat((T) doc.getField(path)).isEqualTo(result);
     }
 }
