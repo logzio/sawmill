@@ -1,21 +1,38 @@
 package io.logz.sawmill.conditions;
 
+import io.logz.sawmill.ConditionFactoryRegistry;
+import io.logz.sawmill.ConditionalFactoriesLoader;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.parser.ConditionParser;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Map;
 import java.util.regex.PatternSyntaxException;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class MatchRegexConditionTest {
+    private ConditionParser conditionParser;
+
+    @Before
+    public void init() {
+        ConditionFactoryRegistry conditionFactoryRegistry = new ConditionFactoryRegistry();
+        ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
+        conditionParser = new ConditionParser(conditionFactoryRegistry);
+    }
 
     @Test
     public void testMatchingValueCaseSensitive() {
         String field = "field1";
         String regex = "^Hello.+";
-        MatchRegexCondition matchRegexCondition = new MatchRegexCondition(field, regex, false, false);
+        Map<String, Object> config = createConfig("field", field,
+                "regex", regex,
+                "matchPartOfValue", false);
+        MatchRegexCondition matchRegexCondition = new MatchRegexCondition.Factory().create(config, conditionParser);
 
         Doc doc = createDoc("field1", "Hello World!");
         assertThat(matchRegexCondition.evaluate(doc)).isTrue();
@@ -28,7 +45,11 @@ public class MatchRegexConditionTest {
     public void testMatchingValueCaseInsensitive() {
         String field = "field1";
         String regex = "^Hello.+";
-        MatchRegexCondition matchRegexCondition = new MatchRegexCondition(field, regex, true, false);
+        Map<String, Object> config = createConfig("field", field,
+                "regex", regex,
+                "caseInsensitive", true,
+                "matchPartOfValue", false);
+        MatchRegexCondition matchRegexCondition = new MatchRegexCondition.Factory().create(config, conditionParser);
 
         Doc doc = createDoc("field1", "Hello World!");
         assertThat(matchRegexCondition.evaluate(doc)).isTrue();
@@ -41,12 +62,16 @@ public class MatchRegexConditionTest {
     public void testMatchingPartOfValue() {
         String field = "field1";
         String regex = "World";
-        MatchRegexCondition matchRegexCondition = new MatchRegexCondition(field, regex, false, false);
+        Map<String, Object> config = createConfig("field", field,
+                "regex", regex,
+                "matchPartOfValue", false);
+        MatchRegexCondition matchRegexCondition = new MatchRegexCondition.Factory().create(config, conditionParser);
 
         Doc doc = createDoc("field1", "Hello World!");
         assertThat(matchRegexCondition.evaluate(doc)).isFalse();
 
-        MatchRegexCondition matchPartOfValueRegexCondition = new MatchRegexCondition(field, regex, false, true);
+        config.remove("matchPartOfValue");
+        MatchRegexCondition matchPartOfValueRegexCondition = new MatchRegexCondition.Factory().create(config, conditionParser);
         doc = createDoc("field1", "hello World!");
         assertThat(matchPartOfValueRegexCondition.evaluate(doc)).isTrue();
     }
@@ -55,12 +80,15 @@ public class MatchRegexConditionTest {
     public void testMatchingPartOfValueCaseInsensitive() {
         String field = "field1";
         String regex = "world";
-        MatchRegexCondition matchRegexCondition = new MatchRegexCondition(field, regex, false, true);
+        Map<String, Object> config = createConfig("field", field,
+                "regex", regex);
+        MatchRegexCondition matchRegexCondition = new MatchRegexCondition.Factory().create(config, conditionParser);
 
         Doc doc = createDoc("field1", "Hello World!");
         assertThat(matchRegexCondition.evaluate(doc)).isFalse();
 
-        MatchRegexCondition matchPartOfValueRegexCondition = new MatchRegexCondition(field, regex, true, true);
+        config.put("caseInsensitive", true);
+        MatchRegexCondition matchPartOfValueRegexCondition = new MatchRegexCondition.Factory().create(config, conditionParser);
         doc = createDoc("field1", "hello World!");
         assertThat(matchPartOfValueRegexCondition.evaluate(doc)).isTrue();
     }
@@ -69,7 +97,11 @@ public class MatchRegexConditionTest {
     public void testNotMatchingValue() {
         String field = "field1";
         String regex = "Wed.+";
-        MatchRegexCondition matchRegexCondition = new MatchRegexCondition(field, regex, false, false);
+        Map<String, Object> config = createConfig("field", field,
+                "regex", regex,
+                "caseInsensitive", false,
+                "matchPartOfValue", false);
+        MatchRegexCondition matchRegexCondition = new MatchRegexCondition.Factory().create(config, conditionParser);
 
         Doc doc = createDoc("field1", "Thursday");
         assertThat(matchRegexCondition.evaluate(doc)).isFalse();
@@ -93,7 +125,11 @@ public class MatchRegexConditionTest {
     public void testWrongValueType() {
         String field = "field1";
         String regex = "Wed.+";
-        MatchRegexCondition matchRegexCondition = new MatchRegexCondition(field, regex, false, false);
+        Map<String, Object> config = createConfig("field", field,
+                "regex", regex,
+                "caseInsensitive", false,
+                "matchPartOfValue", false);
+        MatchRegexCondition matchRegexCondition = new MatchRegexCondition.Factory().create(config, conditionParser);
 
         Doc doc = createDoc("field1", 123);
         assertThat(matchRegexCondition.evaluate(doc)).isFalse();
