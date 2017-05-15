@@ -1,10 +1,16 @@
 package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.Template;
+import io.logz.sawmill.TemplateService;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
+import static io.logz.sawmill.utils.FactoryUtils.templateService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -52,5 +58,26 @@ public class AddAndRemoveFieldProcessorTest {
         assertThat(removeFieldProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThatThrownBy(() ->  doc.getField("messageHola")).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    public void testRemoveSeveralFields() {
+        List<String> fields = Arrays.asList("field1", "field2", "field3", "fieldThatDoesntExists", "field{{withTemplate}}");
+        RemoveFieldProcessor removeFieldProcessor = createProcessor(RemoveFieldProcessor.class, "fields", fields);
+
+        Doc doc = createDoc("field1", "value1",
+                "field2", "value2",
+                "field3", "value3",
+                "field4", "value4",
+                "withTemplate", "4");
+
+        assertThat(removeFieldProcessor.process(doc).isSucceeded()).isTrue();
+
+        assertThat(doc.getSource().size()).isEqualTo(1);
+
+        fields.forEach(field -> {
+            Template template = templateService.createTemplate(field);
+            assertThat(doc.hasField(template.render(doc))).isFalse();
+        });
     }
 }
