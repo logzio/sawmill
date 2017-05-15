@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
 
 public class DateTemplateHandler {
 
-    public TemplateFunction date() {
+    public TemplateFunction dateTemplate() {
         return this::getCurrentDateByFormat;
     }
 
