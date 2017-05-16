@@ -17,20 +17,22 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class TemplateTest {
     public static final String NAME_FIELD = "name";
     public static final String SALUD_FIELD = "salud";
+    // TODO: change it to date after removing compatibility
+    public static final String DATE_FIELD = "someDate";
     public static Template template;
 
     @BeforeClass
     public static void init() {
-        template = new TemplateService().createTemplate("{{" + SALUD_FIELD + "}} señor {{" + NAME_FIELD + "}}, Have a good day");
+        template = new TemplateService().createTemplate("{{" + SALUD_FIELD + "}} señor {{" + NAME_FIELD + "}}, Have a good day{{" + DATE_FIELD + "}}");
     }
 
     @Test
     public void testDocWithAllNeededFields() {
-        Doc doc = createDoc(NAME_FIELD, "Robles", SALUD_FIELD, "Buenos Dias");
+        Doc doc = createDoc(NAME_FIELD, "Robles", SALUD_FIELD, "Buenos Dias", DATE_FIELD, ", today");
 
         String value = template.render(doc);
 
-        assertThat(value).isEqualTo("Buenos Dias señor Robles, Have a good day");
+        assertThat(value).isEqualTo("Buenos Dias señor Robles, Have a good day, today");
     }
 
     @Test
@@ -72,7 +74,7 @@ public class TemplateTest {
     @Test
     public void testDateTemplate() {
         String dateFormat = "dd.mm.yyyy";
-        Template template = new TemplateService().createTemplate("Today is {{#date}}" + dateFormat + "{{/date}}");
+        Template template = new TemplateService().createTemplate("Today is {{#dateTemplate}}" + dateFormat + "{{/dateTemplate}}");
         Doc doc = createDoc("field1", "value1");
 
         String expectedDate =  DateTimeFormatter.ofPattern(dateFormat).format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneOffset.UTC));
@@ -82,9 +84,19 @@ public class TemplateTest {
     @Test
     public void testInvalidDateTemplate() {
         String dateFormat = "hello";
-        Template template = new TemplateService().createTemplate("Today is {{#date}}" + dateFormat + "{{/date}}");
+        Template template = new TemplateService().createTemplate("Today is {{#dateTemplate}}" + dateFormat + "{{/dateTemplate}}");
         Doc doc = createDoc("field1", "value1");
 
         assertThatThrownBy(() -> template.render(doc)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void testCompatibilityDateTemplate() {
+        String dateFormat = "dd.mm.yyyy";
+        Template template = new TemplateService().createTemplate("Today is {{#date}}" + dateFormat + "{{/date}}");
+        Doc doc = createDoc("field1", "value1");
+
+        String expectedDate =  DateTimeFormatter.ofPattern(dateFormat).format(ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneOffset.UTC));
+        assertThat(template.render(doc)).isEqualTo("Today is " + expectedDate);
     }
 }

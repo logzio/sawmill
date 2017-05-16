@@ -286,7 +286,7 @@ Complex If Statement
       "addField": {
         "config": {
           "path": "timestamp",
-          "value": "{{date}} {{time}} {{#date}}yyyy{{/date}}"
+          "value": "{{date}} {{time}} {{#dateTemplate}}yyyy{{/dateTemplate}}"
         }
       }
     }
