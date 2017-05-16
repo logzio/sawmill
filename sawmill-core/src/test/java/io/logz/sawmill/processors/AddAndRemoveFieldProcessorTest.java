@@ -3,6 +3,7 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Template;
 import io.logz.sawmill.TemplateService;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -11,6 +12,7 @@ import java.util.List;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static io.logz.sawmill.utils.FactoryUtils.templateService;
+import static java.util.Collections.EMPTY_MAP;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -79,5 +81,11 @@ public class AddAndRemoveFieldProcessorTest {
             Template template = templateService.createTemplate(field);
             assertThat(doc.hasField(template.render(doc))).isFalse();
         });
+    }
+
+    @Test
+    public void testRemoveProcessorWithBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(RemoveFieldProcessor.class, EMPTY_MAP)).isInstanceOf(ProcessorConfigurationException.class);
+        assertThatThrownBy(() -> createProcessor(RemoveFieldProcessor.class, "fields", Arrays.asList("1", "2"), "path", "3")).isInstanceOf(ProcessorConfigurationException.class);
     }
 }
