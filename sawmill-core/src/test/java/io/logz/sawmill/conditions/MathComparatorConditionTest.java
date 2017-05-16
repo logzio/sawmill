@@ -8,12 +8,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Map;
-import java.util.regex.PatternSyntaxException;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class MathComparatorConditionTest {
 
@@ -159,6 +157,36 @@ public class MathComparatorConditionTest {
         assertThat(mathComparatorCondition.evaluate(doc)).isFalse();
 
         doc = createDoc("field1", 25l);
+        assertThat(mathComparatorCondition.evaluate(doc)).isFalse();
+    }
+
+    @Test
+    public void testGtAndLteWithFloats() {
+        String field = "field1";
+        double lte = 20.2;
+        double gt = 10.1;
+
+        Map<String, Object> config = createConfig("field", field,
+                "lte", lte,
+                "gt", gt);
+        MathComparatorCondition mathComparatorCondition = new MathComparatorCondition.Factory().create(config, conditionParser);
+
+        Doc doc = createDoc("field1", 10.1);
+        assertThat(mathComparatorCondition.evaluate(doc)).isFalse();
+
+        doc = createDoc("field1", 20.2);
+        assertThat(mathComparatorCondition.evaluate(doc)).isTrue();
+
+        doc = createDoc("field1", 10.1111);
+        assertThat(mathComparatorCondition.evaluate(doc)).isTrue();
+
+        doc = createDoc("field1", 20.1999);
+        assertThat(mathComparatorCondition.evaluate(doc)).isTrue();
+
+        doc = createDoc("field1", 10.0999);
+        assertThat(mathComparatorCondition.evaluate(doc)).isFalse();
+
+        doc = createDoc("field1", 20.2001);
         assertThat(mathComparatorCondition.evaluate(doc)).isFalse();
     }
 }

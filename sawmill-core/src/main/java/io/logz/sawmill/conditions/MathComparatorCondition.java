@@ -7,8 +7,6 @@ import io.logz.sawmill.parser.ConditionParser;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;
-import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
 
@@ -16,12 +14,12 @@ import static java.util.Objects.requireNonNull;
 public class MathComparatorCondition implements Condition {
 
     private final String field;
-    private final Long gte;
-    private final Long gt;
-    private final Long lte;
-    private final Long lt;
+    private final Double gte;
+    private final Double gt;
+    private final Double lte;
+    private final Double lt;
 
-    public MathComparatorCondition(String field, Long gte, Long gt, Long lte, Long lt) {
+    public MathComparatorCondition(String field, Double gte, Double gt, Double lte, Double lt) {
         this.field = requireNonNull(field);
         this.gte = gte;
         this.gt = gt;
@@ -32,7 +30,7 @@ public class MathComparatorCondition implements Condition {
     @Override
     public boolean evaluate(Doc doc) {
         if (!doc.hasField(field, Number.class)) return false;
-        Long value = ((Number)doc.getField(this.field)).longValue();
+        double value = ((Number)doc.getField(this.field)).doubleValue();
 
         boolean greaterThan = (gte == null || value >= gte) && (gt == null || value > gt);
         boolean lessThan = (lte == null || value <= lte) && (lt == null || value < lt);
@@ -59,10 +57,10 @@ public class MathComparatorCondition implements Condition {
     public static class Configuration {
 
         private String field;
-        private Long gte;
-        private Long gt;
-        private Long lte;
-        private Long lt;
+        private Double gte;
+        private Double gt;
+        private Double lte;
+        private Double lt;
 
         public Configuration() {}
 
@@ -70,19 +68,19 @@ public class MathComparatorCondition implements Condition {
             return field;
         }
 
-        public Long getGte() {
+        public Double getGte() {
             return gte;
         }
 
-        public Long getGt() {
+        public Double getGt() {
             return gt;
         }
 
-        public Long getLte() {
+        public Double getLte() {
             return lte;
         }
 
-        public Long getLt() {
+        public Double getLt() {
             return lt;
         }
     }
