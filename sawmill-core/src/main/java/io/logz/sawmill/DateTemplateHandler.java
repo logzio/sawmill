@@ -9,6 +9,11 @@ import java.time.format.DateTimeFormatter;
 
 public class DateTemplateHandler {
 
+    // keep compatibility until we change configs
+    public TemplateFunction date() {
+        return this::getCurrentDateByFormat;
+    }
+
     public TemplateFunction dateTemplate() {
         return this::getCurrentDateByFormat;
     }
