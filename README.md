@@ -62,9 +62,6 @@ Example:
 	- values - array of values to add, i.e. values: ["val1","val2"]
 - Add Tag [addTag] - Supports "templates"
 	- tags - array of tags to add, i.e. tags: ["tag1","tag2"]
-- Convert Field [convert]
-	- path
-	- type (one of: long, double, string, boolean)
 - Date [date]
 	- field 
 	- targetField
