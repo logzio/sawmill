@@ -167,8 +167,8 @@ Example:
 	- separator
 - LowerCase [lowerCase]
 	- field
-- Convert [convert]
-        - path - must provide exactly one of path or paths.
+- Convert [convert] must provide exactly one of path or paths
+	- path
 	- paths - a list of strings representing paths.
 	- type - one of [int,long,float,double,string,boolean]
 	
