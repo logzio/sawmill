@@ -170,6 +170,11 @@ Example:
 	- separator
 - LowerCase [lowerCase]
 	- field
+- Convert [convert]
+        - path - must provide exactly one of path or paths.
+	- paths - a list of strings representing paths.
+	- type - one of [int,long,float,double,string,boolean]
+	
   
 # If Conditions
 
@@ -195,6 +200,12 @@ Example:
 - fieldType
 	- path
 	- type (One of the following: string,long, double, list, jsonObject)
+- mathComparator (can be used to check if a value is grater/smaller then, or a value is in a range)
+	- field
+	- gt
+	- gte
+	- lt
+	- lte
 	
 Example:
    
