@@ -51,7 +51,7 @@ public class MatchRegexCondition implements Condition {
         public Factory() {}
 
         @Override
-        public Condition create(Map<String, Object> config, ConditionParser conditionParser) {
+        public MatchRegexCondition create(Map<String, Object> config, ConditionParser conditionParser) {
             MatchRegexCondition.Configuration configuration = JsonUtils.fromJsonMap(MatchRegexCondition.Configuration.class, config);
             return new MatchRegexCondition(configuration.getField(), configuration.getRegex(), configuration.isCaseInsensitive(), configuration.isMatchPartOfValue());
         }
@@ -63,7 +63,7 @@ public class MatchRegexCondition implements Condition {
         private String field;
         private String regex;
         private boolean caseInsensitive;
-        private boolean matchPartOfValue;
+        private boolean matchPartOfValue = true;
 
         public Configuration() {}
 
