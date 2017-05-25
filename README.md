@@ -239,7 +239,7 @@ Example:
 	- field
 	- regex
 	- caseInsensitive - default false
-	- matchPartOfValue - default false
+	- matchPartOfValue - default true
 - exists
 	- field
 - fieldType
