@@ -28,11 +28,11 @@ public class TemplateTest {
 
     @Test
     public void testDocWithAllNeededFields() {
-        Doc doc = createDoc(NAME_FIELD, "Robles", SALUD_FIELD, "Buenos Dias", DATE_FIELD, ", today");
+        Doc doc = createDoc(NAME_FIELD, "'Robles'", SALUD_FIELD, "Buenos Dias", DATE_FIELD, ", today");
 
         String value = template.render(doc);
 
-        assertThat(value).isEqualTo("Buenos Dias señor Robles, Have a good day, today");
+        assertThat(value).isEqualTo("Buenos Dias señor 'Robles', Have a good day, today");
     }
 
     @Test
@@ -50,7 +50,7 @@ public class TemplateTest {
 
         String value = template.render(doc);
 
-        assertThat(value).isEqualTo("{map&#61;field} señor , Have a good day");
+        assertThat(value).isEqualTo("{map=field} señor , Have a good day");
     }
 
     @Test
