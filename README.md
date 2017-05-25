@@ -36,6 +36,7 @@ Simple configuration example:
 	- field
 	- patterns [array]
 	- overwrite [array]
+	- ignoreMissing [boolean default = true  means that if the field is missing this is considered successful]
 	
 Example:
 ```json
@@ -167,11 +168,58 @@ Example:
 	- separator
 - LowerCase [lowerCase]
 	- field
+- UpperCase [upperCase]
+	- fields [array]
+- Strip [strip]
+	- fields [array]
+	
 - Convert [convert] must provide exactly one of path or paths
 	- path
 	- paths - a list of strings representing paths.
 	- type - one of [int,long,float,double,string,boolean]
-	
+
+- CSV [csv]
+	- field
+	- targetField
+	- separator
+	- quoteChar
+	- columns [array]
+	- autoGenerateColumnNames [boolean - default = true]
+	- skipEmptyColumns [boolean - default = false]
+	- convert [this is a json object with key:values where the key is the field and the value is the type as specified in the Convert processor]  EG:
+```json
+{
+  "steps": [
+    {
+      "csv": {
+        "config": {
+          "field": "csv",
+          "separator": ",",
+          "columns": [
+            "field1",
+            "field2",
+            "field3",
+            "field4"
+          ],
+          "convert": {
+            "field1": "long",
+            "field2": "boolean"
+          }
+        }
+      }
+    }
+  ]
+}
+```	
+- appendList [appendList]
+	- path
+	- values [array]
+
+- anonymize [anonymize]
+	- fields [array]
+	- algorithm
+	- key
+
   
 # If Conditions
 
@@ -199,10 +247,10 @@ Example:
 	- type (One of the following: string,long, double, list, jsonObject)
 - mathComparator (can be used to check if a value is grater/smaller then, or a value is in a range)
 	- field
-	- gt
-	- gte
-	- lt
-	- lte
+	- gt (greater than)
+	- gte (greater than or equal to)
+	- lt (less than)
+	- lte (less than or equal to)
 	
 Example:
    
