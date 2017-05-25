@@ -43,7 +43,7 @@ public class AnonymizeProcessor implements Processor {
         }
 
         if (!missingFields.isEmpty()) {
-            return ProcessResult.failure(String.format("failed to anonymize fields in path [%s], fields are missing or not instance of [%s]", missingFields, String.class));
+            return ProcessResult.failure(String.format("failed to anonymize fields in path [%s], fields are missing or not instance of [String]", missingFields));
         }
 
         return ProcessResult.success();
@@ -124,10 +124,5 @@ public class AnonymizeProcessor implements Processor {
         };
 
         public abstract String anonimize(String value);
-
-        @Override
-        public String toString() {
-            return this.name().toUpperCase();
-        }
     }
 }
