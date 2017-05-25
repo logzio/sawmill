@@ -30,11 +30,11 @@ public class TemplateTest {
 
     @Test
     public void testDocWithAllNeededFields() {
-        Doc doc = createDoc(NAME_FIELD, "Robles", SALUD_FIELD, "Buenos Dias", DATE_FIELD, ", today");
+        Doc doc = createDoc(NAME_FIELD, "'Robles'", SALUD_FIELD, "Buenos Dias", DATE_FIELD, ", today");
 
         String value = template.render(doc);
 
-        assertThat(value).isEqualTo("Buenos Dias señor Robles, Have a good day, today");
+        assertThat(value).isEqualTo("Buenos Dias señor 'Robles', Have a good day, today");
     }
 
     @Test
