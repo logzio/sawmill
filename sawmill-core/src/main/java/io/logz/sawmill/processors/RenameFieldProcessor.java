@@ -6,33 +6,45 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.Template;
 import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "rename", factory = RenameFieldProcessor.Factory.class)
 public class RenameFieldProcessor implements Processor {
-    private final Template from;
-    private final Template to;
+    private final Map<Template, Template> renames;
 
-    public RenameFieldProcessor(Template from, Template to) {
-        this.from = checkNotNull(from, "from field path cannot be null");
-        this.to = checkNotNull(to, "to field path cannot be null");
+    public RenameFieldProcessor(Map<Template, Template> renames) {
+        this.renames = requireNonNull(renames, "cannot work without any renames");
     }
 
     @Override
     public ProcessResult process(Doc doc) {
-        String renderedFrom = from.render(doc);
-        String renderedTo = to.render(doc);
-        if (!doc.hasField(renderedFrom)) {
-            return ProcessResult.failure(String.format("failed to rename field [%s] to [%s], couldn't find field", renderedFrom, renderedTo));
+        List<String> missingFields = new ArrayList<>();
+        for (Map.Entry<Template, Template> rename : renames.entrySet()) {
+            String renderedFrom = rename.getKey().render(doc);
+            if (!doc.hasField(renderedFrom)) {
+                missingFields.add(renderedFrom);
+                continue;
+            }
+            String renderedTo = rename.getValue().render(doc);
+            Object fieldValue = doc.getField(renderedFrom);
+            doc.removeField(renderedFrom);
+            doc.addField(renderedTo, fieldValue);
         }
-        Object fieldValue = doc.getField(renderedFrom);
-        doc.removeField(renderedFrom);
-        doc.addField(renderedTo, fieldValue);
+
+        if (!missingFields.isEmpty()) {
+            return ProcessResult.failure(String.format("failed to rename fields [%s], fields are missing", missingFields));
+        }
 
         return ProcessResult.success();
     }
@@ -50,15 +62,34 @@ public class RenameFieldProcessor implements Processor {
         public Processor create(Map<String,Object> config) {
             RenameFieldProcessor.Configuration renameFieldConfig = JsonUtils.fromJsonMap(RenameFieldProcessor.Configuration.class, config);
 
-            Template toTemplate = templateService.createTemplate(renameFieldConfig.getTo());
-            Template fromTemplate = templateService.createTemplate(renameFieldConfig.getFrom());
-            return new RenameFieldProcessor(fromTemplate, toTemplate);
+            Map<Template, Template> renames = new HashMap<>();
+
+            if (renameFieldConfig.getRenames() != null && (renameFieldConfig.getFrom() != null || renameFieldConfig.getTo() != null)) {
+                throw new ProcessorConfigurationException("failed to parse rename processor config, both multiple renames and single rename are defined when only 1 allowed");
+            }
+
+            if (renameFieldConfig.getRenames() == null && (renameFieldConfig.getFrom() == null || renameFieldConfig.getTo() == null))
+            {
+                throw new ProcessorConfigurationException("failed to parse rename processor config, couldn't resolve rename/s");
+            }
+
+            if (renameFieldConfig.getRenames() == null) {
+                renames.put(templateService.createTemplate(renameFieldConfig.getFrom()),
+                        templateService.createTemplate(renameFieldConfig.getTo()));
+            } else {
+                renameFieldConfig.getRenames().entrySet()
+                        .forEach((entry -> renames.put(templateService.createTemplate(entry.getKey()),
+                                templateService.createTemplate(entry.getValue()))));
+            }
+
+            return new RenameFieldProcessor(renames);
         }
     }
 
     public static class Configuration implements Processor.Configuration {
         private String from;
         private String to;
+        private Map<String, String> renames;
 
         public Configuration() { }
 
@@ -70,5 +101,9 @@ public class RenameFieldProcessor implements Processor {
         public String getFrom() { return from; }
 
         public String getTo() { return to; }
+
+        public Map<String, String> getRenames() {
+            return renames;
+        }
     }
 }

@@ -2,6 +2,7 @@ package io.logz.sawmill.processors;
 
 import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.ProcessResult;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
@@ -95,5 +96,33 @@ public class RenameFieldProcessorTest {
 
         Map renamedValue = doc.getField("field-b");
         assertThat(renamedValue.get("x")).isEqualTo(5);
+    }
+
+    @Test
+    public void testMultipleRenames() {
+        Map<String, String> renames = ImmutableMap.of("field1", "fieldA",
+                "field2", "{{field3}}",
+                "field3", "fieldC");
+
+        Doc doc = createDoc("field1", "value1",
+                "field2", "value2",
+                "field3", "value3");
+
+        RenameFieldProcessor renameFieldProcessor = createProcessor(RenameFieldProcessor.class, "renames", renames);
+
+        ProcessResult processResult = renameFieldProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat(doc.hasField("fieldA")).isTrue();
+        assertThat((String) doc.getField("fieldA")).isEqualTo("value1");
+        assertThat(doc.hasField("field1")).isFalse();
+
+        assertThat(doc.hasField("value3")).isTrue();
+        assertThat((String) doc.getField("value3")).isEqualTo("value2");
+        assertThat(doc.hasField("field2")).isFalse();
+        
+        assertThat(doc.hasField("fieldC")).isTrue();
+        assertThat((String) doc.getField("fieldC")).isEqualTo("value3");
+        assertThat(doc.hasField("field3")).isFalse();
     }
 }
