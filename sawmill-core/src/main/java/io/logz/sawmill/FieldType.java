@@ -8,25 +8,25 @@ public enum FieldType {
     INT {
         @Override
         public Object convertFrom(Object value) {
-            return MoreObjects.firstNonNull(Longs.tryParse(value.toString()), 0);
+            return Longs.tryParse(value.toString());
         }
     },
     LONG {
         @Override
         public Object convertFrom(Object value) {
-            return MoreObjects.firstNonNull(Longs.tryParse(value.toString()), 0L);
+            return Longs.tryParse(value.toString());
         }
     },
     FLOAT {
         @Override
         public Object convertFrom(Object value) {
-            return MoreObjects.firstNonNull(Doubles.tryParse(value.toString()), 0F);
+            return Doubles.tryParse(value.toString());
         }
     },
     DOUBLE {
         @Override
         public Object convertFrom(Object value) {
-            return MoreObjects.firstNonNull(Doubles.tryParse(value.toString()), 0D); }
+            return Doubles.tryParse(value.toString()); }
     },
     STRING {
         @Override
@@ -63,9 +63,6 @@ public enum FieldType {
     public abstract Object convertFrom(Object value);
 
     public Object convertFrom(Object value, Object defaultValue) {
-        Object valueAfterConvert = convertFrom(value);
-        if (valueAfterConvert == null) return defaultValue;
-
-        return valueAfterConvert;
+        return MoreObjects.firstNonNull(convertFrom(value), defaultValue);
     }
 }
