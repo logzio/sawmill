@@ -8,6 +8,8 @@ import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -64,19 +66,17 @@ public class RenameFieldProcessor implements Processor {
 
             Map<Template, Template> renames = new HashMap<>();
 
-            if (renameFieldConfig.getRenames() != null && (renameFieldConfig.getFrom() != null || renameFieldConfig.getTo() != null)) {
-                throw new ProcessorConfigurationException("failed to parse rename processor config, both multiple renames and single rename are defined when only 1 allowed");
-            }
-
-            if (renameFieldConfig.getRenames() == null && (renameFieldConfig.getFrom() == null || renameFieldConfig.getTo() == null))
+            if (MapUtils.isEmpty(renameFieldConfig.getRenames()) && (StringUtils.isEmpty(renameFieldConfig.getFrom()) || StringUtils.isEmpty(renameFieldConfig.getTo())))
             {
                 throw new ProcessorConfigurationException("failed to parse rename processor config, couldn't resolve rename/s");
             }
 
-            if (renameFieldConfig.getRenames() == null) {
+            if (StringUtils.isNotEmpty(renameFieldConfig.getTo()) && StringUtils.isNotEmpty(renameFieldConfig.getFrom())) {
                 renames.put(templateService.createTemplate(renameFieldConfig.getFrom()),
                         templateService.createTemplate(renameFieldConfig.getTo()));
-            } else {
+            }
+
+            if (MapUtils.isNotEmpty(renameFieldConfig.getRenames())) {
                 renameFieldConfig.getRenames().entrySet()
                         .forEach((entry -> renames.put(templateService.createTemplate(entry.getKey()),
                                 templateService.createTemplate(entry.getValue()))));

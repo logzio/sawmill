@@ -7,6 +7,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
@@ -100,29 +101,35 @@ public class RenameFieldProcessorTest {
 
     @Test
     public void testMultipleRenames() {
-        Map<String, String> renames = ImmutableMap.of("field1", "fieldA",
-                "field2", "{{field3}}",
-                "field3", "fieldC");
+        Map<String, String> renames = ImmutableMap.of("fieldFrom1", "fieldTo1",
+                "fieldFrom2", "{{field2}}",
+                "{{field3}}", "fieldTo3",
+                "{{field4}}", "{{field5}}");
 
-        Doc doc = createDoc("field1", "value1",
-                "field2", "value2",
-                "field3", "value3");
+        Doc doc = createDoc("fieldFrom1", "value1",
+                "fieldFrom2", "value2",
+                "fieldFrom3", "value3",
+                "fieldFrom4", "value4",
+                "fieldFrom5", "value5",
+                "field2", "fieldTo2",
+                "field3", "fieldFrom3",
+                "field4", "fieldFrom4",
+                "field5", "fieldTo4");
 
-        RenameFieldProcessor renameFieldProcessor = createProcessor(RenameFieldProcessor.class, "renames", renames);
+        Map<String, Object> config = createConfig(
+                "from", "fieldFrom5",
+                "to", "fieldTo5",
+                "renames", renames);
+
+        RenameFieldProcessor renameFieldProcessor = createProcessor(RenameFieldProcessor.class, config);
 
         ProcessResult processResult = renameFieldProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isTrue();
-        assertThat(doc.hasField("fieldA")).isTrue();
-        assertThat((String) doc.getField("fieldA")).isEqualTo("value1");
-        assertThat(doc.hasField("field1")).isFalse();
-
-        assertThat(doc.hasField("value3")).isTrue();
-        assertThat((String) doc.getField("value3")).isEqualTo("value2");
-        assertThat(doc.hasField("field2")).isFalse();
-        
-        assertThat(doc.hasField("fieldC")).isTrue();
-        assertThat((String) doc.getField("fieldC")).isEqualTo("value3");
-        assertThat(doc.hasField("field3")).isFalse();
+        for (int i = 1; i <= 5; i++) {
+            assertThat(doc.hasField("fieldTo" + i)).isTrue();
+            assertThat((String) doc.getField("fieldTo" + i)).isEqualTo("value" + i);
+            assertThat(doc.hasField("fieldFrom" + i)).isFalse();
+        }
     }
 }
