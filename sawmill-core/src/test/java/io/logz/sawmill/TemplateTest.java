@@ -20,10 +20,12 @@ public class TemplateTest {
     // TODO: change it to date after removing compatibility
     public static final String DATE_FIELD = "someDate";
     public static Template template;
+    private static TemplateService templateService;
 
     @BeforeClass
     public static void init() {
-        template = new TemplateService().createTemplate("{{" + SALUD_FIELD + "}} señor {{" + NAME_FIELD + "}}, Have a good day{{" + DATE_FIELD + "}}");
+        templateService = new TemplateService();
+        template = templateService.createTemplate("{{" + SALUD_FIELD + "}} señor {{" + NAME_FIELD + "}}, Have a good day{{" + DATE_FIELD + "}}");
     }
 
     @Test
@@ -46,20 +48,22 @@ public class TemplateTest {
 
     @Test
     public void testDocWithMapField() {
-        Doc doc = createDoc("anotherField", "Robles", SALUD_FIELD, ImmutableMap.of("map", "field"));
+        Template mapTemplate = templateService.createTemplate("this is {{map}} and this is specific field {{map.field1}}");
+        Doc doc = createDoc("map", ImmutableMap.of("field1", "value1", "field2", "value2"));
 
-        String value = template.render(doc);
+        String value = mapTemplate.render(doc);
 
-        assertThat(value).isEqualTo("{map=field} señor , Have a good day");
+        assertThat(value).isEqualTo("this is {field1=value1, field2=value2} and this is specific field value1");
     }
 
     @Test
     public void testDocWithListField() {
-        Doc doc = createDoc("anotherField", "Robles", SALUD_FIELD, Arrays.asList("list", "field"));
+        Template listTemplate = templateService.createTemplate("this is {{list}} and this is specific index {{list.0}}");
+        Doc doc = createDoc("list", Arrays.asList("index0", "index1", "index3"));
 
-        String value = template.render(doc);
+        String value = listTemplate.render(doc);
 
-        assertThat(value).isEqualTo("[list, field] señor , Have a good day");
+        assertThat(value).isEqualTo("this is {0=index0, 1=index1, 2=index3} and this is specific index index0");
     }
 
     @Test
