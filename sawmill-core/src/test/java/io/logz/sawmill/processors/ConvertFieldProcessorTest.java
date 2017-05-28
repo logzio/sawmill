@@ -92,7 +92,7 @@ public class ConvertFieldProcessorTest {
         String errorMessage = processResult.getError().get().getMessage();
         assertThat(errorMessage.contains("nonExistsField")).isTrue();
         assertThat(doc.hasField("field1", Double.class)).isTrue();
-        assertThat(doc.hasField("field2", Double.class)).isTrue();
+        assertThat(doc.hasField("field2", Long.class)).isTrue(); // Zero is long
         assertThat(doc.hasField("field3", Double.class)).isTrue();
     }
 
@@ -152,7 +152,7 @@ public class ConvertFieldProcessorTest {
 
     @Test
     public void testConvertToDoubleDefaultIsZero() {
-        testConversion("-", 0D);
+        testConversion("-", 0l);
     }
 
     @Test

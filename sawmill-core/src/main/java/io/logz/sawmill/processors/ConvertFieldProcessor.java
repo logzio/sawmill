@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static io.logz.sawmill.FieldType.BOOLEAN;
+import static io.logz.sawmill.FieldType.STRING;
 import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "convert", factory = ConvertFieldProcessor.Factory.class)
@@ -41,7 +43,12 @@ public class ConvertFieldProcessor implements Processor {
             }
             Object beforeCast = doc.getField(path);
 
-            Object afterCast = fieldType.convertFrom(beforeCast);
+            Object afterCast;
+            if (fieldType == BOOLEAN || fieldType == STRING) {
+                 afterCast = fieldType.convertFrom(beforeCast);
+            } else {
+                afterCast = fieldType.convertFrom(beforeCast, 0l);
+            }
 
             if (afterCast == null) {
                 errorMessages.add(String.format("failed to convert field in path [%s] to %s, value [%s].", path, fieldType, beforeCast));

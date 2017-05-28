@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.logz.sawmill.FieldType.DOUBLE;
 import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "math", factory = MathProcessor.Factory.class)
@@ -41,13 +42,7 @@ public class MathProcessor implements Processor {
                 return ProcessResult.failure("field [%s] is missing");
             }
 
-            Double value = null;
-            Object fieldValue = doc.getField(variable);
-            if (fieldValue instanceof Number) {
-                value = ((Number) fieldValue).doubleValue();
-            } else if (fieldValue instanceof String) {
-                value = Doubles.tryParse((String) fieldValue);
-            }
+            Double value = resolveVariable(doc, variable);
 
             if (value == null) {
                 return ProcessResult.failure("field [%s] is not a number");
@@ -67,6 +62,11 @@ public class MathProcessor implements Processor {
         return ProcessResult.success();
     }
 
+    private Double resolveVariable(Doc doc, String variable) {
+        Object fieldValue = doc.getField(variable);
+        return (Double) DOUBLE.convertFrom(fieldValue);
+    }
+
     public static class Factory implements Processor.Factory {
         private final Pattern mustachePattern = Pattern.compile("\\{\\{(.+?)\\}\\}");
 
@@ -82,11 +82,11 @@ public class MathProcessor implements Processor {
                         .variables(variables)
                         .build();
             } catch (IllegalArgumentException e) {
-                throw new ProcessorConfigurationException("invalid expression");
+                throw new ProcessorConfigurationException(String.format("invalid expression [%s]", mathConfig.getExpression()));
             }
 
             if (!expression.validate(false).isValid()) {
-                throw new ProcessorConfigurationException("invalid expression");
+                throw new ProcessorConfigurationException(String.format("invalid expression [%s]", mathConfig.getExpression()));
             }
 
             return new MathProcessor(mathConfig.getTargetField(), expression, variables);
