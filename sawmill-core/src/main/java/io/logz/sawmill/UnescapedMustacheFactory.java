@@ -7,6 +7,7 @@ import com.github.mustachejava.reflect.ReflectionObjectHandler;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -19,9 +20,11 @@ public class UnescapedMustacheFactory extends DefaultMustacheFactory {
             public Object coerce(final Object object) {
                 if (object != null && object instanceof List) {
                     List<Object> list = (List) object;
-                    return IntStream.range(0, list.size())
+                    Map<String, Object> map = IntStream.range(0, list.size())
                             .boxed()
                             .collect(Collectors.toMap(i -> i.toString(), list::get));
+                    map.put("last", map.get(String.valueOf(list.size() - 1)));
+                    return map;
                 }
                 return super.coerce(object);
             }
