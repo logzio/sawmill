@@ -86,4 +86,24 @@ public class MathProcessorTest {
 
         assertThat(processResult.isSucceeded()).isFalse();
     }
+
+    @Test
+    public void testAbsolute() {
+        String targetField = "sum";
+        Doc doc = createDoc("field1", 0);
+
+        String expression = "abs(-300)";
+        MathProcessor mathProcessor = createProcessor(MathProcessor.class, "expression", expression, "targetField", targetField);
+        ProcessResult processResult = mathProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat((Double) doc.getField(targetField)).isEqualTo(300);
+
+        expression = "abs(300)";
+        mathProcessor = createProcessor(MathProcessor.class, "expression", expression, "targetField", targetField);
+        processResult = mathProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat((Double) doc.getField(targetField)).isEqualTo(300);
+    }
 }
