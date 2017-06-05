@@ -58,12 +58,12 @@ public class TemplateTest {
 
     @Test
     public void testDocWithListField() {
-        Template listTemplate = templateService.createTemplate("this is {{list}} and this is specific index {{list.0}} and last {{list.last}}");
+        Template listTemplate = templateService.createTemplate("this is {{list}} and this is first {{list.first}}, specific index {{list.1}} and last {{list.last}}");
         Doc doc = createDoc("list", Arrays.asList("index0", "index1", "index3"));
 
         String value = listTemplate.render(doc);
 
-        assertThat(value).isEqualTo("this is {0=index0, 1=index1, 2=index3, last=index3} and this is specific index index0 and last index3");
+        assertThat(value).isEqualTo("this is {0=index0, 1=index1, 2=index3, last=index3, first=index0} and this is first index0, specific index index1 and last index3");
     }
 
     @Test

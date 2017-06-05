@@ -23,6 +23,7 @@ public class UnescapedMustacheFactory extends DefaultMustacheFactory {
                     Map<String, Object> map = IntStream.range(0, list.size())
                             .boxed()
                             .collect(Collectors.toMap(i -> i.toString(), list::get));
+                    map.put("first", map.get("0"));
                     map.put("last", map.get(String.valueOf(list.size() - 1)));
                     return map;
                 }
