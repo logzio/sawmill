@@ -1,15 +1,12 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.primitives.Doubles;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.utilities.JsonUtils;
-import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
-import net.objecthunter.exp4j.ValidationResult;
+import io.logz.sawmill.utilities.MathExpressionProvider;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,12 +21,12 @@ import static java.util.Objects.requireNonNull;
 @ProcessorProvider(type = "math", factory = MathProcessor.Factory.class)
 public class MathProcessor implements Processor {
     private final String targetField;
-    private final Expression expression;
+    private final MathExpressionProvider mathExpressionProvider;
     private final Set<String> variables;
 
-    public MathProcessor(String targetField, Expression expression, Set<String> variables) {
+    public MathProcessor(String targetField, MathExpressionProvider mathExpressionProvider, Set<String> variables) {
         this.targetField = requireNonNull(targetField, "target field cannot be null");
-        this.expression = requireNonNull(expression, "expression cannot be null");
+        this.mathExpressionProvider = requireNonNull(mathExpressionProvider, "expression cannot be null");
         this.variables = variables;
     }
 
@@ -51,10 +48,10 @@ public class MathProcessor implements Processor {
             variablesMap.put(variable, value);
         }
 
-        expression.setVariables(variablesMap);
+        mathExpressionProvider.provide().setVariables(variablesMap);
 
         try {
-            doc.addField(targetField,  expression.evaluate());
+            doc.addField(targetField,  mathExpressionProvider.provide().evaluate());
         } catch (ArithmeticException e) {
             return ProcessResult.failure("Division by zero!");
         }
@@ -76,20 +73,13 @@ public class MathProcessor implements Processor {
 
             Set<String> variables = findVariables(mathConfig.getExpression());
 
-            Expression expression;
-            try {
-                 expression = new ExpressionBuilder(trimMustache(mathConfig.getExpression()))
-                        .variables(variables)
-                        .build();
-            } catch (IllegalArgumentException e) {
+            MathExpressionProvider mathExpressionProvider = new MathExpressionProvider(trimMustache(mathConfig.getExpression()), variables);
+
+            if (!mathExpressionProvider.provide().validate(false).isValid()) {
                 throw new ProcessorConfigurationException(String.format("invalid expression [%s]", mathConfig.getExpression()));
             }
 
-            if (!expression.validate(false).isValid()) {
-                throw new ProcessorConfigurationException(String.format("invalid expression [%s]", mathConfig.getExpression()));
-            }
-
-            return new MathProcessor(mathConfig.getTargetField(), expression, variables);
+            return new MathProcessor(mathConfig.getTargetField(), mathExpressionProvider, variables);
         }
 
         private String trimMustache(String expression) {
