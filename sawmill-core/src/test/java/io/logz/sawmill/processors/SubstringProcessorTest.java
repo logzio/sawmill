@@ -39,6 +39,15 @@ public class SubstringProcessorTest {
         processResult = substringProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isFalse();
+
+        value = "this is a substring without end";
+        doc = createDoc(field, value);
+        
+        substringProcessor = createProcessor(SubstringProcessor.class, "field", field, "begin", begin);
+        processResult = substringProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat((String) doc.getField(field)).isEqualTo(value.substring(begin));
     }
 
     @Test
