@@ -219,6 +219,35 @@ Example:
 	- fields [array]
 	- algorithm
 	- key
+- translate [translate]
+	- field
+	- targetField
+	- fallback
+	- dictionary [this is a json object with key:values where the key is the original value, and the value is what you want to replace it with] EG:
+	
+```json
+{
+  "steps": [
+    {
+      "translate": {
+        "config": {
+          "field": "username",
+          "targetField": "username_translated",
+          "fallback": "unknown",
+          "dictionary": {
+            "josh": "josh_theking",
+            "joshphillips": "josh_squared",
+            "joshledger": "josh_cubed"
+          }
+        }
+      }
+    }
+  ]
+}
+```
+- math [math]
+	- targetField
+	- expression
 
   
 # If Conditions
