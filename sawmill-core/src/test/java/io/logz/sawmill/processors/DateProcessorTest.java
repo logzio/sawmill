@@ -72,6 +72,25 @@ public class DateProcessorTest {
     }
 
     @Test
+    public void testUnixFormatWithDoubleValue() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("Europe/Paris");
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId).truncatedTo(ChronoUnit.SECONDS);
+        Doc doc = createDoc(field, zonedDateTime.toInstant().toEpochMilli() / 1000d);
+
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("UNIX"),
+                "timeZone", zoneId.toString());
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+    }
+
+    @Test
     public void testUnixFormatString() {
         String field = "datetime";
         String targetField = "@timestamp";
