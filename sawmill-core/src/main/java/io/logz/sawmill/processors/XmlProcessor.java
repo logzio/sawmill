@@ -6,40 +6,115 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.DocumentBuilderProvider;
 import io.logz.sawmill.utilities.JsonUtils;
+import io.logz.sawmill.utilities.XPathExpressionProvider;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "xml", factory = XmlProcessor.Factory.class)
 public class XmlProcessor implements Processor {
-    private final String field;
-    private final DocumentBuilderProvider documentBuilderProvider;
+    private static final Logger logger = LoggerFactory.getLogger(XmlProcessor.class);
 
-    public XmlProcessor(String field, DocumentBuilderProvider documentBuilderProvider) {
-        this.field = field;
-        this.documentBuilderProvider = documentBuilderProvider;
+    private final DocumentBuilderProvider documentBuilderProvider;
+    private final String field;
+    private final String targetField;
+    private final Map<XPathExpressionProvider, String> xpath;
+    private final boolean storeXml;
+
+    public XmlProcessor(DocumentBuilderProvider documentBuilderProvider, String field, String targetField, Map<XPathExpressionProvider, String> xpath, boolean storeXml) {
+        this.documentBuilderProvider = requireNonNull(documentBuilderProvider);
+        this.field = requireNonNull(field);
+        this.targetField = targetField;
+        this.xpath = xpath;
+        this.storeXml = storeXml;
     }
 
     @Override
     public ProcessResult process(Doc doc) {
-        if (doc.hasField(field, String.class)) {
+        if (!doc.hasField(field, String.class)) {
             return ProcessResult.failure(String.format("failed to parse xml in path [%s], field is missing or not instance of String", field));
         }
 
         String value = doc.getField(this.field);
+        Document parsed;
 
         try {
             InputStream inputStream = new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8));
-            Document parsed = documentBuilderProvider.provide().parse(inputStream);
+            parsed = documentBuilderProvider.provide().parse(inputStream);
         } catch (SAXException | IOException e) {
             return ProcessResult.failure(String.format("failed to parse xml in path [%s] with value [%s], errorMsg=[%s]", field, value, e.getMessage()));
         }
+
+        if (MapUtils.isNotEmpty(xpath)) {
+            xpath.entrySet().forEach(item -> {
+                try {
+                    String evaluate = item.getKey().provide().evaluate(parsed);
+                    if (StringUtils.isNotEmpty(evaluate)) {
+                        doc.addField(item.getValue(), evaluate);
+                    }
+                } catch (XPathExpressionException e) {
+                    logger.trace("xpath evaluation failed", e);
+                }
+            });
+        }
+
+        if (storeXml) {
+            Map<String, Object> xmlNodes = extractNodes(parsed);
+            if (StringUtils.isNotEmpty(targetField)) {
+                doc.addField(targetField, xmlNodes);
+            } else {
+                xmlNodes.forEach(doc::addField);
+            }
+        }
         return ProcessResult.success();
+    }
+
+    private Map<String, Object> extractNodes(Node parent) {
+        Map<String, Object> xmlNodes = new HashMap<>();
+        NodeList nodes = parent.getChildNodes();
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+
+            String key = node.getNodeName();
+            Object value;
+
+            if (node.getChildNodes().getLength() == 1 &&
+                    node.getChildNodes().item(0).getNodeValue() != null) {
+                value = node.getChildNodes().item(0).getNodeValue();
+            } else {
+                value = extractNodes(node);
+            }
+
+            xmlNodes.compute(key, (k, oldVal) -> {
+                if (oldVal == null) return value;
+                if (oldVal instanceof List) {
+                    ((List) oldVal).add(value);
+                    return oldVal;
+                }
+                return new ArrayList<>(Arrays.asList(oldVal, value));
+            });
+        }
+
+        return xmlNodes;
     }
 
     public static class Factory implements Processor.Factory {
@@ -52,17 +127,49 @@ public class XmlProcessor implements Processor {
 
             DocumentBuilderProvider documentBuilderProvider = new DocumentBuilderProvider();
 
-            return new XmlProcessor(xmlConfig.getField(), documentBuilderProvider);
+            Map<XPathExpressionProvider, String> xpath = null;
+
+            if (MapUtils.isNotEmpty(xmlConfig.getXpath())) {
+                xpath = xmlConfig.getXpath()
+                        .entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(e -> new XPathExpressionProvider(e.getKey()),
+                                Map.Entry::getValue));
+
+                // Initiate to prevent invalid expression
+                xpath.keySet().forEach(XPathExpressionProvider::provide);
+            }
+
+            return new XmlProcessor(documentBuilderProvider,
+                    xmlConfig.getField(),
+                    xmlConfig.getTargetField(),
+                    xpath,
+                    xmlConfig.isStoreXml());
         }
     }
 
     public static class Configuration implements Processor.Configuration {
         private String field;
+        private String targetField;
+        private Map<String, String> xpath;
+        private boolean storeXml = true;
 
         public Configuration() { }
 
         public String getField() {
             return field;
+        }
+
+        public String getTargetField() {
+            return targetField;
+        }
+
+        public Map<String, String> getXpath() {
+            return xpath;
+        }
+
+        public boolean isStoreXml() {
+            return storeXml;
         }
     }
 }
