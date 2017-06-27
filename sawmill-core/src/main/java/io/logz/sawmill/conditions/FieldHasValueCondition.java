@@ -13,9 +13,9 @@ import java.util.Map;
 public class FieldHasValueCondition implements Condition {
 
     private String field;
-    private List<String> possibleValues;
+    private List<Object> possibleValues;
 
-    public FieldHasValueCondition(String field, List<String> possibleValues) {
+    public FieldHasValueCondition(String field, List<Object> possibleValues) {
         this.field = field;
         this.possibleValues = possibleValues;
     }
@@ -42,12 +42,12 @@ public class FieldHasValueCondition implements Condition {
 
     public static class Configuration {
         private String field;
-        private List<String> possibleValues;
+        private List<Object> possibleValues;
 
         public Configuration() {
         }
 
-        public Configuration(String field, List<String> possibleValues) {
+        public Configuration(String field, List<Object> possibleValues) {
             this.field = field;
             this.possibleValues = possibleValues;
         }
@@ -56,7 +56,7 @@ public class FieldHasValueCondition implements Condition {
             return field;
         }
 
-        public List<String> getPossibleValues() {
+        public List<Object> getPossibleValues() {
             return possibleValues;
         }
     }
