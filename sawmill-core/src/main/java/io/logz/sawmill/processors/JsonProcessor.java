@@ -40,8 +40,6 @@ public class JsonProcessor implements Processor {
             return ProcessResult.failure(String.format("failed to parse json, couldn't deserialize from json [%s]", jsonString));
         }
 
-        doc.removeField(field);
-
         if (targetField != null) {
             doc.addField(targetField.render(doc), jsonMap);
         } else {
