@@ -21,7 +21,7 @@ public class AddAndRemoveFieldProcessorTest {
     @Test
     public void testAddAndRemoveField() {
         String path = "message.hola.hello";
-        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class, "path", path, "value", "shalom");
+        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class,  "value", "shalom");
         RemoveFieldProcessor removeFieldProcessor = createProcessor(RemoveFieldProcessor.class, "path", path);
 
         Doc doc = createDoc("field", "value");
@@ -87,5 +87,12 @@ public class AddAndRemoveFieldProcessorTest {
     public void testRemoveProcessorWithBadConfigs() {
         assertThatThrownBy(() -> createProcessor(RemoveFieldProcessor.class, EMPTY_MAP)).isInstanceOf(ProcessorConfigurationException.class);
         assertThatThrownBy(() -> createProcessor(RemoveFieldProcessor.class, "fields", Arrays.asList("1", "2"), "path", "3")).isInstanceOf(ProcessorConfigurationException.class);
+    }
+
+    @Test
+    public void testAddProcessorWithBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(AddFieldProcessor.class)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(AddFieldProcessor.class, "path", "aaaa")).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(AddFieldProcessor.class, "value", "aaaa")).isInstanceOf(NullPointerException.class);
     }
 }
