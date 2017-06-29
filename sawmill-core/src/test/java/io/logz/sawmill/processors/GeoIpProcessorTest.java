@@ -21,6 +21,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class GeoIpProcessorTest {
     private static DatabaseReader databaseReader;
@@ -134,5 +135,10 @@ public class GeoIpProcessorTest {
 
         assertThat(geoIpProcessor.process(doc).isSucceeded()).isTrue();
         assertThat(doc.hasField(target)).isFalse();
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(GeoIpProcessor.class)).isInstanceOf(NullPointerException.class);
     }
 }

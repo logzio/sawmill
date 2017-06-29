@@ -2,6 +2,7 @@ package io.logz.sawmill.processors;
 
 import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class DateProcessorTest {
     @Test
@@ -260,5 +262,12 @@ public class DateProcessorTest {
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
         assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(DateProcessor.class)).isInstanceOf(ProcessorConfigurationException.class);
+        assertThatThrownBy(() -> createProcessor(DateProcessor.class, "field", "aaaa")).isInstanceOf(ProcessorConfigurationException.class);
+        assertThatThrownBy(() -> createProcessor(DateProcessor.class, "formats", Arrays.asList("aaaa"))).isInstanceOf(NullPointerException.class);
     }
 }

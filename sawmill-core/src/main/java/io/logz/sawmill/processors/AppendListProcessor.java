@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "appendList", factory = AppendListProcessor.Factory.class)
 public class AppendListProcessor implements Processor {
@@ -24,7 +24,7 @@ public class AppendListProcessor implements Processor {
     private final List<Template> values;
 
     public AppendListProcessor(Template path, List<Template> values) {
-        this.path = checkNotNull(path, "path cannot be null");
+        this.path = requireNonNull(path, "path cannot be null");
         this.values = values;
 
         checkState(CollectionUtils.isNotEmpty(values), "values cannot be empty");
@@ -48,7 +48,11 @@ public class AppendListProcessor implements Processor {
         @Override
         public AppendListProcessor create(Map<String,Object> config) {
             AppendListProcessor.Configuration configuration = JsonUtils.fromJsonMap(AppendListProcessor.Configuration.class, config);
-            Template path = templateService.createTemplate(configuration.getPath());
+
+            Template path = templateService.createTemplate(requireNonNull(configuration.getPath(), "path cannot be null"));
+
+            checkState(CollectionUtils.isNotEmpty(configuration.getValues()), "values cannot be empty");
+
             List<Template> values = configuration.getValues().stream().map(templateService::createTemplate).collect(Collectors.toList());
 
             return new AppendListProcessor(path, values);

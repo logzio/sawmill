@@ -43,6 +43,9 @@ public class RemoveTagProcessor implements Processor {
         @Override
         public Processor create(Map<String,Object> config) {
             RemoveTagProcessor.Configuration removeTagConfig = JsonUtils.fromJsonMap(RemoveTagProcessor.Configuration.class, config);
+
+            checkState(CollectionUtils.isNotEmpty(removeTagConfig.getTags()), "tags cannot be empty");
+
             List<Template> tags = removeTagConfig.getTags().stream().map(templateService::createTemplate).collect(Collectors.toList());
 
             return new RemoveTagProcessor(tags);

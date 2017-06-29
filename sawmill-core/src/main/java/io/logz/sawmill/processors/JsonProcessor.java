@@ -12,7 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.inject.Inject;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "json", factory = JsonProcessor.Factory.class)
 public class JsonProcessor implements Processor {
@@ -20,7 +20,7 @@ public class JsonProcessor implements Processor {
     private final Template targetField;
 
     public JsonProcessor(String field, Template targetField) {
-        this.field = checkNotNull(field, "field cannot be null");
+        this.field = requireNonNull(field, "field cannot be null");
         this.targetField = targetField;
     }
 

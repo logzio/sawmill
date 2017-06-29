@@ -11,6 +11,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SplitProcessorTest {
     @Test
@@ -90,5 +91,12 @@ public class SplitProcessorTest {
 
         assertThat(processResult.isSucceeded()).isFalse();
         assertThat(doc.hasField(field)).isFalse();
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(SplitProcessor.class)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(SplitProcessor.class, "field", "aaa")).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(SplitProcessor.class, "separator", ",")).isInstanceOf(NullPointerException.class);
     }
 }

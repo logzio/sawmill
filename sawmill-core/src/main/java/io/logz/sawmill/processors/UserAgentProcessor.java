@@ -17,7 +17,7 @@ import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "userAgent", factory = UserAgentProcessor.Factory.class)
 public class UserAgentProcessor implements Processor {
@@ -27,10 +27,10 @@ public class UserAgentProcessor implements Processor {
     private final UserAgentParserProvider uaParserProvider;
 
     public UserAgentProcessor(String field, Template targetField, String prefix, UserAgentParserProvider userAgentParserProvider) {
-        this.field = checkNotNull(field, "field cannot be null");
+        this.field = requireNonNull(field, "field cannot be null");
         this.targetField = targetField;
         this.prefix = prefix != null ? prefix : "";
-        this.uaParserProvider = checkNotNull(userAgentParserProvider);
+        this.uaParserProvider = requireNonNull(userAgentParserProvider);
     }
 
     @Override

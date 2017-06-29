@@ -2,7 +2,6 @@ package io.logz.sawmill;
 
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
-import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.exceptions.SawmillException;
 
 import java.io.StringReader;

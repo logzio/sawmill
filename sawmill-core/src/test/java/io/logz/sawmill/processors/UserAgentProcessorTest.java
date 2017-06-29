@@ -10,6 +10,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class UserAgentProcessorTest {
     @Test
@@ -94,5 +95,10 @@ public class UserAgentProcessorTest {
         assertThat(userAgent.get("os")).isEqualTo("Other");
         assertThat(userAgent.get("os_name")).isEqualTo("Other");
         assertThat(userAgent.get("device")).isEqualTo("Other");
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(UserAgentProcessor.class)).isInstanceOf(NullPointerException.class);
     }
 }

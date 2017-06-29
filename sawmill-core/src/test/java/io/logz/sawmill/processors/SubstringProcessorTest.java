@@ -10,6 +10,7 @@ import java.util.Collections;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SubstringProcessorTest {
     @Test
@@ -81,5 +82,10 @@ public class SubstringProcessorTest {
         processResult = substringProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isFalse();
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(SubstringProcessor.class)).isInstanceOf(NullPointerException.class);
     }
 }

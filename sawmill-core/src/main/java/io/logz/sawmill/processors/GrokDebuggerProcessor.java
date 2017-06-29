@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.EMPTY_LIST;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "grokDebugger", factory = GrokDebuggerProcessor.Factory.class)
 public class GrokDebuggerProcessor implements Processor {
@@ -31,7 +31,7 @@ public class GrokDebuggerProcessor implements Processor {
 
     public GrokDebuggerProcessor(String field, List<String> matchExpressions, Map<String, String> patternsBank, List<String> overwrite, boolean ignoreMissing) {
         checkState(CollectionUtils.isNotEmpty(matchExpressions), "patterns cannot be empty");
-        this.field = checkNotNull(field, "field cannot be null");
+        this.field = requireNonNull(field, "field cannot be null");
         this.expressions = matchExpressions;
         this.overwrite = overwrite != null ? overwrite : EMPTY_LIST;
         this.ignoreMissing = ignoreMissing;

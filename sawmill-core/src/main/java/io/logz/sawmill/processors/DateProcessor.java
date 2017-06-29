@@ -26,13 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static java.time.temporal.ChronoField.HOUR_OF_DAY;
 import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
 import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "date", factory = DateProcessor.Factory.class)
 public class DateProcessor implements Processor {
@@ -116,8 +116,8 @@ public class DateProcessor implements Processor {
 
     public DateProcessor(String field, String targetField, List<String> formats, ZoneId timeZone) {
         checkState(CollectionUtils.isNotEmpty(formats), "formats cannot be empty");
-        this.field = checkNotNull(field, "field cannot be null");
-        this.targetField = checkNotNull(targetField, "target field cannot be null");
+        this.field = requireNonNull(field, "field cannot be null");
+        this.targetField = requireNonNull(targetField, "target field cannot be null");
         this.formats = formats;
         this.timeZone = timeZone;
 
