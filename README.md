@@ -136,7 +136,8 @@ Example:
 	- prefix
 	
 - Remove Field [removeField] - Supports "templates"
-	- path (dotted path, i.e: a.b.c)
+	- path - (dotted path, i.e: a.b.c)
+	- fields - array of fields to remove, i.e. ["timestamp","message"]
 	
 Example:
    
