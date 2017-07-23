@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class PipelineExecutor {
@@ -26,6 +27,7 @@ public class PipelineExecutor {
         PipelineStopwatch pipelineStopwatch = new PipelineStopwatch().start();
 
         long executionIdentifier = watchdog.startedExecution(pipeline.getId(), doc);
+        boolean overtime;
 
         ExecutionResult executionResult;
         try {
@@ -38,7 +40,12 @@ public class PipelineExecutor {
 
         } finally {
             pipelineStopwatch.stop();
+            overtime = watchdog.isOvertime(executionIdentifier);
             watchdog.removeExecution(executionIdentifier);
+        }
+
+        if (overtime) {
+            executionResult = ExecutionResult.overtime(pipelineStopwatch.pipelineElapsed(MILLISECONDS));
         }
 
         if (executionResult.isSucceeded()) {
@@ -139,6 +146,10 @@ public class PipelineExecutor {
         }
 
         public long pipelineElapsed() {
+            return stopwatch.elapsed(timeUnit);
+        }
+
+        public long pipelineElapsed(TimeUnit timeUnit) {
             return stopwatch.elapsed(timeUnit);
         }
 

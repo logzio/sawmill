@@ -6,11 +6,13 @@ import java.util.Optional;
 
 import static io.logz.sawmill.Result.DROPPED;
 import static io.logz.sawmill.Result.FAILED;
+import static io.logz.sawmill.Result.OVERTIME;
 import static io.logz.sawmill.Result.SUCCEEDED;
 
 public class ExecutionResult {
     private final Result result;
     private final Optional<Error> error;
+    private final Optional<Long> timeTook;
 
     private static ExecutionResult executionSucceeded = new ExecutionResult();
     private static ExecutionResult executionDropped = new ExecutionResult(DROPPED);
@@ -19,9 +21,16 @@ public class ExecutionResult {
         this(SUCCEEDED);
     }
 
+    private ExecutionResult(long timeTook) {
+        this.result = OVERTIME;
+        this.timeTook = Optional.of(timeTook);
+        this.error = Optional.empty();
+    }
+
     private ExecutionResult(Result result) {
         this.result = result;
         this.error = Optional.empty();
+        this.timeTook = Optional.empty();
     }
 
     private ExecutionResult(String errorMessage, String failedProcessorName) {
@@ -31,6 +40,7 @@ public class ExecutionResult {
     private ExecutionResult(String errorMessage, String failedProcessorName, PipelineExecutionException e) {
         this.result = FAILED;
         this.error = Optional.of(new Error(errorMessage, failedProcessorName, Optional.ofNullable(e)));
+        this.timeTook = Optional.empty();
     }
 
     public static ExecutionResult success() {
@@ -51,13 +61,24 @@ public class ExecutionResult {
     public boolean isDropped() {
         return result == DROPPED;
     }
+    public boolean isOvertime() {
+        return result == OVERTIME;
+    }
+
+    public static ExecutionResult dropped() {
+        return executionDropped;
+    }
+
+    public static ExecutionResult overtime(long timeTook) {
+        return new ExecutionResult(timeTook);
+    }
 
     public Optional<Error> getError() {
         return error;
     }
 
-    public static ExecutionResult dropped() {
-        return executionDropped;
+    public Optional<Long> getTimeTook() {
+        return timeTook;
     }
 
     public static class Error {

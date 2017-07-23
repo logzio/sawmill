@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -85,5 +84,9 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
         } catch (InterruptedException e) {
             Thread.interrupted();
         }
+    }
+
+    public boolean isOvertime(long executionIdentifier) {
+        return currentlyRunning.get(executionIdentifier).hasBeenNotifiedAsOvertime();
     }
 }
