@@ -228,6 +228,25 @@ public class DateProcessorTest {
     }
 
     @Test
+    public void testISOFormatWithNumberValueInField() {
+        String field = "datetime";
+        String targetField = "timestamp";
+
+        ZoneId zoneId = ZoneId.of("UTC");
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
+        Doc doc = createDoc(field, zonedDateTime.toInstant().toEpochMilli() / 1000);
+
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("dd/MMM/yyyy:HH:mm:ss"));
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isFalse();
+        assertThat(doc.hasField(targetField)).isFalse();
+    }
+
+    @Test
     public void testISOFormatWithoutTimezoneDefaultIsUTC() {
         String field = "datetime";
         String targetField = "timestamp";
