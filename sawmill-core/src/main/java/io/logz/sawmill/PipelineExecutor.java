@@ -45,7 +45,7 @@ public class PipelineExecutor {
         }
 
         if (overtime) {
-            executionResult = ExecutionResult.overtime(pipelineStopwatch.pipelineElapsed(MILLISECONDS));
+            executionResult.setOvertime(pipelineStopwatch.pipelineElapsed(MILLISECONDS));
         }
 
         if (executionResult.isSucceeded()) {

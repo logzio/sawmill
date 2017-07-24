@@ -6,25 +6,15 @@ import java.util.Optional;
 
 import static io.logz.sawmill.Result.DROPPED;
 import static io.logz.sawmill.Result.FAILED;
-import static io.logz.sawmill.Result.OVERTIME;
 import static io.logz.sawmill.Result.SUCCEEDED;
 
 public class ExecutionResult {
     private final Result result;
     private final Optional<Error> error;
-    private final Optional<Long> timeTook;
-
-    private static ExecutionResult executionSucceeded = new ExecutionResult();
-    private static ExecutionResult executionDropped = new ExecutionResult(DROPPED);
+    private Optional<Long> timeTook;
 
     private ExecutionResult() {
         this(SUCCEEDED);
-    }
-
-    private ExecutionResult(long timeTook) {
-        this.result = OVERTIME;
-        this.timeTook = Optional.of(timeTook);
-        this.error = Optional.empty();
     }
 
     private ExecutionResult(Result result) {
@@ -44,7 +34,7 @@ public class ExecutionResult {
     }
 
     public static ExecutionResult success() {
-        return executionSucceeded;
+        return new ExecutionResult();
     }
 
     public static ExecutionResult failure(String errorMessage, String failedProcessorName) {
@@ -62,15 +52,11 @@ public class ExecutionResult {
         return result == DROPPED;
     }
     public boolean isOvertime() {
-        return result == OVERTIME;
+        return timeTook.isPresent();
     }
 
     public static ExecutionResult dropped() {
-        return executionDropped;
-    }
-
-    public static ExecutionResult overtime(long timeTook) {
-        return new ExecutionResult(timeTook);
+        return new ExecutionResult(DROPPED);
     }
 
     public Optional<Error> getError() {
@@ -79,6 +65,10 @@ public class ExecutionResult {
 
     public Optional<Long> getTimeTook() {
         return timeTook;
+    }
+
+    public void setOvertime(long timeTook) {
+        this.timeTook = Optional.of(timeTook);
     }
 
     public static class Error {
