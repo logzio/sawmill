@@ -250,6 +250,11 @@ Example:
 	- targetField
 	- expression
 
+- ahoCorasick
+    - field
+    - targetField
+    - inputWords []
+
   
 # If Conditions
 
@@ -370,9 +375,6 @@ Complex If Statement
     }
 
 ```
-
-    
-	
 
 ## Open source
 In order to move to public repository, these are the items we need to fix:
