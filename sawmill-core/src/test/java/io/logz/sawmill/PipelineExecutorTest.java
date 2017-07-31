@@ -42,7 +42,7 @@ public class PipelineExecutorTest {
 
         ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
         assertThat(executionResult.isOvertime()).isTrue();
-        assertThat(executionResult.getTimeTook().get()).isGreaterThan(THRESHOLD_TIME_MS);
+        assertThat(executionResult.getOvertimeTook().get()).isGreaterThan(THRESHOLD_TIME_MS);
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
