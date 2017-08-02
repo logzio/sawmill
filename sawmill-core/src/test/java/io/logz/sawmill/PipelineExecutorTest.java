@@ -40,7 +40,9 @@ public class PipelineExecutorTest {
         Doc doc = createDoc("id", "testLongProcessingExecution", "message", "hola",
                 "type", "test");
 
-        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isOvertime()).isTrue();
+        assertThat(executionResult.getOvertimeTook().get()).isGreaterThan(THRESHOLD_TIME_MS);
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
@@ -55,11 +57,13 @@ public class PipelineExecutorTest {
         );
         Doc doc = createDoc("id", "testPipelineExecution", "message", "hola");
 
-        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isSucceeded()).isTrue();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(doc.getSource().get("newField2")).isEqualTo("value2");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(executionResult.isOvertime()).isFalse();
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
     }
 
@@ -73,12 +77,14 @@ public class PipelineExecutorTest {
 
         Doc doc = createDoc("id", "testPipelineExecution", "message", "hola");
 
-        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isSucceeded()).isTrue();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(doc.getSource().get("newField2")).isEqualTo("value2");
         assertThat(doc.getSource().get("newField3")).isEqualTo("value3");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(executionResult.isOvertime()).isFalse();
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(1);
     }
 
@@ -91,12 +97,14 @@ public class PipelineExecutorTest {
                 ));
         Doc doc = createDoc("id", "testOnFailureExecutionSteps", "message", "hola");
 
-        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isFalse();
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isSucceeded()).isFalse();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(doc.getSource().get("newField2")).isNull();
         assertThat(doc.getSource().get("newField3")).isNull();
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(executionResult.isOvertime()).isFalse();
         assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(1);
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(0);
     }
@@ -112,7 +120,9 @@ public class PipelineExecutorTest {
                 ));
         Doc doc = createDoc("id", "testOnFailureExecutionSteps", "message", "hola");
 
-        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isSucceeded()).isTrue();
+        assertThat(executionResult.isOvertime()).isFalse();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(doc.getSource().get("newField2")).isEqualTo("value2");
@@ -133,11 +143,13 @@ public class PipelineExecutorTest {
 
         Doc doc = createDoc("id", "testFailOnFailureExecutionStep", "message", "hola");
 
-        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isFalse();
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isSucceeded()).isFalse();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(doc.getSource().get("newField2")).isEqualTo("value2");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
+        assertThat(executionResult.isOvertime()).isFalse();
         assertThat(pipelineExecutorMetrics.getTotalDocsFailedProcessing()).isEqualTo(1);
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(0);
     }
@@ -153,6 +165,7 @@ public class PipelineExecutorTest {
 
         ExecutionResult result = pipelineExecutor.execute(pipeline, doc);
         assertThat(result.isSucceeded()).isFalse();
+        assertThat(result.isOvertime()).isFalse();
         assertThat(result.getError().get().getException().isPresent()).isFalse();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
@@ -172,6 +185,7 @@ public class PipelineExecutorTest {
         ExecutionResult result = pipelineExecutor.execute(pipeline, doc);
         assertThat(result.isSucceeded()).isFalse();
         assertThat(result.isDropped()).isTrue();
+        assertThat(result.isOvertime()).isFalse();
 
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
         assertThat(pipelineExecutorMetrics.getTotalDocsDropped()).isEqualTo(1);
@@ -190,6 +204,7 @@ public class PipelineExecutorTest {
 
         ExecutionResult result = pipelineExecutor.execute(pipeline, doc);
         assertThat(result.isSucceeded()).isFalse();
+        assertThat(result.isOvertime()).isFalse();
         assertThat(result.getError().get().getException().isPresent()).isTrue();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
@@ -207,7 +222,9 @@ public class PipelineExecutorTest {
         Doc doc = createDoc("id", "testStopOnFailure", "message", "hola",
                 "type", "test");
 
-        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isFalse();
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isSucceeded()).isFalse();
+        assertThat(executionResult.isOvertime()).isFalse();
 
         assertThat(doc.getSource().get("newField1")).isNull();
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
@@ -225,7 +242,9 @@ public class PipelineExecutorTest {
         Doc doc = createDoc("id", "testStopOnFailure", "message", "hola",
                 "type", "test");
 
-        assertThat(pipelineExecutor.execute(pipeline, doc).isSucceeded()).isTrue();
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isSucceeded()).isTrue();
+        assertThat(executionResult.isOvertime()).isFalse();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isFalse();
@@ -268,13 +287,17 @@ public class PipelineExecutorTest {
                         createAddFieldExecutionStep(fieldToAdd, valueOnFalse))));
 
         Doc doc1 = createDoc(fieldExists1, "value1", fieldExists2, "value2");
-        assertThat(pipelineExecutor.execute(pipeline, doc1).isSucceeded()).isTrue();
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc1);
+        assertThat(executionResult.isSucceeded()).isTrue();
+        assertThat(executionResult.isOvertime()).isFalse();
         assertThat(doc1.getSource().get("newField1")).isEqualTo("value1");
         String value1 = doc1.getField(fieldToAdd);
         assertThat(value1).isEqualTo(valueOnTrue);
 
         Doc doc2 = createDoc(fieldExists1, "value3");
-        assertThat(pipelineExecutor.execute(pipeline, doc2).isSucceeded()).isTrue();
+        ExecutionResult executionResult2 = pipelineExecutor.execute(pipeline, doc2);
+        assertThat(executionResult2.isSucceeded()).isTrue();
+        assertThat(executionResult2.isOvertime()).isFalse();
         assertThat(doc2.getSource().get("newField1")).isEqualTo("value1");
         String value2 = doc2.getField(fieldToAdd);
         assertThat(value2).isEqualTo(valueOnFalse);

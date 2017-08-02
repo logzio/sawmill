@@ -7,7 +7,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import java.util.Map;
-import java.util.stream.IntStream;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
