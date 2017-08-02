@@ -27,25 +27,22 @@ public class PipelineExecutor {
         PipelineStopwatch pipelineStopwatch = new PipelineStopwatch().start();
 
         long executionIdentifier = watchdog.startedExecution(pipeline.getId(), doc);
-        boolean overtime;
 
         ExecutionResult executionResult;
         try {
             List<ExecutionStep> executionSteps = pipeline.getExecutionSteps();
             executionResult = executeSteps(executionSteps, pipeline, doc, pipelineStopwatch);
 
+            if (watchdog.isOvertime(executionIdentifier)) {
+                executionResult = ExecutionResult.overtime(executionResult, pipelineStopwatch.pipelineElapsed(MILLISECONDS));
+            }
         } catch (RuntimeException e) {
             pipelineExecutionMetricsTracker.pipelineFailedOnUnexpectedError(pipeline.getId(), doc, e);
             throw new PipelineExecutionException(pipeline.getId(), e);
 
         } finally {
             pipelineStopwatch.stop();
-            overtime = watchdog.isOvertime(executionIdentifier);
             watchdog.removeExecution(executionIdentifier);
-        }
-
-        if (overtime) {
-            executionResult.setOvertime(pipelineStopwatch.pipelineElapsed(MILLISECONDS));
         }
 
         if (executionResult.isSucceeded()) {

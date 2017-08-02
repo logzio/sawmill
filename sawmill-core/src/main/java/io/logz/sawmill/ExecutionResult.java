@@ -13,14 +13,21 @@ public class ExecutionResult {
     private final Optional<Error> error;
     private Optional<Long> overtimeTook;
 
+    private static ExecutionResult executionSucceeded = new ExecutionResult();
+    private static ExecutionResult executionDropped = new ExecutionResult(DROPPED);
+
     private ExecutionResult() {
         this(SUCCEEDED);
     }
 
     private ExecutionResult(Result result) {
+        this(result, Optional.empty());
+    }
+
+    private ExecutionResult(Result result, Optional<Long> overtimeTook) {
         this.result = result;
         this.error = Optional.empty();
-        this.overtimeTook = Optional.empty();
+        this.overtimeTook = overtimeTook;
     }
 
     private ExecutionResult(String errorMessage, String failedProcessorName) {
@@ -34,7 +41,7 @@ public class ExecutionResult {
     }
 
     public static ExecutionResult success() {
-        return new ExecutionResult();
+        return executionSucceeded;
     }
 
     public static ExecutionResult failure(String errorMessage, String failedProcessorName) {
@@ -45,8 +52,20 @@ public class ExecutionResult {
         return new ExecutionResult(errorMessage, failedProcessorName, e);
     }
 
+    public static ExecutionResult overtime(ExecutionResult executionResult, long timeTook) {
+        if (executionResult.isFailed()) {
+            executionResult.setOvertime(timeTook);
+            return executionResult;
+        }
+
+        return new ExecutionResult(executionResult.result, Optional.of(timeTook));
+    }
+
     public boolean isSucceeded() {
         return result == SUCCEEDED;
+    }
+    public boolean isFailed() {
+        return result == FAILED;
     }
     public boolean isDropped() {
         return result == DROPPED;
@@ -56,7 +75,7 @@ public class ExecutionResult {
     }
 
     public static ExecutionResult dropped() {
-        return new ExecutionResult(DROPPED);
+        return executionDropped;
     }
 
     public Optional<Error> getError() {
