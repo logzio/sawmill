@@ -33,10 +33,10 @@ Simple configuration example:
 ## Processors
 
 - grok [grok]
-	- field
-	- patterns [array]
-	- overwrite [array]
-	- ignoreMissing [boolean default = true  means that if the field is missing this is considered successful]
+	- field 
+	- patterns [array] 
+	- overwrite [array] (optional)
+	- ignoreMissing [boolean default = true  means that if the field is missing this is considered successful] (optional)
 	
 Example:
 ```json
@@ -56,18 +56,18 @@ Example:
 ```
        
 - Add Field [addField] - Can also be used to "replace" a field value - supports "templates"
-	- path (the path to the field to add, doted fqdn) 
-	- value 
+	- path (the path to the field to add, doted fqdn) (required)
+	- value  (required)
 - Append List [appendList] - Supports "templates"
-	- path (the path to the field to add, doted fqdn) 
-	- values - array of values to add, i.e. values: ["val1","val2"]
+	- path (the path to the field to add, doted fqdn)  
+	- values - array of values to add, i.e. values: ["val1","val2"] 
 - Add Tag [addTag] - Supports "templates"
-	- tags - array of tags to add, i.e. tags: ["tag1","tag2"]
+	- tags - array of tags to add, i.e. tags: ["tag1","tag2"] 
 - Date [date]
 	- field 
-	- targetField
+	- targetField (optional)
 	- formats - An array,  one of these: https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
-	- timeZone - one of these: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
+	- timeZone - one of these: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html  (optional)
 	
 Example: 
 ```json
@@ -89,7 +89,7 @@ Example:
 - Geo IP [geoIp]
 	- sourceField
 	- targetField
-	- tagsOnSuccess [array]
+	- tagsOnSuccess [array] (optional)
 	
 Example:
 ```json
@@ -108,7 +108,7 @@ Example:
    
 - Json [json]
 	- field
-	- targetField
+	- targetField  (optional)
 	
 Example:
 
@@ -126,14 +126,14 @@ Example:
 - Key Value [kv]
 	- field
 	- targetField
-	- includeKeys - [array]
-	- excludeKeys - [array]
-	- trim
-	- trimKey
-	- valueSplit
-	- fieldSplit
-	- allowDuplicateValues
-	- prefix
+	- includeKeys - [array] (optional - but recommended)
+	- excludeKeys - [array] (optional)
+	- trim  (optional)
+	- trimKey (optional)
+	- valueSplit (optional - default is = )
+	- fieldSplit (optional - default is " ")
+	- allowDuplicateValues (optional = default false)
+	- prefix (optional)
 	
 - Remove Field [removeField] - Supports "templates"
 	- path - (dotted path, i.e: a.b.c)
@@ -152,9 +152,9 @@ Example:
 ```
    
 - Remove Tag [removeTag] - Supports "templates"
-	- tags - list of tags - [array]
+	- tags - list of tags - [array] 
 - Rename Field [rename]
-	- from - the field name to rename
+	- from - the field name to rename 
 	- to - the new name of that field
 - Substitue [gsub]
 	- field
@@ -162,8 +162,8 @@ Example:
 	- replacement
 - User Agent [userAgent]
 	- field
-	- targetField
-	- prefix
+	- targetField (optional)
+	- prefix (optional)
 - Split [split]
 	- field
 	- separator
@@ -176,18 +176,18 @@ Example:
 	
 - Convert [convert] must provide exactly one of path or paths
 	- path
-	- paths - a list of strings representing paths.
+	- paths - a list of strings representing paths.  (optional - either use path or paths depending on if you want to convert multiple values or one)
 	- type - one of [int,long,float,double,string,boolean]
 
 - CSV [csv]
 	- field
-	- targetField
-	- separator
-	- quoteChar
-	- columns [array]
+	- targetField (optional)
+	- separator (optional)
+	- quoteChar (optional)
+	- columns [array] (optional)
 	- autoGenerateColumnNames [boolean - default = true]
 	- skipEmptyColumns [boolean - default = false]
-	- convert [this is a json object with key:values where the key is the field and the value is the type as specified in the Convert processor]  EG:
+	- convert [this is a json object with key:values where the key is the field and the value is the type as specified in the Convert processor] (optional)  EG:
 ```json
 {
   "steps": [
@@ -223,7 +223,7 @@ Example:
 - translate [translate]
 	- field
 	- targetField
-	- fallback
+	- fallback (optional)
 	- dictionary [this is a json object with key:values where the key is the original value, and the value is what you want to replace it with] EG:
 	
 ```json
@@ -273,8 +273,8 @@ Example:
 - matchRegex
 	- field
 	- regex
-	- caseInsensitive - default false
-	- matchPartOfValue - default true
+	- caseInsensitive - default false (optional)
+	- matchPartOfValue - default true (optional)
 - exists
 	- field
 - fieldType
@@ -282,7 +282,7 @@ Example:
 	- type (One of the following: string,long, double, list, jsonObject)
 - mathComparator (can be used to check if a value is grater/smaller then, or a value is in a range)
 	- field
-	- gt (greater than)
+	- gt (greater than) 
 	- gte (greater than or equal to)
 	- lt (less than)
 	- lte (less than or equal to)
