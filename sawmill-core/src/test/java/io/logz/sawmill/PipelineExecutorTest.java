@@ -32,17 +32,34 @@ public class PipelineExecutorTest {
     }
 
     @Test
-    public void testLongProcessingExecution() throws InterruptedException {
+    public void testWarnLongProcessingExecution() throws InterruptedException {
         Pipeline pipeline = createPipeline(
                 createAddFieldExecutionStep("newField1", "value1"),
-                createSleepExecutionStep(1100)
+                createSleepExecutionStep(THRESHOLD_TIME_MS + 500)
         );
-        Doc doc = createDoc("id", "testLongProcessingExecution", "message", "hola",
+        Doc doc = createDoc("id", "testWarnLongProcessingExecution", "message", "hola",
                 "type", "test");
 
         ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
         assertThat(executionResult.isOvertime()).isTrue();
         assertThat(executionResult.getOvertimeTook().get()).isGreaterThan(THRESHOLD_TIME_MS);
+
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
+        assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
+        assertThat(pipelineExecutorMetrics.getTotalDocsOvertimeProcessing()).isEqualTo(1);
+    }
+
+    @Test
+    public void testKillLongProcessingExecution() throws InterruptedException {
+        Pipeline pipeline = createPipeline(
+                createAddFieldExecutionStep("newField1", "value1"),
+                createSleepExecutionStep(THRESHOLD_TIME_MS * 5 + 500)
+        );
+        Doc doc = createDoc("id", "testWarnLongProcessingExecution", "message", "hola",
+                "type", "test");
+
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isExpired()).isTrue();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
@@ -323,11 +340,9 @@ public class PipelineExecutorTest {
 
     private ProcessorExecutionStep createSleepExecutionStep(long millis) {
         return new ProcessorExecutionStep("sleep1", (Doc doc) -> {
-            try {
-                Thread.sleep(millis);
-            } catch (InterruptedException e) {
 
-            }
+            Thread.sleep(millis);
+
             return ProcessResult.success();
         });
     }

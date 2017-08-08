@@ -5,6 +5,7 @@ import io.logz.sawmill.exceptions.PipelineExecutionException;
 import java.util.Optional;
 
 import static io.logz.sawmill.Result.DROPPED;
+import static io.logz.sawmill.Result.EXPIRED;
 import static io.logz.sawmill.Result.FAILED;
 import static io.logz.sawmill.Result.SUCCEEDED;
 
@@ -15,6 +16,7 @@ public class ExecutionResult {
 
     private static ExecutionResult executionSucceeded = new ExecutionResult();
     private static ExecutionResult executionDropped = new ExecutionResult(DROPPED);
+    private static ExecutionResult executionExpired = new ExecutionResult(EXPIRED);
 
     private ExecutionResult() {
         this(SUCCEEDED);
@@ -88,6 +90,18 @@ public class ExecutionResult {
 
     public void setOvertime(long timeTook) {
         this.overtimeTook = Optional.of(timeTook);
+    }
+
+    public static ExecutionResult expired(String processorName) {
+        return executionExpired;
+    }
+
+    public static ExecutionResult expired() {
+        return executionExpired;
+    }
+
+    public boolean isExpired() {
+        return result == EXPIRED;
     }
 
     public static class Error {

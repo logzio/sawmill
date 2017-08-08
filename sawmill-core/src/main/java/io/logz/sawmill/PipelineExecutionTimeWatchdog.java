@@ -21,20 +21,22 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(PipelineExecutionTimeWatchdog.class);
 
-    private final long thresholdTimeMs;
+    private final long warningThresholdTimeMs;
+    private final long expiredThresholdTimeMs;
     private final ConcurrentMap<Long, WatchedPipeline> currentlyRunning;
     private final Consumer<WatchedPipeline> overtimeOp;
     private final PipelineExecutionMetricsTracker metricsTracker;
     private final AtomicLong executionIdGenerator;
     private ScheduledExecutorService timer;
 
-    public PipelineExecutionTimeWatchdog(long thresholdTimeMs, PipelineExecutionMetricsTracker metricsTracker, Consumer<WatchedPipeline> overtimeOp) {
-        this.thresholdTimeMs = thresholdTimeMs;
+    public PipelineExecutionTimeWatchdog(long warningThresholdTimeMs, PipelineExecutionMetricsTracker metricsTracker, Consumer<WatchedPipeline> overtimeOp) {
+        this.warningThresholdTimeMs = warningThresholdTimeMs;
+        this.expiredThresholdTimeMs = warningThresholdTimeMs * 5;
         this.metricsTracker = metricsTracker;
         this.overtimeOp = overtimeOp;
         this.currentlyRunning = new ConcurrentHashMap<>();
         this.executionIdGenerator = new AtomicLong();
-        initWatchdog(thresholdTimeMs / THRESHOLD_CHECK_FACTOR);
+        initWatchdog(warningThresholdTimeMs / THRESHOLD_CHECK_FACTOR);
     }
 
     private void initWatchdog(long periodMs) {
@@ -44,26 +46,43 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
 
     private void alertOvertimeExecutions() {
         try {
-            long now = System.currentTimeMillis();
-            List<WatchedPipeline> overtimeExecutions = currentlyRunning.values().stream()
-                    .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > thresholdTimeMs)
-                    .filter(watchedPipeline -> !watchedPipeline.hasBeenNotifiedAsOvertime())
-                    .collect(Collectors.toList());
-            overtimeExecutions.forEach(this::notifyMetricsTracker);
-            overtimeExecutions.forEach(overtimeOp);
-            overtimeExecutions.forEach(WatchedPipeline::setAsNotifiedWithOvertime);
+            warnOvertimeExecutions();
+            killExpiredExecutions();
         } catch (Exception e) {
             logger.error("failed to alert of overtime executions", e);
         }
+    }
+
+    private void killExpiredExecutions() {
+        long now = System.currentTimeMillis();
+        List<WatchedPipeline> expiredExecutions = currentlyRunning.values().stream()
+                .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > expiredThresholdTimeMs)
+                .collect(Collectors.toList());
+        expiredExecutions.forEach(this::interrupt);
+    }
+
+    private void warnOvertimeExecutions() {
+        long now = System.currentTimeMillis();
+        List<WatchedPipeline> warningExceededExecutions = currentlyRunning.values().stream()
+                .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > warningThresholdTimeMs)
+                .filter(watchedPipeline -> !watchedPipeline.hasBeenNotifiedAsOvertime())
+                .collect(Collectors.toList());
+        warningExceededExecutions.forEach(this::notifyMetricsTracker);
+        warningExceededExecutions.forEach(overtimeOp);
+        warningExceededExecutions.forEach(WatchedPipeline::setAsNotifiedWithOvertime);
+    }
+
+    private void interrupt(WatchedPipeline watchedPipeline) {
+        watchedPipeline.getContext().interrupt();
     }
 
     private void notifyMetricsTracker(WatchedPipeline watchedPipeline) {
         metricsTracker.overtimeProcessingDoc(watchedPipeline.getPipelineId(), watchedPipeline.getDoc());
     }
 
-    public long startedExecution(String pipelineId, Doc doc) {
+    public long startedExecution(String pipelineId, Doc doc, Thread context) {
         long ingestTimestamp = System.currentTimeMillis();
-        WatchedPipeline watchedPipeline = new WatchedPipeline(doc, pipelineId, ingestTimestamp);
+        WatchedPipeline watchedPipeline = new WatchedPipeline(doc, pipelineId, ingestTimestamp, context);
         long id = executionIdGenerator.incrementAndGet();
         currentlyRunning.put(id, watchedPipeline);
 
