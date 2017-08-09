@@ -26,7 +26,7 @@ public class KeyValueProcessorTest {
     public static final String KEY_VALUE_MESSAGE_WITH_DUPLICATE_KEYS = "this is KV with duplicate keys sameKey=value1 sameKey=value2 sameKey=value3 sameKey=value4";
 
     @Test
-    public void testDefault() {
+    public void testDefault() throws InterruptedException {
         String field = "message";
         Doc doc = createDoc(field, getDefaultMessage());
 
@@ -46,7 +46,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testNonKeyValues() {
+    public void testNonKeyValues() throws InterruptedException {
         String field = "message";
         Doc doc = createDoc(field, "this message is with out any kv key=");
 
@@ -63,7 +63,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testFieldDoesntExists() {
+    public void testFieldDoesntExists() throws InterruptedException {
         String field = "message";
         Doc doc = createDoc("differentField", "this message is with out any kv");
 
@@ -77,7 +77,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testUnsupportedTypeField() {
+    public void testUnsupportedTypeField() throws InterruptedException {
         String field = "message";
         Doc doc = createDoc(field, 15);
 
@@ -91,7 +91,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testNullField() {
+    public void testNullField() throws InterruptedException {
         String field = "message";
         Doc doc = createDoc(field, null);
 
@@ -105,7 +105,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testWithTargetField() {
+    public void testWithTargetField() throws InterruptedException {
         String field = "message";
         String targetField = "kv";
         Doc doc = createDoc(field, getDefaultMessage());
@@ -129,7 +129,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testWithTemplateTargetField() {
+    public void testWithTemplateTargetField() throws InterruptedException {
         String field = "message";
         String targetField = "{{kvField}}";
         Doc doc = createDoc(field, getDefaultMessage(), "kvField", "kv");
@@ -153,7 +153,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testRecursive() {
+    public void testRecursive() throws InterruptedException {
         String field = "message";
         Doc doc = createDoc(field, getDefaultMessage());
 
@@ -177,7 +177,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testTrimsAndPrefix() {
+    public void testTrimsAndPrefix() throws InterruptedException {
         String field = "message";
         Doc doc = createDoc(field, getDefaultMessage());
 
@@ -200,7 +200,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testIncludeKeys() {
+    public void testIncludeKeys() throws InterruptedException {
         String field = "message";
 
         String fieldSplit = ",";
@@ -226,7 +226,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testExcludeKeys() {
+    public void testExcludeKeys() throws InterruptedException {
         String field = "message";
 
         Doc doc = createDoc(field, getDefaultMessage());
@@ -250,7 +250,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testValueAsList() {
+    public void testValueAsList() throws InterruptedException {
         String field = "message";
 
         Doc doc = createDoc(field, Arrays.asList(getDefaultMessage(), "anotherKV=anotherMagic"));
@@ -272,7 +272,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testAllowDuplicateValues() {
+    public void testAllowDuplicateValues() throws InterruptedException {
         String field = "message";
         Doc doc = createDoc(field, KEY_VALUE_MESSAGE_WITH_DUPLICATE_KEYS);
 
@@ -287,7 +287,7 @@ public class KeyValueProcessorTest {
     }
 
     @Test
-    public void testDontAllowDuplicateValues() {
+    public void testDontAllowDuplicateValues() throws InterruptedException {
         String field = "message";
         Doc doc = createDoc(field, KEY_VALUE_MESSAGE_WITH_DUPLICATE_KEYS);
 

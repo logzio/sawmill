@@ -39,7 +39,10 @@ public class SawmillBenchmark {
     public static String docsPath;
 
     @Param({"50"})
-    public static long thresholdTimeMs;
+    public static long warningThresholdTimeMs;
+
+    @Param({"50"})
+    public static long expiredThresholdTimeMs;
 
     @Param({"1000"})
     public static int docsAmount;
@@ -79,7 +82,7 @@ public class SawmillBenchmark {
 
     private void setupSawmill() {
         pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
-        watchdog = new PipelineExecutionTimeWatchdog(thresholdTimeMs, pipelineExecutorMetrics, context -> { });
+        watchdog = new PipelineExecutionTimeWatchdog(warningThresholdTimeMs, expiredThresholdTimeMs, pipelineExecutorMetrics, context -> { });
         pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
         Pipeline.Factory pipelineFactory = new Pipeline.Factory();
         pipeline = pipelineFactory.create(pipelineConfig);

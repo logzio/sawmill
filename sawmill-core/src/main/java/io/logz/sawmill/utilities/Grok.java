@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 
 import static io.logz.sawmill.FieldType.STRING;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.joni.Matcher.INTERRUPTED;
 
 public final class Grok {
 
@@ -91,7 +92,7 @@ public final class Grok {
         patternBank.put(patternName, definition);
     }
 
-    public List<Match> matches(String text) {
+    public List<Match> matches(String text) throws InterruptedException {
         List<Match> matches = new ArrayList<>();
         byte[] textAsBytes = text.getBytes(StandardCharsets.UTF_8);
         Matcher matcher = compiledExpression.matcher(textAsBytes);
@@ -99,6 +100,9 @@ public final class Grok {
         boolean matchNotFound = result == -1;
         if (matchNotFound) {
             return null;
+        }
+        if (result == INTERRUPTED) {
+            throw new InterruptedException();
         }
         if (compiledExpression.numberOfNames() == 0) {
             return matches;

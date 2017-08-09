@@ -29,9 +29,9 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
     private final AtomicLong executionIdGenerator;
     private ScheduledExecutorService timer;
 
-    public PipelineExecutionTimeWatchdog(long warningThresholdTimeMs, PipelineExecutionMetricsTracker metricsTracker, Consumer<WatchedPipeline> overtimeOp) {
+    public PipelineExecutionTimeWatchdog(long warningThresholdTimeMs, long expiredThresholdTimeMs, PipelineExecutionMetricsTracker metricsTracker, Consumer<WatchedPipeline> overtimeOp) {
         this.warningThresholdTimeMs = warningThresholdTimeMs;
-        this.expiredThresholdTimeMs = warningThresholdTimeMs * 5;
+        this.expiredThresholdTimeMs = expiredThresholdTimeMs;
         this.metricsTracker = metricsTracker;
         this.overtimeOp = overtimeOp;
         this.currentlyRunning = new ConcurrentHashMap<>();
@@ -58,6 +58,7 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
         List<WatchedPipeline> expiredExecutions = currentlyRunning.values().stream()
                 .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > expiredThresholdTimeMs)
                 .collect(Collectors.toList());
+        expiredExecutions.forEach(this::notifyExpiredToMetricsTracker);
         expiredExecutions.forEach(this::interrupt);
     }
 
@@ -67,7 +68,7 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
                 .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > warningThresholdTimeMs)
                 .filter(watchedPipeline -> !watchedPipeline.hasBeenNotifiedAsOvertime())
                 .collect(Collectors.toList());
-        warningExceededExecutions.forEach(this::notifyMetricsTracker);
+        warningExceededExecutions.forEach(this::notifyOvertimeToMetricsTracker);
         warningExceededExecutions.forEach(overtimeOp);
         warningExceededExecutions.forEach(WatchedPipeline::setAsNotifiedWithOvertime);
     }
@@ -76,8 +77,12 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
         watchedPipeline.getContext().interrupt();
     }
 
-    private void notifyMetricsTracker(WatchedPipeline watchedPipeline) {
+    private void notifyOvertimeToMetricsTracker(WatchedPipeline watchedPipeline) {
         metricsTracker.overtimeProcessingDoc(watchedPipeline.getPipelineId(), watchedPipeline.getDoc());
+    }
+
+    private void notifyExpiredToMetricsTracker(WatchedPipeline watchedPipeline) {
+        metricsTracker.pipelineExpired(watchedPipeline.getPipelineId(), watchedPipeline.getDoc());
     }
 
     public long startedExecution(String pipelineId, Doc doc, Thread context) {

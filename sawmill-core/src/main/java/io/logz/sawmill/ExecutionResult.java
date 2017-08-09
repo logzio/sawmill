@@ -92,10 +92,6 @@ public class ExecutionResult {
         this.overtimeTook = Optional.of(timeTook);
     }
 
-    public static ExecutionResult expired(String processorName) {
-        return executionExpired;
-    }
-
     public static ExecutionResult expired() {
         return executionExpired;
     }
