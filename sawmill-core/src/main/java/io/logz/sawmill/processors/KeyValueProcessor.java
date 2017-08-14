@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static org.joni.Matcher.INTERRUPTED;
+
 @ProcessorProvider(type = "kv", factory = KeyValueProcessor.Factory.class)
 public class KeyValueProcessor implements Processor {
 
@@ -97,7 +99,7 @@ public class KeyValueProcessor implements Processor {
     }
 
     @Override
-    public ProcessResult process(Doc doc) {
+    public ProcessResult process(Doc doc) throws InterruptedException {
         if (!doc.hasField(field)) {
             return ProcessResult.failure(String.format("failed to process kv, couldn't find field [%s]", field));
         }
@@ -140,7 +142,7 @@ public class KeyValueProcessor implements Processor {
         return prefix + trim(extractString(message, region.beg[matchNumber], region.end[matchNumber]), trimKey);
     }
 
-    private Object getValue(byte[] message, Region region) {
+    private Object getValue(byte[] message, Region region) throws InterruptedException {
         String value = getMatchedValue(message, region);
 
         if (value == null) {
@@ -157,7 +159,7 @@ public class KeyValueProcessor implements Processor {
         return trim(value, trim);
     }
 
-    private Map<String,Object> parse(String message) {
+    private Map<String,Object> parse(String message) throws InterruptedException {
         Map<String,Object> kvMap = new HashMap<>();
         int matchesCounter = 0;
 
@@ -192,6 +194,10 @@ public class KeyValueProcessor implements Processor {
             result = matcher.search(endOfFullMatch, messageAsBytes.length, Option.MULTILINE);
 
             matchesCounter++;
+
+            if (result == INTERRUPTED) {
+                throw new InterruptedException();
+            }
         }
 
         return kvMap;

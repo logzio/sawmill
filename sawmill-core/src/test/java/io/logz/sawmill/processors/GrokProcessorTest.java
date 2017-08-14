@@ -27,7 +27,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testSeveralExpressions() {
+    public void testSeveralExpressions() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}", "%{SYSLOGBASE}");
 
@@ -65,7 +65,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testOverwrite() {
+    public void testOverwrite() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
 
@@ -84,7 +84,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testWithoutOverwrite() {
+    public void testWithoutOverwrite() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{WORD:http-verb}");
 
@@ -102,7 +102,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testUnknownConversionType() {
+    public void testUnknownConversionType() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{WORD:verb:sheker}");
 
@@ -121,7 +121,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testCustomPatterns() {
+    public void testCustomPatterns() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("(?<custompattern>\\w+)");
 
@@ -139,7 +139,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testCustomPatternsWithHyphen() {
+    public void testCustomPatternsWithHyphen() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("(?<custom-pattern>\\w+)");
 
@@ -157,7 +157,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testConverters() {
+    public void testConverters() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{NUMBER:int:int} %{NUMBER:float:float} %{NUMBER:long:long} %{NUMBER:double:double}");
 
@@ -176,7 +176,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testGrokParseFailure() {
+    public void testGrokParseFailure() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
 
@@ -194,7 +194,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testGrokParseFailureWithCustomTag() {
+    public void testGrokParseFailureWithCustomTag() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
         List<String> tagsOnFailure = Arrays.asList("parsedfailed :(", "reallysad");
@@ -214,7 +214,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testIgnoreMissing() {
+    public void testIgnoreMissing() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}");
 
@@ -231,7 +231,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testWithoutIgnoreMissing() {
+    public void testWithoutIgnoreMissing() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}");
 
@@ -249,7 +249,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testConfigWithoutPatterns() {
+    public void testConfigWithoutPatterns() throws InterruptedException {
         Map<String,Object> config = new HashMap<>();
         config.put("field", "someField");
 
@@ -257,7 +257,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testWithNonExistsPattern() {
+    public void testWithNonExistsPattern() throws InterruptedException {
         Map<String,Object> config = new HashMap<>();
         config.put("field", "someField");
         config.put("patterns", Arrays.asList("%{NONEXISTSPATTERN}"));
@@ -266,7 +266,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testPatternsPriority() {
+    public void testPatternsPriority() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList(
                 "%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}",
@@ -290,7 +290,7 @@ public class GrokProcessorTest {
     }
 
     @Test
-    public void testInvalidExpression() {
+    public void testInvalidExpression() throws InterruptedException {
         String field = "message";
         List<String> invalidPatterns = Arrays.asList("%{COMBINEDAPACHELOG}+%[GREEDYDATA:extra_fields_with_wrong_bracket");
 

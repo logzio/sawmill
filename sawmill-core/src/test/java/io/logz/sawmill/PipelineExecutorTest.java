@@ -4,6 +4,8 @@ import io.logz.sawmill.conditions.AndCondition;
 import io.logz.sawmill.conditions.FieldExistsCondition;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
+import io.logz.sawmill.processors.GrokProcessor;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,11 +14,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class PipelineExecutorTest {
-    private static final long THRESHOLD_TIME_MS = 1000;
+    private static final long WARNING_THRESHOLD_TIME_MS = 500;
+    private static final long EXPIRED_THRESHOLD_TIME_MS = 2000;
 
     private PipelineExecutor pipelineExecutor;
     private List<Doc> overtimeProcessingDocs;
@@ -26,27 +30,65 @@ public class PipelineExecutorTest {
     public void init() {
         overtimeProcessingDocs = new ArrayList<>();
         pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
-        PipelineExecutionTimeWatchdog watchdog = new PipelineExecutionTimeWatchdog(THRESHOLD_TIME_MS, pipelineExecutorMetrics,
+        PipelineExecutionTimeWatchdog watchdog = new PipelineExecutionTimeWatchdog(WARNING_THRESHOLD_TIME_MS, EXPIRED_THRESHOLD_TIME_MS, pipelineExecutorMetrics,
                 watchedPipeline -> overtimeProcessingDocs.add(watchedPipeline.getDoc()));
         pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
     }
 
     @Test
-    public void testLongProcessingExecution() throws InterruptedException {
+    public void testWarnLongProcessingExecution() {
         Pipeline pipeline = createPipeline(
                 createAddFieldExecutionStep("newField1", "value1"),
-                createSleepExecutionStep(1100)
+                createSleepExecutionStep(WARNING_THRESHOLD_TIME_MS + 300)
         );
-        Doc doc = createDoc("id", "testLongProcessingExecution", "message", "hola",
+        Doc doc = createDoc("id", "testWarnLongProcessingExecution", "message", "hola",
                 "type", "test");
 
         ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
         assertThat(executionResult.isOvertime()).isTrue();
-        assertThat(executionResult.getOvertimeTook().get()).isGreaterThan(THRESHOLD_TIME_MS);
+        assertThat(executionResult.getOvertimeTook().get()).isGreaterThan(WARNING_THRESHOLD_TIME_MS);
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
         assertThat(pipelineExecutorMetrics.getTotalDocsOvertimeProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsProcessingExpired()).isEqualTo(0);
+    }
+
+    @Test
+    public void testKillLongProcessingExecution() {
+        Pipeline pipeline = createPipeline(
+                createAddFieldExecutionStep("newField1", "value1"),
+                createSleepExecutionStep(EXPIRED_THRESHOLD_TIME_MS + 300)
+        );
+        Doc doc = createDoc("id", "testKillLongProcessingExecution", "message", "hola",
+                "type", "test");
+
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isExpired()).isTrue();
+
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
+        assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
+        assertThat(pipelineExecutorMetrics.getTotalDocsOvertimeProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsProcessingExpired()).isEqualTo(1);
+    }
+
+    @Test
+    public void testKillLongGrokExecution() {
+        Pipeline pipeline = createPipeline(
+                createAddFieldExecutionStep("newField1", "value1"),
+                createLongGrokExecutionStep()
+        );
+        Doc doc = createDoc("id", "testKillLongGrokExecution",
+                "message", RandomStringUtils.random(10000),
+                "type", "test");
+
+        ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
+        assertThat(executionResult.isExpired()).isTrue();
+
+        assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
+        assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
+        assertThat(pipelineExecutorMetrics.getTotalDocsOvertimeProcessing()).isEqualTo(1);
+        assertThat(pipelineExecutorMetrics.getTotalDocsProcessingExpired()).isEqualTo(1);
     }
 
     @Test
@@ -323,13 +365,18 @@ public class PipelineExecutorTest {
 
     private ProcessorExecutionStep createSleepExecutionStep(long millis) {
         return new ProcessorExecutionStep("sleep1", (Doc doc) -> {
-            try {
-                Thread.sleep(millis);
-            } catch (InterruptedException e) {
 
-            }
+            Thread.sleep(millis);
+
             return ProcessResult.success();
         });
+    }
+
+    private ExecutionStep createLongGrokExecutionStep() {
+        return new ProcessorExecutionStep("slow greedy grok",
+                createProcessor(GrokProcessor.class,
+                        "field", "message",
+                        "patterns", Arrays.asList(".{10000,}.{100000}")));
     }
 
     private ProcessorExecutionStep createAddFieldExecutionStep(String k, String v) {

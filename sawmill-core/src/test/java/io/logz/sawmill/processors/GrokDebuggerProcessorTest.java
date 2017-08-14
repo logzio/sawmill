@@ -20,7 +20,7 @@ public class GrokDebuggerProcessorTest {
     public static GrokDebuggerProcessor.Factory factory = createFactory(GrokDebuggerProcessor.class);
 
     @Test
-    public void testValueOffsets() {
+    public void testValueOffsets() throws InterruptedException {
         String messageField = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
 
@@ -45,7 +45,7 @@ public class GrokDebuggerProcessorTest {
     }
 
     @Test
-    public void testListValueOffset() {
+    public void testListValueOffset() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{WORD:http-verb} %{WORD:http-verb}");
 
