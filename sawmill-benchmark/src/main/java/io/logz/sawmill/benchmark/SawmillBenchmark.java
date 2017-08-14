@@ -41,7 +41,7 @@ public class SawmillBenchmark {
     @Param({"50"})
     public static long warningThresholdTimeMs;
 
-    @Param({"50"})
+    @Param({"500"})
     public static long expiredThresholdTimeMs;
 
     @Param({"1000"})

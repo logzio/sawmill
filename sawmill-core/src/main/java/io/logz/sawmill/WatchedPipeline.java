@@ -5,7 +5,7 @@ public class WatchedPipeline {
     private final String pipelineId;
     private final long ingestTimestamp;
     private boolean notifiedAsOvertime;
-    private Thread context;
+    private final Thread context;
 
     public WatchedPipeline(Doc doc, String pipelineId, long ingestTimestamp, Thread context) {
         this.doc = doc;

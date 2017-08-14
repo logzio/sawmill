@@ -33,7 +33,8 @@ public class SawmillBenchmarkOptions implements Serializable {
     public Options toJmhOptions() {
         jmhOptions.params = new HashMap<String, String>() {{
             put("pipelineConfig", JsonUtils.toJsonString(pipeline));
-            put("warningThresholdTimeMs", execution.getThresholdTimeMs());
+            put("warningThresholdTimeMs", execution.getWarningThresholdTimeMs());
+            put("expiredThresholdTimeMs", execution.getExpiredThresholdTimeMs());
             put("docsPath", input.getDocsPath());
             put("docType", input.getDocType());
             put("docsAmount", input.getDocsAmount());
@@ -344,13 +345,18 @@ public class SawmillBenchmarkOptions implements Serializable {
     }
 
     public static class ExecutionOptions implements Serializable {
-        private String thresholdTimeMs;
+        private String warningThresholdTimeMs;
+        private String expiredThresholdTimeMs;
 
         public ExecutionOptions() {
         }
 
-        public String getThresholdTimeMs() {
-            return thresholdTimeMs;
+        public String getWarningThresholdTimeMs() {
+            return warningThresholdTimeMs;
+        }
+
+        public String getExpiredThresholdTimeMs() {
+            return expiredThresholdTimeMs;
         }
     }
 }

@@ -63,6 +63,14 @@ public class ExecutionResult {
         return new ExecutionResult(executionResult.result, Optional.of(timeTook));
     }
 
+    public static ExecutionResult expired() {
+        return executionExpired;
+    }
+
+    public static ExecutionResult dropped() {
+        return executionDropped;
+    }
+
     public boolean isSucceeded() {
         return result == SUCCEEDED;
     }
@@ -75,9 +83,8 @@ public class ExecutionResult {
     public boolean isOvertime() {
         return overtimeTook.isPresent();
     }
-
-    public static ExecutionResult dropped() {
-        return executionDropped;
+    public boolean isExpired() {
+        return result == EXPIRED;
     }
 
     public Optional<Error> getError() {
@@ -90,14 +97,6 @@ public class ExecutionResult {
 
     public void setOvertime(long timeTook) {
         this.overtimeTook = Optional.of(timeTook);
-    }
-
-    public static ExecutionResult expired() {
-        return executionExpired;
-    }
-
-    public boolean isExpired() {
-        return result == EXPIRED;
     }
 
     public static class Error {
