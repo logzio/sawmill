@@ -51,7 +51,7 @@ public class XmlProcessor implements Processor {
     @Override
     public ProcessResult process(Doc doc) {
         if (!doc.hasField(field, String.class)) {
-            return ProcessResult.failure(String.format("failed to parse xml in path [%s], field is missing or not instance of String", field));
+            return ProcessResult.failure("failed to parse xml in path [" + field + "], field is missing or not instance of String");
         }
 
         String value = doc.getField(this.field);
@@ -61,7 +61,7 @@ public class XmlProcessor implements Processor {
             InputStream inputStream = new ByteArrayInputStream(value.getBytes(StandardCharsets.UTF_8));
             parsed = documentBuilderProvider.provide().parse(inputStream);
         } catch (SAXException | IOException e) {
-            return ProcessResult.failure(String.format("failed to parse xml in path [%s] with value [%s], errorMsg=[%s]", field, value, e.getMessage()));
+            return ProcessResult.failure("failed to parse xml in path [" + field + "] with value [" + value + "], errorMsg=[" + e.getMessage() + "]");
         }
 
         if (MapUtils.isNotEmpty(xpath)) {
@@ -69,7 +69,11 @@ public class XmlProcessor implements Processor {
                 try {
                     String evaluate = item.getKey().provide().evaluate(parsed);
                     if (StringUtils.isNotEmpty(evaluate)) {
-                        doc.addField(item.getValue(), evaluate);
+                        if (doc.hasField(item.getValue())) {
+                            doc.appendList(item.getValue(), evaluate);
+                        } else {
+                            doc.addField(item.getValue(), evaluate);
+                        }
                     }
                 } catch (XPathExpressionException e) {
                     logger.trace("xpath evaluation failed", e);
