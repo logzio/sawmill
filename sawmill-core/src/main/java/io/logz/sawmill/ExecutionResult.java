@@ -67,6 +67,12 @@ public class ExecutionResult {
         return executionExpired;
     }
 
+    public static ExecutionResult expired(long timeTook) {
+        ExecutionResult result = new ExecutionResult(EXPIRED);
+        result.setOvertime(timeTook);
+        return result;
+    }
+
     public static ExecutionResult dropped() {
         return executionDropped;
     }

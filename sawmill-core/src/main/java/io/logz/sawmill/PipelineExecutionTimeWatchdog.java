@@ -74,6 +74,7 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
     }
 
     private void interrupt(WatchedPipeline watchedPipeline) {
+        watchedPipeline.setInterrupted(true);
         watchedPipeline.getContext().interrupt();
     }
 
@@ -112,5 +113,9 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
 
     public boolean isOvertime(long executionIdentifier) {
         return currentlyRunning.get(executionIdentifier).hasBeenNotifiedAsOvertime();
+    }
+
+    public boolean isInterrupted(long executionIdentifier) {
+        return currentlyRunning.get(executionIdentifier).isInterrupted();
     }
 }
