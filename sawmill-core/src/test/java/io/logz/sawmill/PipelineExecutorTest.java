@@ -65,6 +65,7 @@ public class PipelineExecutorTest {
 
         ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
         assertThat(executionResult.isExpired()).isTrue();
+        assertThat(Thread.currentThread().isInterrupted()).isFalse();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();
@@ -84,6 +85,7 @@ public class PipelineExecutorTest {
 
         ExecutionResult executionResult = pipelineExecutor.execute(pipeline, doc);
         assertThat(executionResult.isExpired()).isTrue();
+        assertThat(Thread.currentThread().isInterrupted()).isFalse();
 
         assertThat(doc.getSource().get("newField1")).isEqualTo("value1");
         assertThat(overtimeProcessingDocs.contains(doc)).isTrue();

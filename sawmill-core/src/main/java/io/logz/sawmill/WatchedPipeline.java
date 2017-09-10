@@ -5,6 +5,7 @@ public class WatchedPipeline {
     private final String pipelineId;
     private final long ingestTimestamp;
     private boolean notifiedAsOvertime;
+    private boolean interrupted;
     private final Thread context;
 
     public WatchedPipeline(Doc doc, String pipelineId, long ingestTimestamp, Thread context) {
@@ -12,6 +13,7 @@ public class WatchedPipeline {
         this.pipelineId = pipelineId;
         this.ingestTimestamp = ingestTimestamp;
         this.notifiedAsOvertime = false;
+        this.interrupted = false;
         this.context = context;
     }
 
@@ -37,5 +39,13 @@ public class WatchedPipeline {
 
     public void setAsNotifiedWithOvertime() {
         this.notifiedAsOvertime = true;
+    }
+
+    public boolean isInterrupted() {
+        return interrupted;
+    }
+
+    public void setInterrupted(boolean interrupted) {
+        this.interrupted = interrupted;
     }
 }
