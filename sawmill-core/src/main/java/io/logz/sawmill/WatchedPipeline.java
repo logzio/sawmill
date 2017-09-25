@@ -8,15 +8,15 @@ public class WatchedPipeline {
     private final long ingestTimestamp;
     private boolean notifiedAsOvertime;
     private AtomicBoolean running;
-    private final Thread context;
+    private final Thread thread;
 
-    public WatchedPipeline(Doc doc, String pipelineId, long ingestTimestamp, Thread context) {
+    public WatchedPipeline(Doc doc, String pipelineId, long ingestTimestamp, Thread thread) {
         this.doc = doc;
         this.pipelineId = pipelineId;
         this.ingestTimestamp = ingestTimestamp;
         this.notifiedAsOvertime = false;
         this.running = new AtomicBoolean(true);
-        this.context = context;
+        this.thread = thread;
     }
 
     public Doc getDoc() {
@@ -39,11 +39,11 @@ public class WatchedPipeline {
         this.notifiedAsOvertime = true;
     }
 
-    public boolean compareAndSetFinished() {
-        return !running.compareAndSet(true, false);
+    public boolean compareAndSetFinishedRunning() {
+        return running.compareAndSet(true, false);
     }
 
     public void interrupt() {
-        context.interrupt();
+        thread.interrupt();
     }
 }

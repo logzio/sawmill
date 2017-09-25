@@ -33,7 +33,7 @@ public class PipelineExecutor {
             List<ExecutionStep> executionSteps = pipeline.getExecutionSteps();
             executionResult = executeSteps(executionSteps, pipeline, doc, pipelineStopwatch);
 
-            // Prevent race condition with watchdog interrupt. stopWatchedPipeline is synchronized
+            // Prevent race condition with watchdog - check whether the execution got interrupted
             boolean hasBeenInterrupted = watchdog.stopWatchedPipeline(executionIdentifier);
 
             if (hasBeenInterrupted) {

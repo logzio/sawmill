@@ -73,15 +73,22 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
         warningExceededExecutions.forEach(WatchedPipeline::setAsNotifiedWithOvertime);
     }
 
-    public synchronized boolean stopWatchedPipeline(WatchedPipeline watchedPipeline, boolean shouldInterrupt) {
-        boolean hasBeenFinished = watchedPipeline.compareAndSetFinished();
+    /***
+     * Stop watching pipeline and interrupt if needed
+     * Check whether the execution has been stopped already
+     * @param watchedPipeline
+     * @param shouldInterrupt indicate if interrupt is required
+     * @return {@code true} if already finished.
+     */
+    private synchronized boolean stopWatchedPipeline(WatchedPipeline watchedPipeline, boolean shouldInterrupt) {
+        boolean alreadyFinished = !watchedPipeline.compareAndSetFinishedRunning();
 
-        if (shouldInterrupt && !hasBeenFinished) {
+        if (shouldInterrupt && !alreadyFinished) {
             watchedPipeline.interrupt();
             notifyExpiredToMetricsTracker(watchedPipeline);
         }
 
-        return hasBeenFinished;
+        return alreadyFinished;
     }
 
     private void interruptIfRunning(WatchedPipeline watchedPipeline) {
