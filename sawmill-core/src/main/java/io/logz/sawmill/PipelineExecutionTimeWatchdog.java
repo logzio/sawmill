@@ -58,8 +58,8 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
         List<WatchedPipeline> expiredExecutions = currentlyRunning.values().stream()
                 .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > expiredThresholdTimeMs)
                 .collect(Collectors.toList());
-        expiredExecutions.forEach(this::notifyExpiredToMetricsTracker);
-        expiredExecutions.forEach(this::interrupt);
+
+        expiredExecutions.forEach(this::interruptIfRunning);
     }
 
     private void warnOvertimeExecutions() {
@@ -73,9 +73,23 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
         warningExceededExecutions.forEach(WatchedPipeline::setAsNotifiedWithOvertime);
     }
 
-    private void interrupt(WatchedPipeline watchedPipeline) {
-        watchedPipeline.setInterrupted(true);
-        watchedPipeline.getContext().interrupt();
+    public synchronized boolean stopWatchedPipeline(WatchedPipeline watchedPipeline, boolean shouldInterrupt) {
+        boolean hasBeenFinished = watchedPipeline.compareAndSetFinished();
+
+        if (shouldInterrupt && !hasBeenFinished) {
+            watchedPipeline.interrupt();
+            notifyExpiredToMetricsTracker(watchedPipeline);
+        }
+
+        return hasBeenFinished;
+    }
+
+    private void interruptIfRunning(WatchedPipeline watchedPipeline) {
+        stopWatchedPipeline(watchedPipeline, true);
+    }
+
+    public boolean stopWatchedPipeline(long executionIdentifier) {
+        return stopWatchedPipeline(currentlyRunning.get(executionIdentifier), false);
     }
 
     private void notifyOvertimeToMetricsTracker(WatchedPipeline watchedPipeline) {
@@ -113,9 +127,5 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
 
     public boolean isOvertime(long executionIdentifier) {
         return currentlyRunning.get(executionIdentifier).hasBeenNotifiedAsOvertime();
-    }
-
-    public boolean isInterrupted(long executionIdentifier) {
-        return currentlyRunning.get(executionIdentifier).isInterrupted();
     }
 }
