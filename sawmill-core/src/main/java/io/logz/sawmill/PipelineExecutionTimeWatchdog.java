@@ -58,8 +58,8 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
         List<WatchedPipeline> expiredExecutions = currentlyRunning.values().stream()
                 .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > expiredThresholdTimeMs)
                 .collect(Collectors.toList());
-        expiredExecutions.forEach(this::notifyExpiredToMetricsTracker);
-        expiredExecutions.forEach(this::interrupt);
+
+        expiredExecutions.forEach(this::interruptIfRunning);
     }
 
     private void warnOvertimeExecutions() {
@@ -73,9 +73,30 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
         warningExceededExecutions.forEach(WatchedPipeline::setAsNotifiedWithOvertime);
     }
 
-    private void interrupt(WatchedPipeline watchedPipeline) {
-        watchedPipeline.setInterrupted(true);
-        watchedPipeline.getContext().interrupt();
+    /***
+     * Stop watching pipeline and interrupt if needed
+     * Check whether the execution has been stopped already
+     * @param watchedPipeline
+     * @param shouldInterrupt indicate if interrupt is required
+     * @return {@code true} if already finished.
+     */
+    private synchronized boolean stopWatchedPipeline(WatchedPipeline watchedPipeline, boolean shouldInterrupt) {
+        boolean alreadyFinished = !watchedPipeline.compareAndSetFinishedRunning();
+
+        if (shouldInterrupt && !alreadyFinished) {
+            watchedPipeline.interrupt();
+            notifyExpiredToMetricsTracker(watchedPipeline);
+        }
+
+        return alreadyFinished;
+    }
+
+    private void interruptIfRunning(WatchedPipeline watchedPipeline) {
+        stopWatchedPipeline(watchedPipeline, true);
+    }
+
+    public boolean stopWatchedPipeline(long executionIdentifier) {
+        return stopWatchedPipeline(currentlyRunning.get(executionIdentifier), false);
     }
 
     private void notifyOvertimeToMetricsTracker(WatchedPipeline watchedPipeline) {
@@ -113,9 +134,5 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
 
     public boolean isOvertime(long executionIdentifier) {
         return currentlyRunning.get(executionIdentifier).hasBeenNotifiedAsOvertime();
-    }
-
-    public boolean isInterrupted(long executionIdentifier) {
-        return currentlyRunning.get(executionIdentifier).isInterrupted();
     }
 }

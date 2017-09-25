@@ -1,20 +1,22 @@
 package io.logz.sawmill;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class WatchedPipeline {
     private final Doc doc;
     private final String pipelineId;
     private final long ingestTimestamp;
     private boolean notifiedAsOvertime;
-    private boolean interrupted;
-    private final Thread context;
+    private AtomicBoolean running;
+    private final Thread thread;
 
-    public WatchedPipeline(Doc doc, String pipelineId, long ingestTimestamp, Thread context) {
+    public WatchedPipeline(Doc doc, String pipelineId, long ingestTimestamp, Thread thread) {
         this.doc = doc;
         this.pipelineId = pipelineId;
         this.ingestTimestamp = ingestTimestamp;
         this.notifiedAsOvertime = false;
-        this.interrupted = false;
-        this.context = context;
+        this.running = new AtomicBoolean(true);
+        this.thread = thread;
     }
 
     public Doc getDoc() {
@@ -29,10 +31,6 @@ public class WatchedPipeline {
         return ingestTimestamp;
     }
 
-    public Thread getContext() {
-        return context;
-    }
-
     public boolean hasBeenNotifiedAsOvertime() {
         return notifiedAsOvertime;
     }
@@ -41,11 +39,11 @@ public class WatchedPipeline {
         this.notifiedAsOvertime = true;
     }
 
-    public boolean isInterrupted() {
-        return interrupted;
+    public boolean compareAndSetFinishedRunning() {
+        return running.compareAndSet(true, false);
     }
 
-    public void setInterrupted(boolean interrupted) {
-        this.interrupted = interrupted;
+    public void interrupt() {
+        thread.interrupt();
     }
 }

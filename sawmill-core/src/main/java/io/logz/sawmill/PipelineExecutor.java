@@ -33,7 +33,10 @@ public class PipelineExecutor {
             List<ExecutionStep> executionSteps = pipeline.getExecutionSteps();
             executionResult = executeSteps(executionSteps, pipeline, doc, pipelineStopwatch);
 
-            if (watchdog.isInterrupted(executionIdentifier)) {
+            // Prevent race condition with watchdog - check whether the execution got interrupted
+            boolean hasBeenInterrupted = watchdog.stopWatchedPipeline(executionIdentifier);
+
+            if (hasBeenInterrupted) {
                 Thread.interrupted(); // clear interrupted flag
                 executionResult = ExecutionResult.expired(pipelineStopwatch.pipelineElapsed(MILLISECONDS));
             } else if (watchdog.isOvertime(executionIdentifier)) {
