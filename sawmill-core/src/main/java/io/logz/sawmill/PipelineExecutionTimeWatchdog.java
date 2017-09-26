@@ -80,15 +80,17 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
      * @param shouldInterrupt indicate if interrupt is required
      * @return {@code true} if already finished.
      */
-    private synchronized boolean stopWatchedPipeline(WatchedPipeline watchedPipeline, boolean shouldInterrupt) {
-        boolean alreadyFinished = !watchedPipeline.compareAndSetFinishedRunning();
+    private boolean stopWatchedPipeline(WatchedPipeline watchedPipeline, boolean shouldInterrupt) {
+        synchronized (watchedPipeline) {
+            boolean alreadyFinished = !watchedPipeline.compareAndSetFinishedRunning();
 
-        if (shouldInterrupt && !alreadyFinished) {
-            watchedPipeline.interrupt();
-            notifyExpiredToMetricsTracker(watchedPipeline);
+            if (shouldInterrupt && !alreadyFinished) {
+                watchedPipeline.interrupt();
+                notifyExpiredToMetricsTracker(watchedPipeline);
+            }
+
+            return alreadyFinished;
         }
-
-        return alreadyFinished;
     }
 
     private void interruptIfRunning(WatchedPipeline watchedPipeline) {
