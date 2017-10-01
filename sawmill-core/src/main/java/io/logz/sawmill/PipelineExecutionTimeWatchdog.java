@@ -1,5 +1,6 @@
 package io.logz.sawmill;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,7 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
     }
 
     private void initWatchdog(long periodMs) {
-        timer = Executors.newScheduledThreadPool(1);
+        timer = Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setNameFormat("sawmill-watchdog-%d").build());
         timer.scheduleAtFixedRate(this::alertOvertimeExecutions, 0, periodMs, MILLISECONDS);
     }
 
