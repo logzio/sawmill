@@ -16,6 +16,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -65,20 +66,34 @@ public class XmlProcessor implements Processor {
         }
 
         if (MapUtils.isNotEmpty(xpath)) {
-            xpath.entrySet().forEach(item -> {
+            for (Map.Entry<XPathExpressionProvider, String> item : xpath.entrySet()) {
                 try {
-                    String evaluate = item.getKey().provide().evaluate(parsed);
-                    if (StringUtils.isNotEmpty(evaluate)) {
-                        if (doc.hasField(item.getValue())) {
-                            doc.appendList(item.getValue(), evaluate);
-                        } else {
-                            doc.addField(item.getValue(), evaluate);
+                    Object evaluate;
+                    NodeList nodeList = (NodeList) item.getKey().provide().evaluate(parsed, XPathConstants.NODESET);
+                    if (nodeList.getLength() == 0) continue;
+                    if (nodeList.getLength() == 1) {
+                        evaluate = nodeList.item(0).getTextContent();
+                    } else {
+                        evaluate = new ArrayList<>();
+                        for (int i = 0; i < nodeList.getLength(); i++) {
+                            ((List)evaluate).add(nodeList.item(i).getTextContent());
                         }
+                    }
+
+                    String path = item.getValue();
+                    if (doc.hasField(path)) {
+                        if (evaluate instanceof List) {
+                            ((List)evaluate).forEach(val -> doc.appendList(path, val));
+                        } else {
+                            doc.appendList(path, evaluate);
+                        }
+                    } else {
+                        doc.addField(path, evaluate);
                     }
                 } catch (XPathExpressionException e) {
                     logger.trace("xpath evaluation failed", e);
                 }
-            });
+            }
         }
 
         if (storeXml) {

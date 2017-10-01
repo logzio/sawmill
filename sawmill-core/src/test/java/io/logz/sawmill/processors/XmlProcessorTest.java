@@ -75,7 +75,6 @@ public class XmlProcessorTest {
         Map<String, Object> config = createConfig("field", field,
                 "storeXml", false,
                 "xpath", ImmutableMap.of("/country/languages/language[@type='official']/text()", "lang",
-                        "/country/languages/language[2]/text()", "lang",
                         "/country/cities/city[2]/name/text()", "bestCity",
                         "/country/otherField", "nonExistsField"));
 
