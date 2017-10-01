@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createCondition;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class FieldHasValueConditionTest {
@@ -43,8 +44,9 @@ public class FieldHasValueConditionTest {
         boolean boolValue = true;
         List<String> listValue = Arrays.asList("some", "list");
         ImmutableMap<String, String> mapValue = ImmutableMap.of("some", "map");
-        List<Object> possibleValues = Arrays.asList(stringValue, intValue, longValue, doubleValue, boolValue, listValue, mapValue);
-        FieldHasValueCondition fieldHasValueCondition = new FieldHasValueCondition(field, possibleValues);
+        String templateValue = "{{templateField}}";
+        List<Object> possibleValues = Arrays.asList(stringValue, intValue, longValue, doubleValue, boolValue, listValue, mapValue, templateValue);
+        FieldHasValueCondition fieldHasValueCondition = createCondition(FieldHasValueCondition.class, "field", field, "possibleValues", possibleValues);
 
         Doc doc = createDoc("field1", stringValue);
         assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
@@ -65,6 +67,10 @@ public class FieldHasValueConditionTest {
         assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
 
         doc = createDoc("field1", mapValue);
+        assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
+
+        doc = createDoc("field1", "templateValue",
+                "templateField", "templateValue");
         assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
     }
 }

@@ -2,12 +2,18 @@ package io.logz.sawmill.conditions;
 
 import io.logz.sawmill.Condition;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.Template;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ConditionProvider;
 import io.logz.sawmill.parser.ConditionParser;
 import io.logz.sawmill.utilities.JsonUtils;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static java.util.Objects.requireNonNull;
 
 @ConditionProvider(type = "hasValue", factory = FieldHasValueCondition.Factory.class)
 public class FieldHasValueCondition implements Condition {
@@ -26,17 +32,36 @@ public class FieldHasValueCondition implements Condition {
 
         Object value = doc.getField(field);
 
-        return possibleValues.stream().anyMatch(value::equals);
+        return possibleValues.stream()
+                .map(possibleValue -> {
+                    if (possibleValue instanceof Template) {
+                        return ((Template)possibleValue).render(doc);
+                    } else {
+                        return possibleValue;
+                    }
+                }).anyMatch(value::equals);
     }
 
     public static class Factory implements Condition.Factory {
-        public Factory() {
+        private final TemplateService templateService;
+
+        @Inject
+        public Factory(TemplateService templateService) {
+            this.templateService = requireNonNull(templateService);
         }
 
         @Override
         public Condition create(Map<String, Object> config, ConditionParser conditionParser) {
             FieldHasValueCondition.Configuration fieldHasValueConfig = JsonUtils.fromJsonMap(FieldHasValueCondition.Configuration.class, config);
-            return new FieldHasValueCondition(fieldHasValueConfig.getField(), fieldHasValueConfig.getPossibleValues());
+            List<Object> possibleValues = fieldHasValueConfig.getPossibleValues().stream()
+                    .map(value -> {
+                        if (value instanceof String) {
+                            return templateService.createTemplate((String)value);
+                        } else {
+                            return value;
+                        }
+                    }).collect(Collectors.toList());
+            return new FieldHasValueCondition(fieldHasValueConfig.getField(), possibleValues);
         }
     }
 
