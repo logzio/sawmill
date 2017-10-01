@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
+
 @ConditionProvider(type = "hasValue", factory = FieldHasValueCondition.Factory.class)
 public class FieldHasValueCondition implements Condition {
 
@@ -33,7 +35,7 @@ public class FieldHasValueCondition implements Condition {
         return possibleValues.stream()
                 .map(possibleValue -> {
                     if (possibleValue instanceof Template) {
-                        return ((Template)value).render(doc);
+                        return ((Template)possibleValue).render(doc);
                     } else {
                         return possibleValue;
                     }
@@ -45,7 +47,7 @@ public class FieldHasValueCondition implements Condition {
 
         @Inject
         public Factory(TemplateService templateService) {
-            this.templateService = templateService;
+            this.templateService = requireNonNull(templateService);
         }
 
         @Override
