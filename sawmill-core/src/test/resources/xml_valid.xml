@@ -1,0 +1,17 @@
+<country>
+    <id>1</id>
+    <name>Israel</name>
+    <cities>
+        <city><name>Jerusalem</name></city>
+        <city><name>Tel Aviv</name></city>
+    </cities>
+    <lat>31.0461</lat>
+    <long>34.8516</long>
+    <continent>Asia</continent>
+    <currency>New Shekel</currency>
+    <languages>
+        <language type="official">Hebrew</language>
+        <language type="official">Arabic</language>
+        <language>English</language>
+    </languages>
+</country>
