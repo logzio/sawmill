@@ -43,7 +43,8 @@ public class FieldHasValueConditionTest {
         boolean boolValue = true;
         List<String> listValue = Arrays.asList("some", "list");
         ImmutableMap<String, String> mapValue = ImmutableMap.of("some", "map");
-        List<Object> possibleValues = Arrays.asList(stringValue, intValue, longValue, doubleValue, boolValue, listValue, mapValue);
+        String templateValue = "{{templateField}}";
+        List<Object> possibleValues = Arrays.asList(stringValue, intValue, longValue, doubleValue, boolValue, listValue, mapValue, templateValue);
         FieldHasValueCondition fieldHasValueCondition = new FieldHasValueCondition(field, possibleValues);
 
         Doc doc = createDoc("field1", stringValue);
@@ -65,6 +66,10 @@ public class FieldHasValueConditionTest {
         assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
 
         doc = createDoc("field1", mapValue);
+        assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
+
+        doc = createDoc("field1", "value1",
+                "templateField", "value1");
         assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
     }
 }
