@@ -1,21 +1,25 @@
 package io.logz.sawmill;
 
 import io.logz.sawmill.utilities.Grok;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static java.util.Collections.EMPTY_MAP;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class GrokTest {
 
     @Test
-    public void testNoMatch() {
+    public void testNoMatch() throws InterruptedException {
         Map<String, String> bank = new HashMap<>();
         bank.put("MONTHDAY", "(?:(?:0[1-9])|(?:[12][0-9])|(?:3[01])|[1-9])");
         Grok grok = new Grok(bank, "%{MONTHDAY:day}");
@@ -29,7 +33,7 @@ public class GrokTest {
     }
 
     @Test
-    public void testAddPatternByDefinition() {
+    public void testAddPatternByDefinition() throws InterruptedException {
         Map<String, String> bank = new HashMap<>();
         Grok grok = new Grok(bank, "%{SINGLEDIGIT:num=[0-9]}%{SINGLEDIGIT:num}");
 
@@ -44,7 +48,7 @@ public class GrokTest {
     }
 
     @Test
-    public void testMultipleNamedCapturesWithSameName() {
+    public void testMultipleNamedCapturesWithSameName() throws InterruptedException {
         Map<String, String> bank = new HashMap<>();
         bank.put("SINGLEDIGIT", "[0-9]");
         Grok grok = new Grok(bank, "%{SINGLEDIGIT:num}%{SINGLEDIGIT:num}%{SINGLEDIGIT:num}");
@@ -60,7 +64,7 @@ public class GrokTest {
     }
 
     @Test
-    public void testNumericCaptures() {
+    public void testNumericCaptures() throws InterruptedException {
         Map<String, String> bank = new HashMap<>();
         bank.put("BASE10NUM", "(?<![0-9.+-])(?>[+-]?(?:(?:[0-9]+(?:\\.[0-9]+)?)|(?:\\.[0-9]+)))");
         bank.put("NUMBER", "(?:%{BASE10NUM})");
@@ -95,7 +99,7 @@ public class GrokTest {
     }
 
     @Test
-    public void testNoNamedCaptures() {
+    public void testNoNamedCaptures() throws InterruptedException {
         Map<String, String> bank = new HashMap<>();
 
         bank.put("WORD", "\\w+");
@@ -137,7 +141,7 @@ public class GrokTest {
     }
 
     @Test
-    public void testWithOniguramaNamedCaptures() {
+    public void testWithOniguramaNamedCaptures() throws InterruptedException {
         Grok grok = new Grok(EMPTY_MAP, "(?<foo>\\w+)");
         String text = "hello world";
 
@@ -151,7 +155,7 @@ public class GrokTest {
     }
 
     @Test
-    public void testWithOniguramaWithHyphensNamedCaptures() {
+    public void testWithOniguramaWithHyphensNamedCaptures() throws InterruptedException {
         Grok grok = new Grok(EMPTY_MAP, "(?<foo-bar>\\w+)");
         String text = "hello world";
 
@@ -165,11 +169,27 @@ public class GrokTest {
     }
 
     @Test
-    public void testMatchWithoutCaptures() {
+    public void testMatchWithoutCaptures() throws InterruptedException {
         String line = "value";
         Grok grok = new Grok(EMPTY_MAP, "value");
         List<Grok.Match> captures = grok.matches(line);
         assertThat(captures).hasSize(0);
+    }
+
+    @Test
+    public void testMatchInterrupted() {
+        Grok grok = new Grok(EMPTY_MAP, ".{10000,}.{100000}");
+        String text = RandomStringUtils.random(10000);
+
+        interruptCurrentThreadIn(100);
+
+        assertThatThrownBy(() -> grok.matches(text)).isInstanceOf(InterruptedException.class);
+    }
+
+    private void interruptCurrentThreadIn(long millis) {
+        Thread currentThread = Thread.currentThread();
+        ScheduledExecutorService interrupter = Executors.newScheduledThreadPool(1);
+        interrupter.schedule(currentThread::interrupt, millis, MILLISECONDS);
     }
 
 }

@@ -22,7 +22,6 @@ import org.openjdk.jmh.infra.BenchmarkParams;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -40,7 +39,10 @@ public class SawmillBenchmark {
     public static String docsPath;
 
     @Param({"50"})
-    public static long thresholdTimeMs;
+    public static long warningThresholdTimeMs;
+
+    @Param({"500"})
+    public static long expiredThresholdTimeMs;
 
     @Param({"1000"})
     public static int docsAmount;
@@ -80,7 +82,7 @@ public class SawmillBenchmark {
 
     private void setupSawmill() {
         pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
-        watchdog = new PipelineExecutionTimeWatchdog(thresholdTimeMs, pipelineExecutorMetrics, context -> { });
+        watchdog = new PipelineExecutionTimeWatchdog(warningThresholdTimeMs, expiredThresholdTimeMs, pipelineExecutorMetrics, context -> { });
         pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
         Pipeline.Factory pipelineFactory = new Pipeline.Factory();
         pipeline = pipelineFactory.create(pipelineConfig);

@@ -147,8 +147,9 @@ public class DateProcessor implements Processor {
         Object dateTimeDocValue = doc.getField(field);
 
         ZonedDateTime dateTime = null;
-        if (dateTimeDocValue instanceof Long) {
-            dateTime = getUnixDateTime((Long) dateTimeDocValue);
+        boolean unixParseRequested = formats.contains("UNIX") || formats.contains("UNIX_MS");
+        if (dateTimeDocValue instanceof Number && unixParseRequested) {
+            dateTime = getUnixDateTime(((Number) dateTimeDocValue).longValue());
         } else if (dateTimeDocValue instanceof String) {
             dateTime = getISODateTime((String) dateTimeDocValue);
         }

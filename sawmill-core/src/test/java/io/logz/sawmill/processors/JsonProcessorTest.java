@@ -50,7 +50,7 @@ public class JsonProcessorTest {
 
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat((Map) doc.getField(targetField)).isEqualTo(jsonMap);
-        assertThat(doc.hasField(field)).isFalse();
+        assertThat(doc.hasField(field)).isTrue();
     }
 
     @Test
@@ -69,7 +69,7 @@ public class JsonProcessorTest {
 
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat((Map) doc.getField("json")).isEqualTo(jsonMap);
-        assertThat(doc.hasField(field)).isFalse();
+        assertThat(doc.hasField(field)).isTrue();
     }
 
     @Test
@@ -88,7 +88,7 @@ public class JsonProcessorTest {
         jsonMap.entrySet().forEach(entry ->
             assertThat((Object) doc.getField(entry.getKey())).isEqualTo(entry.getValue())
         );
-        assertThat(doc.hasField(field)).isFalse();
+        assertThat(doc.hasField(field)).isTrue();
     }
 
     @Test

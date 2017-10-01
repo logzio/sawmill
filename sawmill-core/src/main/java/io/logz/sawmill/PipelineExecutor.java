@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class PipelineExecutor {
@@ -25,13 +26,22 @@ public class PipelineExecutor {
     public ExecutionResult execute(Pipeline pipeline, Doc doc) {
         PipelineStopwatch pipelineStopwatch = new PipelineStopwatch().start();
 
-        long executionIdentifier = watchdog.startedExecution(pipeline.getId(), doc);
+        long executionIdentifier = watchdog.startedExecution(pipeline.getId(), doc, Thread.currentThread());
 
         ExecutionResult executionResult;
         try {
             List<ExecutionStep> executionSteps = pipeline.getExecutionSteps();
             executionResult = executeSteps(executionSteps, pipeline, doc, pipelineStopwatch);
 
+            // Prevent race condition with watchdog - check whether the execution got interrupted
+            boolean hasBeenInterrupted = watchdog.stopWatchedPipeline(executionIdentifier);
+
+            if (hasBeenInterrupted) {
+                Thread.interrupted(); // clear interrupted flag
+                executionResult = ExecutionResult.expired(pipelineStopwatch.pipelineElapsed(MILLISECONDS));
+            } else if (watchdog.isOvertime(executionIdentifier)) {
+                executionResult = ExecutionResult.overtime(executionResult, pipelineStopwatch.pipelineElapsed(MILLISECONDS));
+            }
         } catch (RuntimeException e) {
             pipelineExecutionMetricsTracker.pipelineFailedOnUnexpectedError(pipeline.getId(), doc, e);
             throw new PipelineExecutionException(pipeline.getId(), e);
@@ -58,7 +68,7 @@ public class PipelineExecutor {
         for (ExecutionStep executionStep : executionSteps) {
             ExecutionResult executionResult = executeStep(executionStep, pipeline, doc, pipelineStopwatch);
             boolean shouldStop = !executionResult.isSucceeded() && pipeline.isStopOnFailure();
-            if (shouldStop || executionResult.isDropped()) {
+            if (shouldStop || executionResult.isExpired() || executionResult.isDropped()) {
                 return executionResult;
             }
         }
@@ -66,16 +76,21 @@ public class PipelineExecutor {
     }
 
     private ExecutionResult executeStep(ExecutionStep executionStep, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {
-        if (executionStep instanceof ConditionalExecutionStep) {
-            return executeConditionalStep((ConditionalExecutionStep) executionStep, pipeline, doc, pipelineStopwatch);
-        } else if (executionStep instanceof ProcessorExecutionStep) {
-            return executeProcessorStep((ProcessorExecutionStep) executionStep, pipeline, doc, pipelineStopwatch);
+        try {
+            if (executionStep instanceof ConditionalExecutionStep) {
+                return executeConditionalStep((ConditionalExecutionStep) executionStep, pipeline, doc, pipelineStopwatch);
+            } else if (executionStep instanceof ProcessorExecutionStep) {
+                return executeProcessorStep((ProcessorExecutionStep) executionStep, pipeline, doc, pipelineStopwatch);
+            }
+        } catch (InterruptedException e) {
+            return ExecutionResult.expired();
         }
+
 
         throw new RuntimeException("Unsupported execution step " + executionStep.getClass());
     }
 
-    private ExecutionResult executeConditionalStep(ConditionalExecutionStep conditionalExecutionStep, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {
+    private ExecutionResult executeConditionalStep(ConditionalExecutionStep conditionalExecutionStep, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) throws InterruptedException {
         Condition condition = conditionalExecutionStep.getCondition();
 
         if (condition.evaluate(doc)) {
@@ -85,7 +100,7 @@ public class PipelineExecutor {
         }
     }
 
-    private ExecutionResult executeProcessorStep(ProcessorExecutionStep executionStep, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) {
+    private ExecutionResult executeProcessorStep(ProcessorExecutionStep executionStep, Pipeline pipeline, Doc doc, PipelineStopwatch pipelineStopwatch) throws InterruptedException{
         Processor processor = executionStep.getProcessor();
         String pipelineId = pipeline.getId();
         String processorName = executionStep.getProcessorName();
@@ -139,6 +154,10 @@ public class PipelineExecutor {
         }
 
         public long pipelineElapsed() {
+            return stopwatch.elapsed(timeUnit);
+        }
+
+        public long pipelineElapsed(TimeUnit timeUnit) {
             return stopwatch.elapsed(timeUnit);
         }
 

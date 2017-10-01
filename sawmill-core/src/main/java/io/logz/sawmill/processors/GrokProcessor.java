@@ -61,7 +61,7 @@ public class GrokProcessor implements Processor {
     }
 
     @Override
-    public ProcessResult process(Doc doc) {
+    public ProcessResult process(Doc doc) throws InterruptedException {
         if (!doc.hasField(field, String.class)) {
             if (ignoreMissing) return ProcessResult.success();
 
@@ -97,7 +97,7 @@ public class GrokProcessor implements Processor {
         return matchValues.size() == 1 ? matchValues.get(0) : matchValues;
     }
 
-    private List<Grok.Match> getMatches(String value) {
+    private List<Grok.Match> getMatches(String value) throws InterruptedException {
         for (Grok grok : groks) {
             List<Grok.Match> captures = grok.matches(value);
             if (CollectionUtils.isNotEmpty(captures)) {
@@ -111,7 +111,7 @@ public class GrokProcessor implements Processor {
         private static final String[] PATTERN_NAMES = new String[] {
                 "gpfs", "grok-patterns", "haproxy",
                 "java", "linux-syslog", "mcollective", "mcollective-patterns", "mongodb", "nagios",
-                "postgresql", "redis", "ruby", "SYSLOG5424BASEOLDER"
+                "postgresql", "redis", "ruby", "SYSLOG5424BASEOLDER", "firewalls"
         };
 
         private final Map<String,String> patternsBank;

@@ -12,15 +12,15 @@ import java.util.Map;
 
 import static io.logz.sawmill.processors.GrokProcessorTest.APACHE_LOG_SAMPLE;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
-import static io.logz.sawmill.utils.FactoryUtils.createFactory;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessorFactory;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GrokDebuggerProcessorTest {
 
-    public static GrokDebuggerProcessor.Factory factory = createFactory(GrokDebuggerProcessor.class);
+    public static GrokDebuggerProcessor.Factory factory = createProcessorFactory(GrokDebuggerProcessor.class);
 
     @Test
-    public void testValueOffsets() {
+    public void testValueOffsets() throws InterruptedException {
         String messageField = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
 
@@ -45,7 +45,7 @@ public class GrokDebuggerProcessorTest {
     }
 
     @Test
-    public void testListValueOffset() {
+    public void testListValueOffset() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{WORD:http-verb} %{WORD:http-verb}");
 

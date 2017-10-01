@@ -2,7 +2,6 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Template;
-import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import org.junit.Test;
 
