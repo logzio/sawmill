@@ -1,11 +1,14 @@
 package io.logz.sawmill.processors;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.exceptions.ProcessorConfigurationException;
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -15,31 +18,19 @@ import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.fail;
 
 public class XmlProcessorTest {
 
-    public static final String VALID_XML =
-            "<country>" +
-                "<id>1</id>" +
-                "<name>Israel</name>" +
-                "<cities>" +
-                    "<city>" +
-                        "<name>Jerusalem</name>" +
-                    "</city>" +
-                    "<city>" +
-                        "<name>Tel Aviv</name>" +
-                    "</city>" +
-                "</cities>" +
-                "<lat>31.0461</lat>" +
-                "<long>34.8516</long>" +
-                "<continent>Asia</continent>" +
-                "<currency>New Shekel</currency>" +
-                "<languages>" +
-                    "<language type=\"official\">Hebrew</language>" +
-                    "<language type=\"official\">Arabic</language>" +
-                    "<language>English</language>" +
-                "</languages>" +
-            "</country>";
+    public static String VALID_XML;
+
+    static {
+        try {
+            VALID_XML = IOUtils.toString(XmlProcessorTest.class.getResourceAsStream("/xml_valid.xml"), Charsets.UTF_8);
+        } catch (IOException e) {
+            fail("couldn't load valid xml");
+        }
+    }
 
     public static final String INVALID_XML = "<invalid>/invalid";
 
