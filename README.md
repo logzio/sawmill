@@ -253,7 +253,31 @@ Example:
     - field
     - targetField
     - inputWords []
-
+    
+- xml [xml]
+	- field 
+	- targetField
+	- xpath [this is a json object with key:values where the key is the xpath, and the value is the field name you want for that path]  EX:
+	
+```json
+{
+  "steps": [
+    {
+      "xml": {
+        "config": {
+          "field": "message",
+          "targetField": "xmldata",
+          "xpath": {
+            "/testng-results/suite/test/@started-at": "start_time",
+            "/testng-results/suite/test/@finished-at": "finish_time",
+            "/testng-results/suite/test/@duration-ms": "total_time"
+          }
+        }
+      }
+    }
+  ]
+}
+```
   
 # If Conditions
 
