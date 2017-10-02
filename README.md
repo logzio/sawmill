@@ -257,6 +257,7 @@ Example:
 - xml [xml]
 	- field 
 	- targetField
+	- storeXml [boolean, default = true]
 	- xpath [this is a json object with key:values where the key is the xpath, and the value is the field name you want for that path]  EX:
 	
 ```json
