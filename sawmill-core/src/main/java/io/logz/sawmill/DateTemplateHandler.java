@@ -1,20 +1,19 @@
 package io.logz.sawmill;
 
-import com.github.mustachejava.TemplateFunction;
-
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Function;
 
 public class DateTemplateHandler {
 
     // keep compatibility until we change configs
-    public TemplateFunction date() {
+    public Function<String, String> date() {
         return this::getCurrentDateByFormat;
     }
 
-    public TemplateFunction dateTemplate() {
+    public Function<String, String> dateTemplate() {
         return this::getCurrentDateByFormat;
     }
 
