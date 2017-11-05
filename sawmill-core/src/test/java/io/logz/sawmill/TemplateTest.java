@@ -77,7 +77,7 @@ public class TemplateTest {
 
     @Test
     public void testDateTemplate() {
-        String dateFormat = "dd.mm.yyyy";
+        String dateFormat = "dd.MM.yyyy";
         Template template = new TemplateService().createTemplate("Today is {{#dateTemplate}}" + dateFormat + "{{/dateTemplate}}");
         Doc doc = createDoc("field1", "value1");
 
@@ -96,7 +96,7 @@ public class TemplateTest {
 
     @Test
     public void testCompatibilityDateTemplate() {
-        String dateFormat = "dd.mm.yyyy";
+        String dateFormat = "dd.MM.yyyy";
         Template template = new TemplateService().createTemplate("Today is {{#date}}" + dateFormat + "{{/date}}");
         Doc doc = createDoc("field1", "value1");
 
