@@ -14,17 +14,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class DocSizeProcessorTest {
 
     @Test
-    public void testDocSizeFieldExists(){
+    public void testConstructor(){
         Doc doc = createDoc("docSize", 15);
-
-        DocSizeProcessor sizeProcessor = createProcessor(DocSizeProcessor.class, createConfig("charset", "utf8"));
+        DocSizeProcessor sizeProcessor = createProcessor(DocSizeProcessor.class, createConfig("targetField", "docSize_test"));
         ProcessResult processResult = sizeProcessor.process(doc);
-        assertThat(processResult.isSucceeded()).isFalse();
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat(doc.hasField("docSize_test")).isTrue();
     }
 
     @Test
-    public void utf8CharacterSet(){
-        String s = "Hello, UTF-8!";
+    public void sanity(){
+        String s = "Hello, World!";
         Doc doc = createDoc("testField", s);
 
         DocSizeProcessor sizeProcessor = createProcessor(DocSizeProcessor.class);
