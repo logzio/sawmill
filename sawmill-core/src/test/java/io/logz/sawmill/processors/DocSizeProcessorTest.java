@@ -6,6 +6,9 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
@@ -26,13 +29,14 @@ public class DocSizeProcessorTest {
     public void sanity(){
         String s = "Hello, World!";
         Doc doc = createDoc("testField", s);
+        Map<String, Object> origMap = new HashMap<>(doc.getSource());
 
         DocSizeProcessor sizeProcessor = createProcessor(DocSizeProcessor.class);
         ProcessResult processResult = sizeProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat(doc.hasField("docSize")).isTrue();
-        assertThat((int) doc.getField("docSize")).isEqualTo(Utf8.encodedLength(JsonUtils.toJsonString(createDoc("testField", s).getSource())));
+        assertThat((int) doc.getField("docSize")).isEqualTo(Utf8.encodedLength(JsonUtils.toJsonString(origMap)));
     }
 
 
@@ -40,13 +44,14 @@ public class DocSizeProcessorTest {
     public void differentLangTest(){
         String s = "こんにちは世界!";
         Doc doc = createDoc("testField", s);
+        Map<String, Object> origMap = new HashMap<>(doc.getSource());
 
         DocSizeProcessor sizeProcessor = createProcessor(DocSizeProcessor.class);
         ProcessResult processResult = sizeProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat(doc.hasField("docSize")).isTrue();
-        assertThat((int) doc.getField("docSize")).isEqualTo(Utf8.encodedLength(JsonUtils.toJsonString(createDoc("testField", s).getSource())));
+        assertThat((int) doc.getField("docSize")).isEqualTo(Utf8.encodedLength(JsonUtils.toJsonString(origMap)));
     }
 
 }
