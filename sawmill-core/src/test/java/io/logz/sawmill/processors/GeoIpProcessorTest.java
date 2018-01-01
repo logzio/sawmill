@@ -8,6 +8,7 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -30,11 +31,29 @@ public class GeoIpProcessorTest {
     }
 
     private static void loadDatabaseReader() {
-        try (InputStream inputStream = new GZIPInputStream(Resources.getResource("GeoLite2-City.mmdb.gz").openStream())) {
-            databaseReader = new DatabaseReader.Builder(inputStream).withCache(new CHMCache()).build();
+        try (InputStream gzipInputStream = new GZIPInputStream(Resources.getResource("GeoLite2-City.tar.gz").openStream())) {
+            try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream)) {
+                if (seekToDbFile(tarArchiveInputStream)) {
+                    databaseReader = new DatabaseReader.Builder(tarArchiveInputStream).withCache(new CHMCache()).build();
+                } else {
+                    throw new RuntimeException("failed to load geoip database");
+                }
+            }
         } catch (IOException e) {
             throw new RuntimeException("failed to load geoip database", e);
         }
+    }
+
+    private static boolean seekToDbFile(TarArchiveInputStream tarArchiveInputStream) throws IOException {
+        while (tarArchiveInputStream.getNextEntry() != null) {
+            boolean dbFile = tarArchiveInputStream.getCurrentEntry().getName().endsWith(".mmdb");
+
+            if (dbFile) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Test

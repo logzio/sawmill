@@ -13,6 +13,10 @@
         <version>1.1.38</version>
     </parent>
 
+    <properties>
+        <maxMindGeoIpCityUrl>http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz</maxMindGeoIpCityUrl>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -31,8 +35,8 @@
                                 <get src="https://raw.githubusercontent.com/ua-parser/uap-core/0dabfd35a465e1c7dd5b07c273d4b693d46ee387/regexes.yaml"
                                      dest="${project.build.outputDirectory}/regexes.yaml" />
                                 <!--GeoIp processor DB file (download from maxmind)-->
-                                <get src="http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
-                                     dest="${project.build.outputDirectory}/GeoLite2-City.mmdb.gz"
+                                <get src="${maxMindGeoIpCityUrl}"
+                                     dest="${project.build.outputDirectory}/GeoLite2-City.tar.gz"
                                      usetimestamp="true"/>
                             </tasks>
                         </configuration>
@@ -90,6 +94,10 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
