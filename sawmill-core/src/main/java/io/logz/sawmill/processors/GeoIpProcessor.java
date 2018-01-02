@@ -16,6 +16,7 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -44,12 +45,25 @@ public class GeoIpProcessor implements Processor {
     }
 
     private static void loadDatabaseReader() {
-        try (InputStream inputStream = new GZIPInputStream(Resources.getResource("GeoLite2-City.mmdb.gz").openStream())) {
-            databaseReader = new DatabaseReader.Builder(inputStream).withCache(new CHMCache()).build();
-        } catch (IOException e) {
+        try (InputStream gzipInputStream = new GZIPInputStream(Resources.getResource("GeoLite2-City.tar.gz").openStream())) {
+            try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream)) {
+                databaseReader = new DatabaseReader.Builder(seekToDbFile(tarArchiveInputStream)).withCache(new CHMCache()).build();
+            }
+        } catch (Exception e) {
             throw new RuntimeException("failed to load geoip database", e);
         }
+    }
 
+    private static TarArchiveInputStream seekToDbFile(TarArchiveInputStream tarArchiveInputStream) throws IOException {
+        while (tarArchiveInputStream.getNextEntry() != null) {
+            boolean dbFile = tarArchiveInputStream.getCurrentEntry().getName().endsWith(".mmdb");
+
+            if (dbFile) {
+                return tarArchiveInputStream;
+            }
+        }
+
+        throw new RuntimeException("DB file not found");
     }
 
     private final String sourceField;
