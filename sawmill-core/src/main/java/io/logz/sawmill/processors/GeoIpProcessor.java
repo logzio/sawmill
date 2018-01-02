@@ -47,27 +47,23 @@ public class GeoIpProcessor implements Processor {
     private static void loadDatabaseReader() {
         try (InputStream gzipInputStream = new GZIPInputStream(Resources.getResource("GeoLite2-City.tar.gz").openStream())) {
             try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream)) {
-                if (seekToDbFile(tarArchiveInputStream)) {
-                    databaseReader = new DatabaseReader.Builder(tarArchiveInputStream).withCache(new CHMCache()).build();
-                } else {
-                    throw new RuntimeException("failed to load geoip database, DB not found");
-                }
+                databaseReader = new DatabaseReader.Builder(seekToDbFile(tarArchiveInputStream)).withCache(new CHMCache()).build();
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("failed to load geoip database", e);
         }
     }
 
-    private static boolean seekToDbFile(TarArchiveInputStream tarArchiveInputStream) throws IOException {
+    private static TarArchiveInputStream seekToDbFile(TarArchiveInputStream tarArchiveInputStream) throws IOException {
         while (tarArchiveInputStream.getNextEntry() != null) {
             boolean dbFile = tarArchiveInputStream.getCurrentEntry().getName().endsWith(".mmdb");
 
             if (dbFile) {
-                return true;
+                return tarArchiveInputStream;
             }
         }
 
-        return false;
+        throw new RuntimeException("DB file not found");
     }
 
     private final String sourceField;
