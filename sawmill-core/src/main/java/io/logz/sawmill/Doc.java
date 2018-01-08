@@ -42,7 +42,7 @@ public class Doc {
 
     public <T> T getField(String path) {
         Optional<Object> field = JsonUtils.getByPath(source, path);
-        checkState(field.isPresent(), String.format("Couldn't resolve field in path [%s]", path));
+        checkState(field.isPresent(), "Couldn't resolve field in path [%s]", path);
         return (T) field.get();
     }
 
