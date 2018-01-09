@@ -40,7 +40,7 @@ public class ConditionalFactoriesLoader {
         return instance;
     }
 
-    public void loadAnnotatedProcessors(ConditionFactoryRegistry conditionFactoryRegistry) {
+    public void loadAnnotatedConditions(ConditionFactoryRegistry conditionFactoryRegistry) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         long timeElapsed = 0;
 

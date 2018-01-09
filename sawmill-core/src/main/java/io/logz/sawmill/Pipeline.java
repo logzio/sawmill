@@ -45,7 +45,7 @@ public class Pipeline {
 
         public Factory(ProcessorFactoryRegistry processorFactoryRegistry, ConditionFactoryRegistry conditionFactoryRegistry) {
             ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
-            ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
+            ConditionalFactoriesLoader.getInstance().loadAnnotatedConditions(conditionFactoryRegistry);
             pipelineDefinitionJsonParser = new PipelineDefinitionJsonParser();
             executionStepsParser = new ExecutionStepsParser(processorFactoryRegistry, conditionFactoryRegistry);
         }

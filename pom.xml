@@ -10,6 +10,7 @@
     <modules>
         <module>sawmill-core</module>
         <module>sawmill-benchmark</module>
+        <module>sawmill-executor</module>
     </modules>
 
     <packaging>pom</packaging>

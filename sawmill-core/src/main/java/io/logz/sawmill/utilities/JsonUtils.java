@@ -12,6 +12,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public class JsonUtils {
 
@@ -118,5 +119,50 @@ public class JsonUtils {
             }
         }
         return map;
+    }
+
+    public static String getTheOnlyKeyFrom(Map<String, Object> map) {
+        Set<String> keys = map.keySet();
+        if (keys.size() != 1) {
+            throw new RuntimeException("JSON should contain only one key: " + toJsonString(map));
+        }
+        return keys.iterator().next();
+    }
+
+    public static Boolean getBoolean(Map<String, Object> map, String key, boolean requiredField) {
+        return getValueAs(map, key, Boolean.class, requiredField);
+    }
+
+    public static String getString(Map<String, Object> map, String key, boolean requiredField) {
+        return getValueAs(map, key, String.class, requiredField);
+    }
+
+    public static List<Map<String, Object>> getList(Map<String, Object> map, String key, boolean requiredField) {
+        return getValueAs(map, key, List.class, requiredField);
+    }
+
+    public static Map<String, Object> getMap(Map<String, Object> map, String key, boolean requiredField) {
+        return getValueAs(map, key, Map.class, requiredField);
+    }
+
+    public static <T> T getValueAs(Map<String, Object> map, String key, Class<T> clazz, boolean requiredField) {
+        Object value = map.get(key);
+        if (value == null) {
+            if (!requiredField) return null;
+            throw new RuntimeException("\"" + key + "\"" + " is a required field which does not exists in " + map);
+        }
+        if (!clazz.isInstance(value)) {
+            throw new RuntimeException("Value of field \"" + key + "\"" + " is: " + value  + " with type: " + value.getClass().getSimpleName() +
+                    " , while it should be of type " + clazz.getSimpleName());
+        }
+        return clazz.cast(value);
+    }
+
+    public static boolean isValueList(Map<String, Object> map, String key) {
+        return map.get(key) instanceof List;
+    }
+
+    public static boolean isValueMap(Map<String, Object> map, String key) {
+        return map.get(key) instanceof Map;
     }
 }
