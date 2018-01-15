@@ -125,7 +125,7 @@ public class DateProcessor implements Processor {
 
         formats.forEach(format -> {
             try {
-                dateTimePatternToFormatter.computeIfAbsent(format, k -> DateTimeFormatter.ofPattern(format));
+                dateTimePatternToFormatter.computeIfAbsent(format, k -> new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern(format).toFormatter());
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException(String.format("failed to create date processor, format [%s] is not valid", format), e);
             }
