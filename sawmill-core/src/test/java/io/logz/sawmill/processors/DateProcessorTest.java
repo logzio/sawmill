@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
@@ -178,6 +179,29 @@ public class DateProcessorTest {
         Doc docWithList = createDoc(field, Arrays.asList("its", "a", "list", "should", "not", "work"));
 
         assertThat(dateProcessor.process(docWithList).isSucceeded()).isFalse();
+    }
+
+    @Test
+    public void testCaseInsensitive() {
+        String field = "datetime";
+        String targetField = "timestamp";
+
+        ZoneId zoneId = ZoneId.of("Europe/Paris");
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("dd/MMM/yyyy:HH:mm:ss Z").toFormatter();
+        String dateString = zonedDateTime.format(formatter).toLowerCase();
+        Doc doc = createDoc(field, dateString);
+
+        ZonedDateTime expectedDateTime = LocalDateTime.parse(dateString, formatter).atZone(zoneId);
+
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("dd/MMM/yyyy:HH:mm:ss Z"));
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.elasticPrintFormat));
     }
 
     @Test
