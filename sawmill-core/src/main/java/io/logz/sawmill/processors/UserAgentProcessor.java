@@ -156,7 +156,7 @@ public class UserAgentProcessor implements Processor {
         private String field;
         private String targetField;
         private String prefix;
-        private int truncatedInputLength;
+        private int truncatedInputLength = 256;
         private List<String> tagOnTruncated = Collections.singletonList("_user_agent_truncated");
 
         public Configuration() { }
