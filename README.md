@@ -291,10 +291,10 @@ Example:
 - in  (this is used to find a value in a field that is an array like tags)
 	- path
 	- value
-- hasValue (this finds a match of a string field)
+- hasValue (checks if a field has a value)
 	- field
-	- possibleValues [array]
-- matchRegex
+	- possibleValues [array]  (type sensitive, if it's a number make sure to have the value not in quotes, if it's a string have it in quotes, if it can be both be safe and have the values both in quotes and not in quotes.
+- matchRegex (only works on string fields)
 	- field
 	- regex
 	- caseInsensitive - default false (optional)
@@ -320,9 +320,9 @@ Example:
   "if": {
     "condition": {
       "hasValue": {
-        "field": "tags",
+        "field": "level",
 	"possibleValues":[
-	  "_jsonparsefailure"
+	  "INFO"
 	]
       },
       "then": [
