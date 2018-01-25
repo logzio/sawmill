@@ -66,7 +66,7 @@ Example:
 	- field 
 	- targetField (optional)
 	- formats - An array,  one of these: https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
-	- timeZone - one of these: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html  (optional)
+	- timeZone - one of these: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html  (optional)  You can try to use this timezone list http://joda-time.sourceforge.net/timezones.html but make sure to test because not all zones exist in sawmill.
 	
 Example: 
 ```json
