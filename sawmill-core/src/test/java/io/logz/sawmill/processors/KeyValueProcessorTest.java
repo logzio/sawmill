@@ -2,6 +2,7 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import java.text.MessageFormat;
@@ -301,6 +302,24 @@ public class KeyValueProcessorTest {
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat((String) doc.getField("sameKey")).isEqualTo("value1");
     }
+
+    @Test
+    public void testMaxKeyLength() throws InterruptedException {
+        int maxKeyLength = 80;
+        String field = "message";
+        String key = "thisShouldBeIgnored" + RandomStringUtils.randomAlphabetic(maxKeyLength) ;
+        Doc doc = createDoc(field, Arrays.asList(getDefaultMessage(), key + "=anotherMagic"));
+
+        Map<String,Object> config = createConfig("field", field, "maxKeyLength", maxKeyLength);
+
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
+
+        ProcessResult processResult = kvProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat(doc.hasField(key)).isFalse();
+    }
+
 
     private String getDefaultMessage() {
         return getMessage(" ", "=");
