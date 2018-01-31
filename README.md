@@ -1,5 +1,10 @@
 # Sawmill
-Log enricher an transformer TBD
+Sawmill is an open source Java Library which enable data processing, enrichments, filtering and transformations.
+
+Using Sawmill pipelines you can process documents with groks, geoip, user-agent resolving, add or remove fields/tags and more dynamically inside your JVM based application.
+
+# Documentation
+The full sawmill documentation [can be found here](https://github.com/logzio/sawmill/wiki).
 
 Simple configuration example:
 ```json
@@ -400,6 +405,3 @@ Complex If Statement
 
 ```
 
-## Open source
-In order to move to public repository, these are the items we need to fix:
-- Remove the dependency of custom java-grok in Nexus
