@@ -6,7 +6,7 @@ Using Sawmill pipelines you can process documents with groks, geoip, user-agent 
 # Documentation
 The full sawmill documentation [can be found here](https://github.com/logzio/sawmill/wiki).
 
-Simple configuration example:
+## Simple configuration example
 ```json
 {
   "steps": [
