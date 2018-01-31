@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class GeoIpProcessorTest {
     @Test
     public void testValidIpWithSpecificProperties() {
-        String ip = "187.162.70.166";
+        String ip = "1.0.0.0";
         String source = "ipString";
 
 
@@ -31,9 +31,8 @@ public class GeoIpProcessorTest {
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat(doc.hasField("geoip")).isTrue();
         Map<String, Object> geoIp = doc.getField("geoip");
-        assertThat(geoIp.size()).isEqualTo(4);
-        assertThat(geoIp.get("country_name")).isEqualTo("Mexico");
-        assertThat(geoIp.get("city_name")).isEqualTo("Mexico City");
+        assertThat(geoIp.size()).isGreaterThanOrEqualTo(3);
+        assertThat(geoIp.get("country_name")).isEqualTo("Australia");
         assertThat(geoIp.get("ip")).isEqualTo(ip);
     }
 
