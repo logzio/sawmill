@@ -1,4 +1,5 @@
-# Sawmill
+![Sawmill Logo](logo.png)
+
 Sawmill is an open source Java Library which enable data processing, enrichments, filtering and transformations.
 
 Using Sawmill pipelines you can process documents with groks, geoip, user-agent resolving, add or remove fields/tags and more dynamically inside your JVM based application.
