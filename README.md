@@ -1,11 +1,9 @@
 ![Sawmill Logo](logo.png)
 
-Sawmill is an open source Java Library which enable data processing, enrichments, filtering and transformations.
-
-Using Sawmill pipelines you can process documents with groks, geoip, user-agent resolving, add or remove fields/tags and more dynamically inside your JVM based application.
+Sawmill is a JSON transformation open source library. It enables you to enrich, transform, and filter your JSON documents. Using Sawmill pipelines you can integrate your favorite groks, geoip, user-agent resolving, add or remove fields/tags and more in a descriptive manner, using configuration files or builders, in a simple DSL, allowing you to dynamically change transformations.
 
 # Documentation
-The full sawmill documentation [can be found here](https://github.com/logzio/sawmill/wiki).
+The full Sawmill documentation [can be found here](https://github.com/logzio/sawmill/wiki).
 
 ## Simple configuration example
 ```json
