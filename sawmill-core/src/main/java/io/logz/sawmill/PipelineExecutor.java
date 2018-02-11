@@ -5,7 +5,6 @@ import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
