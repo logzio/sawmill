@@ -5,6 +5,7 @@ import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -17,6 +18,14 @@ public class PipelineExecutor {
 
     private final PipelineExecutionTimeWatchdog watchdog;
     private final PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker;
+
+    public PipelineExecutor() {
+        this(new PipelineExecutionMetricsMBean());
+    }
+
+    public PipelineExecutor(PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker) {
+        this(new PipelineExecutionTimeWatchdog(1000, 1000, pipelineExecutionMetricsTracker, context -> {}), pipelineExecutionMetricsTracker);
+    }
 
     public PipelineExecutor(PipelineExecutionTimeWatchdog watchdog, PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker) {
         this.watchdog = watchdog;
