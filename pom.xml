@@ -6,13 +6,38 @@
 
     <groupId>io.logz.sawmill</groupId>
     <artifactId>sawmill</artifactId>
-    <version>1.1.42</version>
+    <version>1.1.43</version>
     <modules>
         <module>sawmill-core</module>
         <module>sawmill-benchmark</module>
     </modules>
 
     <packaging>pom</packaging>
+    <name>Sawmill</name>
+    <description>Sawmill is a JSON transformation open source library.</description>
+    <url>https://github.com/logzio/sawmill</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Ori Riechman</name>
+            <email>ori@logz.io</email>
+            <organization>Logz.io</organization>
+            <organizationUrl>http://logz.io</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:logzio/samill.git</connection>
+        <developerConnection>scm:git:git@github.com:logzio/sawmill.git</developerConnection>
+        <url>https://github.com/logzio/sawmill</url>
+    </scm>
 
     <repositories>
         <repository>
@@ -58,6 +83,20 @@
                         <id>attach-sources</id>
                         <goals>
                             <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
                         </goals>
                     </execution>
                 </executions>
