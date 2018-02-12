@@ -23,7 +23,7 @@ public class PipelineExecutor {
     }
 
     public PipelineExecutor(PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker) {
-        this(new PipelineExecutionTimeWatchdog(1000, 1000, pipelineExecutionMetricsTracker, context -> {}), pipelineExecutionMetricsTracker);
+        this(new PipelineExecutionTimeWatchdog(100, 1000, pipelineExecutionMetricsTracker, context -> {}), pipelineExecutionMetricsTracker);
     }
 
     public PipelineExecutor(PipelineExecutionTimeWatchdog watchdog, PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker) {
