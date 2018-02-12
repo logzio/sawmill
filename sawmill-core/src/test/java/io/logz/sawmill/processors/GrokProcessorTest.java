@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
-import static io.logz.sawmill.utils.FactoryUtils.createFactory;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessorFactory;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

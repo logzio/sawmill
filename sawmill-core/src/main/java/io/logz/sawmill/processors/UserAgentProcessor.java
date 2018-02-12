@@ -37,7 +37,6 @@ public class UserAgentProcessor implements Processor {
         this.uaParserProvider = requireNonNull(userAgentParserProvider);
         this.truncatedInputLength = truncatedInputLength > 0 ? truncatedInputLength : 256;
         this.tagOnTruncated = tagOnTruncated;
-        this.uaParserProvider = checkNotNull(userAgentParserProvider);
     }
 
     @Override

@@ -20,7 +20,7 @@ public class AddAndRemoveFieldProcessorTest {
     @Test
     public void testAddAndRemoveField() {
         String path = "message.hola.hello";
-        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class,  "value", "shalom");
+        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class, "path", path, "value", "shalom");
         RemoveFieldProcessor removeFieldProcessor = createProcessor(RemoveFieldProcessor.class, "path", path);
 
         Doc doc = createDoc("field", "value");
