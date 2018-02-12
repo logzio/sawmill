@@ -11,6 +11,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class UserAgentProcessorTest {
     @Test
@@ -206,5 +207,11 @@ public class UserAgentProcessorTest {
         assertThat(doc.hasField("tags")).isTrue();
         assertThat((List)doc.getField("tags")).isNotEmpty().contains("_user_agent_truncated");
 
+    }
+
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(UserAgentProcessor.class)).isInstanceOf(NullPointerException.class);
     }
 }

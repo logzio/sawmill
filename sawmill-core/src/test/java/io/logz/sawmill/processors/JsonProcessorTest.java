@@ -13,6 +13,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class JsonProcessorTest {
 
@@ -136,5 +137,10 @@ public class JsonProcessorTest {
         ProcessResult processResult = jsonProcessor.process(doc);
 
         assertThat(processResult.isSucceeded()).isFalse();
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(JsonProcessor.class)).isInstanceOf(NullPointerException.class);
     }
 }

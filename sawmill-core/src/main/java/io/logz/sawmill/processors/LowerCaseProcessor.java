@@ -8,14 +8,14 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "lowerCase", factory = LowerCaseProcessor.Factory.class)
 public class LowerCaseProcessor implements Processor {
     private final String field;
 
     public LowerCaseProcessor(String path) {
-        this.field = checkNotNull(path, "field cannot be null");
+        this.field = requireNonNull(path, "field cannot be null");
     }
 
     @Override

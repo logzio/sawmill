@@ -9,6 +9,7 @@ import java.util.List;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AddAndRemoveTagProcessorTest {
     @Test
@@ -69,5 +70,11 @@ public class AddAndRemoveTagProcessorTest {
         assertThat(removeTagProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThat(((List)doc.getField("tags")).contains("specialTag1")).isFalse();
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(AddTagProcessor.class)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> createProcessor(RemoveTagProcessor.class)).isInstanceOf(IllegalStateException.class);
     }
 }

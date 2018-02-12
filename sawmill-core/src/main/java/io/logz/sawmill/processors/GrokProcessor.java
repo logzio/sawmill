@@ -22,9 +22,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.EMPTY_LIST;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "grok", factory = GrokProcessor.Factory.class)
 public class GrokProcessor implements Processor {
@@ -37,7 +37,7 @@ public class GrokProcessor implements Processor {
 
     public GrokProcessor(String field, List<String> matchExpressions, Map<String, String> patternsBank, List<String> overwrite, boolean ignoreMissing, List<String> tagsOnFailure) {
         checkState(CollectionUtils.isNotEmpty(matchExpressions), "patterns cannot be empty");
-        this.field = checkNotNull(field, "field cannot be null");
+        this.field = requireNonNull(field, "field cannot be null");
         this.expressions = matchExpressions;
         this.overwrite = overwrite != null ? overwrite : EMPTY_LIST;
         this.ignoreMissing = ignoreMissing;

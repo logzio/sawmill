@@ -44,6 +44,8 @@ public class AddTagProcessor implements Processor {
         public Processor create(Map<String,Object> config) {
             AddTagProcessor.Configuration addTagConfig = JsonUtils.fromJsonMap(AddTagProcessor.Configuration.class, config);
 
+            checkState(CollectionUtils.isNotEmpty(addTagConfig.getTags()), "tags cannot be empty");
+
             List<Template> tags = addTagConfig.getTags().stream().map(templateService::createTemplate).collect(Collectors.toList());
             return new AddTagProcessor(tags);
         }

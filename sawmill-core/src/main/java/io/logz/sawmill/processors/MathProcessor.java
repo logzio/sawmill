@@ -71,15 +71,16 @@ public class MathProcessor implements Processor {
         public MathProcessor create(Map<String,Object> config) {
             MathProcessor.Configuration mathConfig = JsonUtils.fromJsonMap(MathProcessor.Configuration.class, config);
 
-            Set<String> variables = findVariables(mathConfig.getExpression());
+            String expression = requireNonNull(mathConfig.getExpression(), "expression cannot be null");
+            Set<String> variables = findVariables(expression);
 
-            MathExpressionProvider mathExpressionProvider = new MathExpressionProvider(trimMustache(mathConfig.getExpression()), variables);
+            MathExpressionProvider mathExpressionProvider = new MathExpressionProvider(trimMustache(expression), variables);
 
             if (!mathExpressionProvider.provide().validate(false).isValid()) {
-                throw new ProcessorConfigurationException(String.format("invalid expression [%s]", mathConfig.getExpression()));
+                throw new ProcessorConfigurationException(String.format("invalid expression [%s]", expression));
             }
 
-            return new MathProcessor(mathConfig.getTargetField(), mathExpressionProvider, variables);
+            return new MathProcessor(requireNonNull(mathConfig.getTargetField()), mathExpressionProvider, variables);
         }
 
         private String trimMustache(String expression) {

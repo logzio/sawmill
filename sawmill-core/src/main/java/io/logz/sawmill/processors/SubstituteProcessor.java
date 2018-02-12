@@ -12,7 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "gsub", factory = SubstituteProcessor.Factory.class)
 public class SubstituteProcessor implements Processor {
@@ -22,9 +22,9 @@ public class SubstituteProcessor implements Processor {
     private final String replacement;
 
     public SubstituteProcessor(String field, Pattern pattern, String replacement) {
-        this.field = checkNotNull(field, "field cannot be null");
-        this.pattern = checkNotNull(pattern, "pattern cannot be null");
-        this.replacement = checkNotNull(replacement, "replacement cannot be null");
+        this.field = requireNonNull(field, "field cannot be null");
+        this.pattern = requireNonNull(pattern, "pattern cannot be null");
+        this.replacement = requireNonNull(replacement, "replacement cannot be null");
     }
 
     @Override
@@ -50,7 +50,7 @@ public class SubstituteProcessor implements Processor {
 
             Pattern pattern;
             try {
-                pattern = Pattern.compile(subConfig.getPattern());
+                pattern = Pattern.compile(requireNonNull(subConfig.getPattern(), "pattern cannot be null"));
             } catch (PatternSyntaxException e) {
                 throw new ProcessorConfigurationException("cannot create gsub processor with invalid pattern");
             }

@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "userAgent", factory = UserAgentProcessor.Factory.class)
 public class UserAgentProcessor implements Processor {
@@ -31,12 +31,12 @@ public class UserAgentProcessor implements Processor {
     private final UserAgentParserProvider uaParserProvider;
 
     public UserAgentProcessor(String field, Template targetField, String prefix, int truncatedInputLength, List<String> tagOnTruncated, UserAgentParserProvider userAgentParserProvider) {
-        this.field = checkNotNull(field, "field cannot be null");
+        this.field = requireNonNull(field, "field cannot be null");
         this.targetField = targetField;
         this.prefix = prefix != null ? prefix : "";
+        this.uaParserProvider = requireNonNull(userAgentParserProvider);
         this.truncatedInputLength = truncatedInputLength > 0 ? truncatedInputLength : 256;
         this.tagOnTruncated = tagOnTruncated;
-        this.uaParserProvider = checkNotNull(userAgentParserProvider);
     }
 
     @Override

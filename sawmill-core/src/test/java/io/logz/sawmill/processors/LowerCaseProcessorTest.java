@@ -8,6 +8,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class LowerCaseProcessorTest {
     @Test
@@ -53,5 +54,10 @@ public class LowerCaseProcessorTest {
 
         assertThat(processResult.isSucceeded()).isFalse();
         assertThat(doc.hasField(field)).isFalse();
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(LowerCaseProcessor.class)).isInstanceOf(NullPointerException.class);
     }
 }
