@@ -125,7 +125,7 @@ public class DateProcessor implements Processor {
 
         formats.forEach(format -> {
             try {
-                dateTimePatternToFormatter.computeIfAbsent(format, k -> DateTimeFormatter.ofPattern(format));
+                dateTimePatternToFormatter.computeIfAbsent(format, k -> new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern(format).toFormatter());
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException(String.format("failed to create date processor, format [%s] is not valid", format), e);
             }
@@ -147,8 +147,9 @@ public class DateProcessor implements Processor {
         Object dateTimeDocValue = doc.getField(field);
 
         ZonedDateTime dateTime = null;
-        if (dateTimeDocValue instanceof Long) {
-            dateTime = getUnixDateTime((Long) dateTimeDocValue);
+        boolean unixParseRequested = formats.contains("UNIX") || formats.contains("UNIX_MS");
+        if (dateTimeDocValue instanceof Number && unixParseRequested) {
+            dateTime = getUnixDateTime(((Number) dateTimeDocValue).longValue());
         } else if (dateTimeDocValue instanceof String) {
             dateTime = getISODateTime((String) dateTimeDocValue);
         }

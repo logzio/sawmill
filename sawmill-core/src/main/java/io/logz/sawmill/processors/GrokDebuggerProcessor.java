@@ -49,7 +49,7 @@ public class GrokDebuggerProcessor implements Processor {
     }
 
     @Override
-    public ProcessResult process(Doc doc) {
+    public ProcessResult process(Doc doc) throws InterruptedException {
         if (!doc.hasField(field, String.class)) {
             if (ignoreMissing) return ProcessResult.success();
 
@@ -94,7 +94,7 @@ public class GrokDebuggerProcessor implements Processor {
 
     }
 
-    private List<Grok.Match> getMatches(String value) {
+    private List<Grok.Match> getMatches(String value) throws InterruptedException {
         for (int i=0; i< groks.size(); i++) {
             List<Grok.Match> captures = groks.get(i).matches(value);
             if (CollectionUtils.isNotEmpty(captures)) {

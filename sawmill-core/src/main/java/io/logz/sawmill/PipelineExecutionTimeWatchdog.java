@@ -1,5 +1,6 @@
 package io.logz.sawmill;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,49 +22,97 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(PipelineExecutionTimeWatchdog.class);
 
-    private final long thresholdTimeMs;
+    private final long warningThresholdTimeMs;
+    private final long expiredThresholdTimeMs;
     private final ConcurrentMap<Long, WatchedPipeline> currentlyRunning;
     private final Consumer<WatchedPipeline> overtimeOp;
     private final PipelineExecutionMetricsTracker metricsTracker;
     private final AtomicLong executionIdGenerator;
     private ScheduledExecutorService timer;
 
-    public PipelineExecutionTimeWatchdog(long thresholdTimeMs, PipelineExecutionMetricsTracker metricsTracker, Consumer<WatchedPipeline> overtimeOp) {
-        this.thresholdTimeMs = thresholdTimeMs;
+    public PipelineExecutionTimeWatchdog(long warningThresholdTimeMs, long expiredThresholdTimeMs, PipelineExecutionMetricsTracker metricsTracker, Consumer<WatchedPipeline> overtimeOp) {
+        this.warningThresholdTimeMs = warningThresholdTimeMs;
+        this.expiredThresholdTimeMs = expiredThresholdTimeMs;
         this.metricsTracker = metricsTracker;
         this.overtimeOp = overtimeOp;
         this.currentlyRunning = new ConcurrentHashMap<>();
         this.executionIdGenerator = new AtomicLong();
-        initWatchdog(thresholdTimeMs / THRESHOLD_CHECK_FACTOR);
+        initWatchdog(warningThresholdTimeMs / THRESHOLD_CHECK_FACTOR);
     }
 
     private void initWatchdog(long periodMs) {
-        timer = Executors.newScheduledThreadPool(1);
+        timer = Executors.newScheduledThreadPool(1, new ThreadFactoryBuilder().setNameFormat("sawmill-watchdog-%d").setDaemon(true).build());
         timer.scheduleAtFixedRate(this::alertOvertimeExecutions, 0, periodMs, MILLISECONDS);
     }
 
     private void alertOvertimeExecutions() {
         try {
-            long now = System.currentTimeMillis();
-            List<WatchedPipeline> overtimeExecutions = currentlyRunning.values().stream()
-                    .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > thresholdTimeMs)
-                    .filter(watchedPipeline -> !watchedPipeline.hasBeenNotifiedAsOvertime())
-                    .collect(Collectors.toList());
-            overtimeExecutions.forEach(this::notifyMetricsTracker);
-            overtimeExecutions.forEach(overtimeOp);
-            overtimeExecutions.forEach(WatchedPipeline::setAsNotifiedWithOvertime);
+            warnOvertimeExecutions();
+            killExpiredExecutions();
         } catch (Exception e) {
             logger.error("failed to alert of overtime executions", e);
         }
     }
 
-    private void notifyMetricsTracker(WatchedPipeline watchedPipeline) {
+    private void killExpiredExecutions() {
+        long now = System.currentTimeMillis();
+        List<WatchedPipeline> expiredExecutions = currentlyRunning.values().stream()
+                .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > expiredThresholdTimeMs)
+                .collect(Collectors.toList());
+
+        expiredExecutions.forEach(this::interruptIfRunning);
+    }
+
+    private void warnOvertimeExecutions() {
+        long now = System.currentTimeMillis();
+        List<WatchedPipeline> warningExceededExecutions = currentlyRunning.values().stream()
+                .filter(watchedPipeline -> now - watchedPipeline.getIngestTimestamp() > warningThresholdTimeMs)
+                .filter(watchedPipeline -> !watchedPipeline.hasBeenNotifiedAsOvertime())
+                .collect(Collectors.toList());
+        warningExceededExecutions.forEach(this::notifyOvertimeToMetricsTracker);
+        warningExceededExecutions.forEach(overtimeOp);
+        warningExceededExecutions.forEach(WatchedPipeline::setAsNotifiedWithOvertime);
+    }
+
+    /***
+     * Stop watching pipeline and interrupt if needed
+     * Check whether the execution has been stopped already
+     * @param watchedPipeline
+     * @param shouldInterrupt indicate if interrupt is required
+     * @return {@code true} if already finished.
+     */
+    private boolean stopWatchedPipeline(WatchedPipeline watchedPipeline, boolean shouldInterrupt) {
+        synchronized (watchedPipeline) {
+            boolean alreadyFinished = !watchedPipeline.compareAndSetFinishedRunning();
+
+            if (shouldInterrupt && !alreadyFinished) {
+                watchedPipeline.interrupt();
+                notifyExpiredToMetricsTracker(watchedPipeline);
+            }
+
+            return alreadyFinished;
+        }
+    }
+
+    private void interruptIfRunning(WatchedPipeline watchedPipeline) {
+        stopWatchedPipeline(watchedPipeline, true);
+    }
+
+    public boolean stopWatchedPipeline(long executionIdentifier) {
+        return stopWatchedPipeline(currentlyRunning.get(executionIdentifier), false);
+    }
+
+    private void notifyOvertimeToMetricsTracker(WatchedPipeline watchedPipeline) {
         metricsTracker.overtimeProcessingDoc(watchedPipeline.getPipelineId(), watchedPipeline.getDoc());
     }
 
-    public long startedExecution(String pipelineId, Doc doc) {
+    private void notifyExpiredToMetricsTracker(WatchedPipeline watchedPipeline) {
+        metricsTracker.pipelineExpired(watchedPipeline.getPipelineId(), watchedPipeline.getDoc());
+    }
+
+    public long startedExecution(String pipelineId, Doc doc, Thread context) {
         long ingestTimestamp = System.currentTimeMillis();
-        WatchedPipeline watchedPipeline = new WatchedPipeline(doc, pipelineId, ingestTimestamp);
+        WatchedPipeline watchedPipeline = new WatchedPipeline(doc, pipelineId, ingestTimestamp, context);
         long id = executionIdGenerator.incrementAndGet();
         currentlyRunning.put(id, watchedPipeline);
 
@@ -84,5 +133,9 @@ public class PipelineExecutionTimeWatchdog implements Closeable {
         } catch (InterruptedException e) {
             Thread.interrupted();
         }
+    }
+
+    public boolean isOvertime(long executionIdentifier) {
+        return currentlyRunning.get(executionIdentifier).hasBeenNotifiedAsOvertime();
     }
 }

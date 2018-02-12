@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static org.joni.Matcher.INTERRUPTED;
+
 import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "kv", factory = KeyValueProcessor.Factory.class)
@@ -47,6 +49,7 @@ public class KeyValueProcessor implements Processor {
     private final boolean recursive;
     private final String trim;
     private final String trimKey;
+    private final int maxKeyLength;
 
     public KeyValueProcessor(String field,
                              Template targetField,
@@ -59,7 +62,8 @@ public class KeyValueProcessor implements Processor {
                              String prefix,
                              boolean recursive,
                              String trim,
-                             String trimKey) {
+                             String trimKey,
+                             int maxKeyLength) {
         this.field = requireNonNull(field, "field cannot be null");
         this.targetField = targetField;
         this.pattern = buildPattern(fieldSplit, valueSplit, includeBrackets);
@@ -70,6 +74,7 @@ public class KeyValueProcessor implements Processor {
         this.recursive = recursive;
         this.trim = trim;
         this.trimKey = trimKey;
+        this.maxKeyLength = maxKeyLength;
     }
 
     /***
@@ -99,7 +104,7 @@ public class KeyValueProcessor implements Processor {
     }
 
     @Override
-    public ProcessResult process(Doc doc) {
+    public ProcessResult process(Doc doc) throws InterruptedException {
         if (!doc.hasField(field)) {
             return ProcessResult.failure(String.format("failed to process kv, couldn't find field [%s]", field));
         }
@@ -139,10 +144,11 @@ public class KeyValueProcessor implements Processor {
 
     private String getKey(byte[] message, Region region) {
         int matchNumber = pattern.nameToBackrefNumber(KEY.getBytes(), 0, KEY.getBytes().length, region);
-        return prefix + trim(extractString(message, region.beg[matchNumber], region.end[matchNumber]), trimKey);
+        String key = prefix + trim(extractString(message, region.beg[matchNumber], region.end[matchNumber]), trimKey);
+        return key.length() <= maxKeyLength ? key : null;
     }
 
-    private Object getValue(byte[] message, Region region) {
+    private Object getValue(byte[] message, Region region) throws InterruptedException {
         String value = getMatchedValue(message, region);
 
         if (value == null) {
@@ -159,7 +165,7 @@ public class KeyValueProcessor implements Processor {
         return trim(value, trim);
     }
 
-    private Map<String,Object> parse(String message) {
+    private Map<String,Object> parse(String message) throws InterruptedException {
         Map<String,Object> kvMap = new HashMap<>();
         int matchesCounter = 0;
 
@@ -171,29 +177,35 @@ public class KeyValueProcessor implements Processor {
         while (result != -1 && matchesCounter < MAX_MATCHES) {
             Region region = matcher.getEagerRegion();
             String key = getKey(messageAsBytes, region);
-            Object value = getValue(messageAsBytes, region);
 
-            if (value == null) {
-                continue;
-            }
+            if (key != null) {
 
-            if (allowDuplicateValues) {
-                kvMap.compute(key, (k, oldVal) -> {
-                    if (oldVal == null) return value;
-                    if (oldVal instanceof List) {
-                        ((List) oldVal).add(value);
-                        return oldVal;
+                Object value = getValue(messageAsBytes, region);
+
+                if (value != null) {
+
+                    if (allowDuplicateValues) {
+                        kvMap.compute(key, (k, oldVal) -> {
+                            if (oldVal == null) return value;
+                            if (oldVal instanceof List) {
+                                ((List) oldVal).add(value);
+                                return oldVal;
+                            }
+                            return new ArrayList<>(Arrays.asList(oldVal, value));
+                        });
+                    } else {
+                        kvMap.putIfAbsent(key, value);
                     }
-                    return new ArrayList<>(Arrays.asList(oldVal, value));
-                });
-            } else {
-                kvMap.putIfAbsent(key, value);
+                }
             }
-
             int endOfFullMatch = region.end[0];
             result = matcher.search(endOfFullMatch, messageAsBytes.length, Option.MULTILINE);
 
             matchesCounter++;
+
+            if (result == INTERRUPTED) {
+                throw new InterruptedException();
+            }
         }
 
         return kvMap;
@@ -256,7 +268,8 @@ public class KeyValueProcessor implements Processor {
                     keyValueConfig.getPrefix(),
                     keyValueConfig.isRecursive(),
                     keyValueConfig.getTrim(),
-                    keyValueConfig.getTrimKey());
+                    keyValueConfig.getTrimKey(),
+                    keyValueConfig.getMaxKeyLength());
         }
     }
 
@@ -273,6 +286,7 @@ public class KeyValueProcessor implements Processor {
         private boolean recursive = false;
         private String trim;
         private String trimKey;
+        private int maxKeyLength = 40;
 
         public Configuration() { }
 
@@ -322,6 +336,10 @@ public class KeyValueProcessor implements Processor {
 
         public String getTrimKey() {
             return trimKey;
+        }
+
+        public int getMaxKeyLength() {
+            return maxKeyLength;
         }
     }
 }
