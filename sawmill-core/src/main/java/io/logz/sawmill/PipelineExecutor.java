@@ -18,6 +18,14 @@ public class PipelineExecutor {
     private final PipelineExecutionTimeWatchdog watchdog;
     private final PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker;
 
+    public PipelineExecutor() {
+        this(new PipelineExecutionMetricsMBean());
+    }
+
+    public PipelineExecutor(PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker) {
+        this(new PipelineExecutionTimeWatchdog(100, 1000, pipelineExecutionMetricsTracker, context -> {}), pipelineExecutionMetricsTracker);
+    }
+
     public PipelineExecutor(PipelineExecutionTimeWatchdog watchdog, PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker) {
         this.watchdog = watchdog;
         this.pipelineExecutionMetricsTracker = pipelineExecutionMetricsTracker;
