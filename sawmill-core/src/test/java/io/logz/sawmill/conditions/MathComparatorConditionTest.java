@@ -1,7 +1,6 @@
 package io.logz.sawmill.conditions;
 
 import io.logz.sawmill.ConditionFactoryRegistry;
-import io.logz.sawmill.ConditionalFactoriesLoader;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.parser.ConditionParser;
 import org.junit.Before;
@@ -19,8 +18,7 @@ public class MathComparatorConditionTest {
 
     @Before
     public void init() {
-        ConditionFactoryRegistry conditionFactoryRegistry = new ConditionFactoryRegistry();
-        ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
+        ConditionFactoryRegistry conditionFactoryRegistry = ConditionFactoryRegistry.getInstance();
         conditionParser = new ConditionParser(conditionFactoryRegistry);
     }
 
