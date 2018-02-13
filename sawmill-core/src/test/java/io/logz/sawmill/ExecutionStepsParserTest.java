@@ -29,13 +29,11 @@ public class ExecutionStepsParserTest {
 
     @Before
     public void init() {
-        ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
+        ProcessorFactoryRegistry processorFactoryRegistry = ProcessorFactoryRegistry.getInstance();
         processorFactoryRegistry.register("test", new TestProcessor.Factory());
-        ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
 
-        ConditionFactoryRegistry conditionFactoryRegistry = new ConditionFactoryRegistry();
+        ConditionFactoryRegistry conditionFactoryRegistry = ConditionFactoryRegistry.getInstance();
         conditionFactoryRegistry.register("testCondition", new TestCondition.Factory());
-        ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
 
         executionStepsParser = new ExecutionStepsParser(processorFactoryRegistry, conditionFactoryRegistry);
     }

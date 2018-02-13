@@ -20,13 +20,11 @@ public class PipelineTest {
 
     @Before
     public void init() {
-        processorFactoryRegistry = new ProcessorFactoryRegistry();
+        processorFactoryRegistry = ProcessorFactoryRegistry.getInstance();
         processorFactoryRegistry.register("test", new TestProcessor.Factory());
-        ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
 
-        conditionFactoryRegistry = new ConditionFactoryRegistry();
+        conditionFactoryRegistry = ConditionFactoryRegistry.getInstance();
         conditionFactoryRegistry.register("testCondition", new TestCondition.Factory());
-        ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
 
         factory = new Pipeline.Factory(processorFactoryRegistry, conditionFactoryRegistry);
     }
