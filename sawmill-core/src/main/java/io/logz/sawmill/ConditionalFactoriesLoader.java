@@ -51,7 +51,7 @@ public class ConditionalFactoriesLoader {
                 ConditionProvider conditionProvider = condition.getAnnotation(ConditionProvider.class);
                 String typeName = conditionProvider.type();
                 conditionFactoryRegistry.register(typeName, getFactory(conditionProvider));
-                logger.info("{} condition factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
+                logger.debug("{} condition factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
                 conditionsLoaded++;
             } catch (Exception e) {
                 logger.error("failed to load condition {}", condition.getName(), e);
@@ -60,7 +60,7 @@ public class ConditionalFactoriesLoader {
                 timeElapsed = stopwatch.elapsed(MILLISECONDS);
             }
         }
-        logger.info("{} conditions factories loaded, took {}ms", conditionsLoaded, stopwatch.elapsed(MILLISECONDS));
+        logger.debug("{} conditions factories loaded, took {}ms", conditionsLoaded, stopwatch.elapsed(MILLISECONDS));
     }
 
     public Condition.Factory getFactory(ConditionProvider conditionProvider) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException, NoSuchMethodException {
