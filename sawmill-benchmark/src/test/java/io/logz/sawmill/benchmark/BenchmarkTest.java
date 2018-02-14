@@ -48,7 +48,7 @@ public class BenchmarkTest {
 
         while ( results.hasNext()) {
             RunResult runResults = results.next();
-            assertThat(runResults.getPrimaryResult().getScore()).isBetween(40000.0, 65000.0);
+            assertThat(runResults.getPrimaryResult().getScore()).isGreaterThan(35000.0);
         }
     }
 
