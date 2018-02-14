@@ -8,7 +8,15 @@ import java.util.Map;
 public class ProcessorFactoryRegistry {
     private final Map<String, Processor.Factory> processorFactories = new HashMap<>();
 
-    public ProcessorFactoryRegistry() { }
+    private final static ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
+
+    private ProcessorFactoryRegistry() {
+        ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(this);
+    }
+
+    public static ProcessorFactoryRegistry getInstance() {
+        return processorFactoryRegistry;
+    }
 
     public void register(String name, Processor.Factory factory) {
         processorFactories.put(name, factory);

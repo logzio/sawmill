@@ -14,6 +14,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class KeyValueProcessorTest {
 
@@ -327,5 +328,10 @@ public class KeyValueProcessorTest {
 
     private String getMessage(String fieldSplit, String valueSplit) {
         return MessageFormat.format(KEV_VALUE_MESSAGE_TEMPLATE, fieldSplit, valueSplit);
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(KeyValueProcessor.class)).isInstanceOf(NullPointerException.class);
     }
 }

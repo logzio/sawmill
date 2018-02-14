@@ -87,4 +87,11 @@ public class AddAndRemoveFieldProcessorTest {
         assertThatThrownBy(() -> createProcessor(RemoveFieldProcessor.class, EMPTY_MAP)).isInstanceOf(ProcessorConfigurationException.class);
         assertThatThrownBy(() -> createProcessor(RemoveFieldProcessor.class, "fields", Arrays.asList("1", "2"), "path", "3")).isInstanceOf(ProcessorConfigurationException.class);
     }
+
+    @Test
+    public void testAddProcessorWithBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(AddFieldProcessor.class)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(AddFieldProcessor.class, "path", "aaaa")).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(AddFieldProcessor.class, "value", "aaaa")).isInstanceOf(NullPointerException.class);
+    }
 }

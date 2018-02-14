@@ -26,6 +26,8 @@ import java.util.Map;
 
 import static org.joni.Matcher.INTERRUPTED;
 
+import static java.util.Objects.requireNonNull;
+
 @ProcessorProvider(type = "kv", factory = KeyValueProcessor.Factory.class)
 public class KeyValueProcessor implements Processor {
 
@@ -62,7 +64,7 @@ public class KeyValueProcessor implements Processor {
                              String trim,
                              String trimKey,
                              int maxKeyLength) {
-        this.field = field;
+        this.field = requireNonNull(field, "field cannot be null");
         this.targetField = targetField;
         this.pattern = buildPattern(fieldSplit, valueSplit, includeBrackets);
         this.includeKeys = includeKeys;

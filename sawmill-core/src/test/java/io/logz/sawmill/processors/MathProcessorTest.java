@@ -106,4 +106,11 @@ public class MathProcessorTest {
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat((Double) doc.getField(targetField)).isEqualTo(300);
     }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(MathProcessor.class)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(MathProcessor.class, "targetField", "aaa")).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(MathProcessor.class, "expression", "1 + 2")).isInstanceOf(NullPointerException.class);
+    }
 }

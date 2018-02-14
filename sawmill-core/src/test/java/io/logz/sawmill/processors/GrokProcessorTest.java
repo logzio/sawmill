@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
+import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessorFactory;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -301,5 +302,10 @@ public class GrokProcessorTest {
         assertThatThrownBy(() -> factory.create(config))
                 .isInstanceOf(ProcessorConfigurationException.class)
                 .hasMessageContaining("Failed to create grok for expression");
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(GrokProcessor.class, "patterns", Arrays.asList("pattern"))).isInstanceOf(NullPointerException.class);
     }
 }

@@ -30,11 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
 import static io.logz.sawmill.processors.GeoIpProcessor.Property.LOCATION;
 import static java.util.Collections.EMPTY_LIST;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "geoIp", factory = GeoIpProcessor.Factory.class)
 public class GeoIpProcessor implements Processor {
@@ -73,8 +73,8 @@ public class GeoIpProcessor implements Processor {
 
     public GeoIpProcessor(String sourceField, Template targetField, List<Property> properties, List<String> tagsOnSuccess) {
         checkState(CollectionUtils.isNotEmpty(properties), "properties cannot be empty");
-        this.sourceField = checkNotNull(sourceField, "source field cannot be null");
-        this.targetField = checkNotNull(targetField, "target field cannot be null");
+        this.sourceField = requireNonNull(sourceField, "source field cannot be null");
+        this.targetField = requireNonNull(targetField, "target field cannot be null");
         this.properties = properties;
         this.tagsOnSuccess = tagsOnSuccess != null ? tagsOnSuccess : EMPTY_LIST;
     }
@@ -142,7 +142,7 @@ public class GeoIpProcessor implements Processor {
             GeoIpProcessor.Configuration geoIpConfig = JsonUtils.fromJsonMap(Configuration.class, config);
 
             return new GeoIpProcessor(geoIpConfig.getSourceField(),
-                    templateService.createTemplate(geoIpConfig.getTargetField()),
+                    templateService.createTemplate(requireNonNull(geoIpConfig.getTargetField(), "target field cannot be null")),
                     geoIpConfig.getProperties(),
                     geoIpConfig.getTagsOnSuccess());
         }

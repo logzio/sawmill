@@ -40,12 +40,10 @@ public class Pipeline {
         private final ExecutionStepsParser executionStepsParser;
 
         public Factory() {
-            this(new ProcessorFactoryRegistry(), new ConditionFactoryRegistry());
+            this(ProcessorFactoryRegistry.getInstance(), ConditionFactoryRegistry.getInstance());
         }
 
         public Factory(ProcessorFactoryRegistry processorFactoryRegistry, ConditionFactoryRegistry conditionFactoryRegistry) {
-            ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(processorFactoryRegistry);
-            ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
             pipelineDefinitionJsonParser = new PipelineDefinitionJsonParser();
             executionStepsParser = new ExecutionStepsParser(processorFactoryRegistry, conditionFactoryRegistry);
         }

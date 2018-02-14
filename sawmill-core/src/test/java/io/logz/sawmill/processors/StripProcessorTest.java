@@ -11,6 +11,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class StripProcessorTest {
     @Test
@@ -54,5 +55,10 @@ public class StripProcessorTest {
         assertThat(failureMessage).contains("field2");
         assertThat(failureMessage).contains("field4");
         assertThat(failureMessage).contains("nonExistsField");
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(StripProcessor.class)).isInstanceOf(IllegalStateException.class);
     }
 }
