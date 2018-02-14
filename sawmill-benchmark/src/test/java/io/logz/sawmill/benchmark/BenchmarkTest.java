@@ -10,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -18,6 +19,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
+
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class BenchmarkTest {
 
@@ -33,7 +37,7 @@ public class BenchmarkTest {
 
         String json = ConfigFactory.parseString(scenario).root().render(ConfigRenderOptions.concise());
         Options opts = JsonUtils.fromJsonString(SawmillBenchmarkOptions.class, json).toJmhOptions();
-        new Runner(opts).run();
+        Iterator<RunResult> results = new Runner(opts).run().iterator();
 
         // Copy the artifacts
         File sourceResults = new File(tempFolder.getRoot(), "result.json");
@@ -41,6 +45,11 @@ public class BenchmarkTest {
 
         logger.info("Test Output:");
         logger.info(FileUtils.readFileToString(sourceResults, Charsets.UTF_8));
+
+        while ( results.hasNext()) {
+            RunResult runResults = results.next();
+            assertThat(runResults.getPrimaryResult().getScore()).isBetween(40000.0, 65000.0);
+        }
     }
 
     // Not the cleanest way to get the target dir to save the result
