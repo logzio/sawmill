@@ -54,8 +54,9 @@ public class Doc {
 
         for (int i=0; i< pathElements.length - 1; i++) {
             String pathElement = pathElements[i];
-            if (context.containsKey(pathElement)) {
-                context = (Map) context.get(pathElement);
+            Object pathValue = context.get(pathElement);
+            if (pathValue != null && pathValue instanceof Map) {
+                context = (Map) pathValue;
             } else {
                 Map<String, Object> newMap = new HashMap<>();
                 context.put(pathElement, newMap);
