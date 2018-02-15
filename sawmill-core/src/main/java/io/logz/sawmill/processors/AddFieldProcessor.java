@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "addField", factory = AddFieldProcessor.Factory.class)
 public class AddFieldProcessor implements Processor {
@@ -20,7 +20,7 @@ public class AddFieldProcessor implements Processor {
     private final Function<Doc, Object> getValueFunction;
 
     public AddFieldProcessor(Template path, Function<Doc, Object> getValueFunction) {
-        this.path = checkNotNull(path, "path cannot be null");
+        this.path = path;
         this.getValueFunction = getValueFunction;
     }
 
@@ -42,8 +42,8 @@ public class AddFieldProcessor implements Processor {
         public Processor create(Map<String,Object> config) {
             AddFieldProcessor.Configuration addFieldConfig = JsonUtils.fromJsonMap(AddFieldProcessor.Configuration.class, config);
 
-            Template path = templateService.createTemplate(addFieldConfig.getPath());
-            Object value = addFieldConfig.getValue();
+            Template path = templateService.createTemplate(requireNonNull(addFieldConfig.getPath(), "path cannot be null"));
+            Object value = requireNonNull(addFieldConfig.getValue(), "value cannot be null");
 
             return new AddFieldProcessor(path, createGetValueFunction(value));
         }

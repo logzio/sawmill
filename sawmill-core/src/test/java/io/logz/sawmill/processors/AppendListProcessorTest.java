@@ -11,6 +11,7 @@ import java.util.List;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AppendListProcessorTest {
 
@@ -69,4 +70,10 @@ public class AppendListProcessorTest {
         assertThat((List) doc.getField(FIELD_NAME)).isEqualTo(Arrays.asList(ANOTHER_VALUE, TEMPLATE_VALUE));
     }
 
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(AppendListProcessor.class)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(AppendListProcessor.class, "values", Arrays.asList("aaa"))).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(AppendListProcessor.class, "path", "aaa")).isInstanceOf(IllegalStateException.class);
+    }
 }

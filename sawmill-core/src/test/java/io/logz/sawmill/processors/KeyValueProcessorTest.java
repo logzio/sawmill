@@ -2,6 +2,7 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import java.text.MessageFormat;
@@ -13,6 +14,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class KeyValueProcessorTest {
 
@@ -302,11 +304,34 @@ public class KeyValueProcessorTest {
         assertThat((String) doc.getField("sameKey")).isEqualTo("value1");
     }
 
+    @Test
+    public void testMaxKeyLength() throws InterruptedException {
+        int maxKeyLength = 80;
+        String field = "message";
+        String key = "thisShouldBeIgnored" + RandomStringUtils.randomAlphabetic(maxKeyLength) ;
+        Doc doc = createDoc(field, Arrays.asList(getDefaultMessage(), key + "=anotherMagic"));
+
+        Map<String,Object> config = createConfig("field", field, "maxKeyLength", maxKeyLength);
+
+        KeyValueProcessor kvProcessor = createProcessor(KeyValueProcessor.class, config);
+
+        ProcessResult processResult = kvProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat(doc.hasField(key)).isFalse();
+    }
+
+
     private String getDefaultMessage() {
         return getMessage(" ", "=");
     }
 
     private String getMessage(String fieldSplit, String valueSplit) {
         return MessageFormat.format(KEV_VALUE_MESSAGE_TEMPLATE, fieldSplit, valueSplit);
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(KeyValueProcessor.class)).isInstanceOf(NullPointerException.class);
     }
 }

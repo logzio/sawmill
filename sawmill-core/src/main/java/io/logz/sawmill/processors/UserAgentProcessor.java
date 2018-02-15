@@ -14,23 +14,29 @@ import ua_parser.OS;
 import ua_parser.UserAgent;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "userAgent", factory = UserAgentProcessor.Factory.class)
 public class UserAgentProcessor implements Processor {
     private final String field;
     private final Template targetField;
     private final String prefix;
+    private final int truncatedInputLength;
+    private final List<String> tagOnTruncated;
     private final UserAgentParserProvider uaParserProvider;
 
-    public UserAgentProcessor(String field, Template targetField, String prefix, UserAgentParserProvider userAgentParserProvider) {
-        this.field = checkNotNull(field, "field cannot be null");
+    public UserAgentProcessor(String field, Template targetField, String prefix, int truncatedInputLength, List<String> tagOnTruncated, UserAgentParserProvider userAgentParserProvider) {
+        this.field = requireNonNull(field, "field cannot be null");
         this.targetField = targetField;
         this.prefix = prefix != null ? prefix : "";
-        this.uaParserProvider = checkNotNull(userAgentParserProvider);
+        this.uaParserProvider = requireNonNull(userAgentParserProvider);
+        this.truncatedInputLength = truncatedInputLength > 0 ? truncatedInputLength : 256;
+        this.tagOnTruncated = tagOnTruncated;
     }
 
     @Override
@@ -40,6 +46,11 @@ public class UserAgentProcessor implements Processor {
         }
 
         String uaString = doc.getField(field);
+
+        if (uaString.length() > truncatedInputLength) {
+            uaString = uaString.substring(0, truncatedInputLength);
+            doc.appendList("tags", tagOnTruncated);
+        }
 
         Client client = uaParserProvider.provide().parse(uaString);
 
@@ -135,6 +146,8 @@ public class UserAgentProcessor implements Processor {
             return new UserAgentProcessor(userAgentConfig.getField(),
                     targetField,
                     userAgentConfig.getPrefix(),
+                    userAgentConfig.getTruncatedInputLength(),
+                    userAgentConfig.getTagOnTruncated(),
                     uaParserProvider);
         }
     }
@@ -143,6 +156,8 @@ public class UserAgentProcessor implements Processor {
         private String field;
         private String targetField;
         private String prefix;
+        private int truncatedInputLength = 256;
+        private List<String> tagOnTruncated = Collections.singletonList("_user_agent_truncated");
 
         public Configuration() { }
 
@@ -157,6 +172,14 @@ public class UserAgentProcessor implements Processor {
 
         public String getPrefix() {
             return prefix;
+        }
+
+        public int getTruncatedInputLength() {
+            return truncatedInputLength;
+        }
+
+        public List<String> getTagOnTruncated() {
+            return tagOnTruncated;
         }
     }
 }

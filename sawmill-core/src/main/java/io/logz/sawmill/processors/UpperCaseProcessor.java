@@ -22,8 +22,6 @@ public class UpperCaseProcessor implements Processor {
         this.fields = requireNonNull(fields, "fields cannot be null");
     }
 
-
-
     @Override
     public ProcessResult process(Doc doc) {
         List<String> missingFields = new ArrayList<>();

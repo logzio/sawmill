@@ -14,21 +14,13 @@ import static com.google.common.base.Preconditions.checkState;
 public class Doc {
 
     private final Map<String, Object> source;
-    private final Map<String, Object> metadata;
-
-    public Doc(Map<String, Object> source, Map<String, Object> metadata) {
-        checkState(MapUtils.isNotEmpty(source), "source cannot be empty");
-        this.source = source;
-        this.metadata = metadata;
-    }
 
     public Doc(Map<String, Object> source) {
-        this(source, new HashMap<>());
+        checkState(MapUtils.isNotEmpty(source), "source cannot be empty");
+        this.source = source;
     }
 
     public Map<String, Object> getSource() { return source; }
-
-    public Map<String, Object> getMetadata() { return metadata; }
 
     public boolean hasField(String path) {
         Optional<Object> field = JsonUtils.getByPath(source, path);
@@ -42,7 +34,7 @@ public class Doc {
 
     public <T> T getField(String path) {
         Optional<Object> field = JsonUtils.getByPath(source, path);
-        checkState(field.isPresent(), String.format("Couldn't resolve field in path [%s]", path));
+        checkState(field.isPresent(), "Couldn't resolve field in path [%s]", path);
         return (T) field.get();
     }
 
@@ -146,7 +138,6 @@ public class Doc {
     public String toString() {
         return "Doc{" +
                 "source=" + source +
-                ", metadata=" + metadata +
                 '}';
     }
 }

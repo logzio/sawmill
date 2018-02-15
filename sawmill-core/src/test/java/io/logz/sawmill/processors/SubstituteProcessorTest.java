@@ -66,8 +66,13 @@ public class SubstituteProcessorTest {
                 "pattern", pattern,
                 "replacement", "");
 
-        Doc doc = createDoc(field, "value");
-
         assertThatThrownBy(() -> createProcessor(SubstituteProcessor.class, config)).isInstanceOf(ProcessorConfigurationException.class);
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(SubstituteProcessor.class, "pattern", "a")).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(SubstituteProcessor.class, "pattern", "a", "field", "aaa")).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(SubstituteProcessor.class, "pattern", "a", "replacement", "aaa")).isInstanceOf(NullPointerException.class);
     }
 }

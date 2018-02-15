@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "csv", factory = CsvProcessor.Factory.class)
 public class CsvProcessor implements Processor {
@@ -40,11 +40,11 @@ public class CsvProcessor implements Processor {
                         boolean autoGenerateColumnNames,
                         boolean skipEmptyColumns,
                         Map<String, FieldType> convert) {
-        this.field = checkNotNull(field, "field cannot be null");
+        this.field = requireNonNull(field, "field cannot be null");
         this.targetField = targetField;
-        this.separator = checkNotNull(separator, "separator cannot be null");
-        this.quoteChar = checkNotNull(quoteChar, "quoteChar cannot be null");
-        this.columns = checkNotNull(columns, "columns cannot be null");
+        this.separator = requireNonNull(separator, "separator cannot be null");
+        this.quoteChar = requireNonNull(quoteChar, "quoteChar cannot be null");
+        this.columns = requireNonNull(columns, "columns cannot be null");
         this.autoGenerateColumnNames = autoGenerateColumnNames;
         this.skipEmptyColumns = skipEmptyColumns;
         this.convert = convert;

@@ -8,7 +8,15 @@ import java.util.Map;
 public class ConditionFactoryRegistry {
     private final Map<String, Condition.Factory> conditionFactory = new HashMap<>();
 
-    public ConditionFactoryRegistry() { }
+    private static final ConditionFactoryRegistry conditionFactoryRegistry = new ConditionFactoryRegistry();
+
+    private ConditionFactoryRegistry() {
+        ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(this);
+    }
+
+    public static ConditionFactoryRegistry getInstance() {
+        return conditionFactoryRegistry;
+    }
 
     public void register(String name, Condition.Factory factory) {
         conditionFactory.put(name, factory);

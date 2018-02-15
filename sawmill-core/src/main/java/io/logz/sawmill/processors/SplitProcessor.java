@@ -9,7 +9,7 @@ import io.logz.sawmill.utilities.JsonUtils;
 import java.util.Arrays;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "split", factory = SplitProcessor.Factory.class)
 public class SplitProcessor implements Processor {
@@ -17,8 +17,8 @@ public class SplitProcessor implements Processor {
     private final String separator;
 
     public SplitProcessor(String path, String separator) {
-        this.field = checkNotNull(path, "field cannot be null");
-        this.separator = checkNotNull(separator, "separator cannot be null");
+        this.field = requireNonNull(path, "field cannot be null");
+        this.separator = requireNonNull(separator, "separator cannot be null");
     }
 
     @Override

@@ -18,8 +18,7 @@ public class FactoryUtils {
     public static final ConditionParser conditionParser;
 
     static {
-        ConditionFactoryRegistry conditionFactoryRegistry = new ConditionFactoryRegistry();
-        ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(conditionFactoryRegistry);
+        ConditionFactoryRegistry conditionFactoryRegistry = ConditionFactoryRegistry.getInstance();
         conditionParser = new ConditionParser(conditionFactoryRegistry);
     }
 

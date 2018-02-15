@@ -3,6 +3,7 @@ package io.logz.sawmill.processors;
 import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
@@ -130,5 +131,10 @@ public class RenameFieldProcessorTest {
             assertThat((String) doc.getField("fieldTo" + i)).isEqualTo("value" + i);
             assertThat(doc.hasField("fieldFrom" + i)).isFalse();
         }
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(RenameFieldProcessor.class)).isInstanceOf(ProcessorConfigurationException.class);
     }
 }

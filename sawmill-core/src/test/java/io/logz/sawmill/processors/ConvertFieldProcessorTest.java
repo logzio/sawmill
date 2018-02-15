@@ -182,4 +182,14 @@ public class ConvertFieldProcessorTest {
 
         assertThat((T) doc.getField(path)).isEqualTo(result);
     }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(ConvertFieldProcessor.class)).isInstanceOf(ProcessorConfigurationException.class);
+        assertThatThrownBy(() -> createProcessor(ConvertFieldProcessor.class, "path", "sdfsdf", "paths", Arrays.asList("asd", "dsf"))).isInstanceOf(ProcessorConfigurationException.class);
+        assertThatThrownBy(() -> createProcessor(ConvertFieldProcessor.class, "paths", Arrays.asList("asd", "dsf"))).isInstanceOf(ProcessorConfigurationException.class);
+        assertThatThrownBy(() -> createProcessor(ConvertFieldProcessor.class, "path", "sdfsdf")).isInstanceOf(ProcessorConfigurationException.class);
+        assertThatThrownBy(() -> createProcessor(ConvertFieldProcessor.class, "path", "sdfsdf", "type", "notAType")).isInstanceOf(ProcessorConfigurationException.class);
+        assertThatThrownBy(() -> createProcessor(ConvertFieldProcessor.class, "type", "long")).isInstanceOf(ProcessorConfigurationException.class);
+    }
 }

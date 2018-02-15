@@ -51,7 +51,7 @@ public class ProcessorFactoriesLoader {
                 ProcessorProvider processorProvider = processor.getAnnotation(ProcessorProvider.class);
                 String typeName = processorProvider.type();
                 processorFactoryRegistry.register(typeName, getFactory(processorProvider));
-                logger.info("{} processor factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
+                logger.debug("{} processor factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
                 processorsLoaded++;
             } catch (Exception e) {
                 logger.error("failed to load processor {}", processor.getName(), e);
@@ -60,7 +60,7 @@ public class ProcessorFactoriesLoader {
                 timeElapsed = stopwatch.elapsed(MILLISECONDS);
             }
         }
-        logger.info("{} processor factories loaded, took {}ms", processorsLoaded, stopwatch.elapsed(MILLISECONDS));
+        logger.debug("{} processor factories loaded, took {}ms", processorsLoaded, stopwatch.elapsed(MILLISECONDS));
     }
 
     public Processor.Factory getFactory(ProcessorProvider processorProvider) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException, NoSuchMethodException {

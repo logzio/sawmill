@@ -9,6 +9,8 @@ import io.logz.sawmill.utilities.JsonUtils;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Objects.requireNonNull;
+
 @ConditionProvider(type = "in", factory = InCondition.Factory.class)
 public class InCondition implements Condition {
 
@@ -16,8 +18,8 @@ public class InCondition implements Condition {
     private String value;
 
     public InCondition(String path, String value) {
-        this.path = path;
-        this.value = value;
+        this.path = requireNonNull(path);
+        this.value = requireNonNull(value);
     }
 
     @Override

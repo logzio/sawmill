@@ -2,12 +2,14 @@ package io.logz.sawmill.processors;
 
 import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +19,7 @@ import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class DateProcessorTest {
     @Test
@@ -181,6 +184,29 @@ public class DateProcessorTest {
     }
 
     @Test
+    public void testCaseInsensitive() {
+        String field = "datetime";
+        String targetField = "timestamp";
+
+        ZoneId zoneId = ZoneId.of("Europe/Paris");
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("dd/MMM/yyyy:HH:mm:ss Z").toFormatter();
+        String dateString = zonedDateTime.format(formatter).toLowerCase();
+        Doc doc = createDoc(field, dateString);
+
+        ZonedDateTime expectedDateTime = LocalDateTime.parse(dateString, formatter).atZone(zoneId);
+
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("dd/MMM/yyyy:HH:mm:ss Z"));
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.elasticPrintFormat));
+    }
+
+    @Test
     public void testISOFormatWithoutTimezone() {
         String field = "datetime";
         String targetField = "timestamp";
@@ -298,5 +324,12 @@ public class DateProcessorTest {
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
         assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+    }
+
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createProcessor(DateProcessor.class)).isInstanceOf(ProcessorConfigurationException.class);
+        assertThatThrownBy(() -> createProcessor(DateProcessor.class, "field", "aaaa")).isInstanceOf(ProcessorConfigurationException.class);
+        assertThatThrownBy(() -> createProcessor(DateProcessor.class, "formats", Arrays.asList("aaaa"))).isInstanceOf(NullPointerException.class);
     }
 }
