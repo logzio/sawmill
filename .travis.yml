@@ -1,8 +1,31 @@
 language: java
-jdk:
-- oraclejdk8
-install: ./mvnw install -Dgpg.skip
-notifications:
-  slack:
-    secure: Rbh2G05Ep9vWXT5RTeD4sI0j1E6DmXgxOpFbWunxqmxvG+99jAt9+GDY2w2P1BxGbdbi57E6T2j5my7ehLtLSH8Y15l+29Zj0D38cysdhI6YNpISUcerjKB23zLFh4CYcy05rSlnsnlRQN9s0Rd2SYc4iaT5f6Kk83N0t6kgUkcTaKSxmJW4HkaQl4aPebWFWlz2c5o0JcWa5gDiKdzYWc71ZRHog57zXCWQBlXObO+3Bsb94aviWxEV7JXgYj5j+LuygUJFxLko2wId2h0LYgUC4hsNz0UoZCyIrglV0OmDdFLbbSbZ/4aqH8QvwfeI8KWiNYv4Cm9+LsWYNrVkI34CxYMQiO1AoSdLOt0eVDQqfFCg6ygozUL8IQDde1c63Rvpon1N1f0casaOPtuZ3b5hBfC9c4icFdyBvPR6C102VL4sgMKIaNzUbEUxvwupFF2nR/WlIofHEV4EcqEzDasDM1jx5xfURjcZSjAQx8+QlPncnJTHgH5RKHESCbOBp6x3UTnC0kGBCaSvz1UjrmrZ35RUbFUS0kkpqxjHAyCZ1xwh1ZjTJOvXJN6lYhsXfJtFLFOZY2+mGPUWLOTSDavkSGECcrU82IUuIkYEjD7wiJSNvfWz7Q+ii6Di8y6YP9Ji9GgSa9kcC3xTfIQPSVu/sdZoNXQ6W8ss6FjkI04=
+jdk: oraclejdk8
 
+cache:
+  directories:
+    - '$HOME/.m2'
+
+install: ./mvnw install -DskipTests  -Dgpg.skip
+
+jobs:
+  include:
+    - stage: install
+      script: echo 'Install on ' $TRAVIS_BRANCH
+
+    - stage: deploy
+      sudo: false
+      services: []
+      install: skip
+      script: skip
+      before_deploy:
+        - openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k $CODESIGNING
+        - gpg --fast-import release/codesigning.asc
+        - rm release/codesigning.asc
+      deploy:
+        - provider: script
+          skip_cleanup: true
+          script: bash ./mvnw deploy -Drevision=$TRAVIS_TAG  --settings release/settings.xml
+          on:
+            tags: true
+            branch: master
+      after_deploy: echo 'Deployed finished successfully'
