@@ -1,4 +1,4 @@
-![Sawmill Logo](logo.png)
+![Sawmill Logo](sawmill-logo.png)
 
 [![Build Status](https://travis-ci.org/logzio/sawmill.svg?branch=master)](https://travis-ci.org/logzio/sawmill)
 Sawmill is a JSON transformation open source library. 
