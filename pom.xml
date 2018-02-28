@@ -60,7 +60,10 @@
         <assertj.version>3.5.2</assertj.version>
         <logback.version>1.1.7</logback.version>
         <commonsIO.version>2.5</commonsIO.version>
-        <revision>1.1.43-SNAPSHOT</revision>
+        <!--
+         The version of this project is determined upon deployment using a a GitHub release name (i.e. tag). The version mentioned here is not a real version, and serves mainly for local builds
+         -->
+        <revision>0-SNAPSHOT</revision>
     </properties>
 
     <build>
