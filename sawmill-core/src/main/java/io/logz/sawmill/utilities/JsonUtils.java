@@ -81,27 +81,6 @@ public class JsonUtils {
         }
     }
 
-    /**
-     * json OGNL (Object Graph Navigation Language) getter.
-     * <p>for example:
-     * <pre>
-     * JsonUtils.getByPath(json, "x.y.z")
-     * </pre>
-     *
-     * @return Optional of the value in paths
-     * @throws Exception on any error
-     **/
-    public static <T> Optional<T> getByPath(Map json, String... paths) {
-        Object cursor = json;
-        for (String path : paths) {
-            for (String node : path.split("\\.")) {
-                cursor = ((Map) cursor).get(node);
-                if (cursor == null) return Optional.empty();
-            }
-        }
-        return Optional.of((T) cursor);
-    }
-
     public static String createJson(Map<String, Object> map) {
         return toJsonString(map);
     }

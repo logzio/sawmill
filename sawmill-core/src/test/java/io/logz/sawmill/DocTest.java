@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -15,11 +16,13 @@ public class DocTest {
     @Test
     public void testGetField() {
         Doc doc = createDoc("message", "holla", "object",
-                JsonUtils.createMap("nestedField", "nestedValue")
+                JsonUtils.createMap("nestedField", "nestedValue",
+                        "field.with.dots", "hola")
         );
 
         assertThat((String) doc.getField("message")).isEqualTo("holla");
         assertThat((String) doc.getField("object.nestedField")).isEqualTo("nestedValue");
+        assertThat((String) doc.getField("object.field\\.with\\.dots")).isEqualTo("hola");
         assertThatThrownBy(() -> doc.getField("notExists")).isInstanceOf(IllegalStateException.class);
     }
 
@@ -53,11 +56,14 @@ public class DocTest {
         doc.addField("int" ,15);
         assertThat((Integer) doc.getField("int")).isEqualTo(15);
 
-        doc.addField("object.nestedField1", "shalom1");
-        assertThat((String) doc.getField("object.nestedField1")).isEqualTo("shalom1");
+        doc.addField("object.nested\\Field1", "shalom1");
+        assertThat((String) doc.getField("object.nested\\Field1")).isEqualTo("shalom1");
 
         doc.addField("object.nestedField2", "shalom2");
         assertThat((String) doc.getField("object.nestedField2")).isEqualTo("shalom2");
+
+        doc.addField("object.field\\.with\\.dots\\", "shalom3");
+        assertThat(((Map<String, Object>) doc.getSource().get("object")).get("field.with.dots\\")).isEqualTo("shalom3");
     }
 
     @Test
