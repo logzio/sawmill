@@ -21,10 +21,11 @@ jobs:
         - openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k $CODESIGNING
         - gpg --fast-import release/codesigning.asc
         - rm release/codesigning.asc
+        - ./mvnw versions:set -DnewVersion=$TRAVIS_TAG
       deploy:
         - provider: script
           skip_cleanup: true
-          script: bash ./mvnw deploy -Drevision=$TRAVIS_TAG  --settings release/settings.xml
+          script: bash ./mvnw deploy --settings release/settings.xml
           on:
             tags: true
             branch: master
