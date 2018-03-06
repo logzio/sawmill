@@ -62,8 +62,8 @@ public class DocTest {
         doc.addField("object.nestedField2", "shalom2");
         assertThat((String) doc.getField("object.nestedField2")).isEqualTo("shalom2");
 
-        doc.addField("object.field\\.with\\.dots\\", "shalom3");
-        assertThat(((Map<String, Object>) doc.getSource().get("object")).get("field.with.dots\\")).isEqualTo("shalom3");
+        doc.addField("object.field\\.with\\.dots", "shalom3");
+        assertThat(((Map<String, Object>) doc.getSource().get("object")).get("field.with.dots")).isEqualTo("shalom3");
     }
 
     @Test

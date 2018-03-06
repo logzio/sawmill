@@ -39,7 +39,7 @@ public class Doc {
 
     public void addField(String path, Object value) {
         Map<String, Object> context = source;
-        List<String> pathElements = tokenizeString(path);
+        List<String> pathElements = tokenizePath(path);
 
         String leafKey = pathElements.get(pathElements.size() - 1);
 
@@ -68,7 +68,7 @@ public class Doc {
             return false;
         }
         Map<String, Object> context = source;
-        List<String> pathElements = tokenizeString(path);
+        List<String> pathElements = tokenizePath(path);
 
         String leafKey = pathElements.get(pathElements.size() - 1);
 
@@ -142,42 +142,38 @@ public class Doc {
      * @return Optional of the value in paths
      * @throws Exception on any error
      **/
-    public static <T> Optional<T> getByPath(Map json, String... paths) {
+    private static <T> Optional<T> getByPath(Map json, String... paths) {
         Object cursor = json;
         for (String path : paths) {
-            for (String node : tokenizeString(path)) {
-                cursor = ((Map) cursor).get(node);
+            for (String pathElement : tokenizePath(path)) {
+                cursor = ((Map) cursor).get(pathElement);
                 if (cursor == null) return Optional.empty();
             }
         }
         return Optional.of((T) cursor);
     }
 
-    public static List<String> tokenizeString(String s) {
-        List<String> tokens = new ArrayList<>();
+    private static List<String> tokenizePath(String s) {
+        List<String> pathTokens = new ArrayList<>();
         StringBuilder sb = new StringBuilder();
+        boolean inEscape = false;
 
-        char[] charArray = s.toCharArray();
-        int i = 0;
-        while (i < charArray.length) {
-            // Handle escaped character \.
-            if (charArray[i] == '\\' && i < (charArray.length - 1) && charArray[i + 1] == '.') {
-                sb.append('.');
-                i++;
-
-            } else if (charArray[i] == '.') {
-                tokens.add(sb.toString());
+        for (char c : s.toCharArray()) {
+            if (inEscape) {
+                inEscape = false;
+                sb.append(c);
+            } else if (c == '\\') {
+                inEscape = true;
+            } else if (c == '.') {
+                pathTokens.add(sb.toString());
                 sb.setLength(0);
             } else {
-                sb.append(charArray[i]);
+                sb.append(c);
             }
-
-            i++;
         }
+        pathTokens.add(sb.toString());
 
-        tokens.add(sb.toString());
-
-        return tokens;
+        return pathTokens;
     }
 
     @Override
