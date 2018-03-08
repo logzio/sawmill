@@ -9,10 +9,30 @@ It enables you to enrich, transform, and filter your JSON documents.
 
 Using Sawmill pipelines you can integrate your favorite groks, geoip, user-agent resolving, add or remove fields/tags and more in a descriptive manner, using configuration files or builders, in a simple DSL, allowing you to dynamically change transformations.
 
-# Documentation
+## Download
+
+Get Sawmill Java via Maven:
+
+```xml
+<dependency>
+    <groupId>io.logz.sawmill</groupId>
+    <artifactId>sawmill-core</artifactId>
+    <version>1.1.45</version>
+</dependency>
+```
+
+or Gradle:
+
+```gradle
+compile 'io.logz.sawmill:sawmill-core:1.1.45'
+```
+
+## Documentation
+
 The full Sawmill documentation [can be found here](https://github.com/logzio/sawmill/wiki).
 
 ## Simple configuration example
+
 ```json
 {
   "steps": [
