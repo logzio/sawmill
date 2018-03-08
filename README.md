@@ -1,6 +1,8 @@
 ![Sawmill Logo](sawmill-logo.png)
 
 [![Build Status](https://travis-ci.org/logzio/sawmill.svg?branch=master)](https://travis-ci.org/logzio/sawmill)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.logz.sawmill/sawmill/badge.svg)](http://mvnrepository.com/artifact/io.logz.sawmill/sawmill)
+
 Sawmill is a JSON transformation open source library. 
 
 It enables you to enrich, transform, and filter your JSON documents. 
