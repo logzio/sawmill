@@ -72,9 +72,8 @@ public class Doc {
 
         String leafKey = pathElements.get(pathElements.size() - 1);
 
-        if (pathElements.size() > 1) {
-            String pathWithoutLeaf = path.substring(0, path.lastIndexOf("."));
-            context = getField(pathWithoutLeaf);
+        for (String currElement : pathElements.subList(0, pathElements.size() - 1)) {
+            context = (Map<String, Object>) context.get(currElement);
         }
 
         context.remove(leafKey);

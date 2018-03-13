@@ -70,7 +70,8 @@ public class DocTest {
     @Test
     public void testRemoveField() {
         Doc doc = createDoc("message", "hola", "name", "test", "object",
-                JsonUtils.createMap("nestedField1", "nestedValue1", "nestedField2", "nestedValue2")
+                JsonUtils.createMap("nestedField1", "nestedValue1", "nestedField2", "nestedValue2",
+                        "fieldWith.escaping", "someValue", ".startWithEscaping", "value2")
         );
 
         assertThat(doc.removeField("message")).isTrue();
@@ -79,6 +80,12 @@ public class DocTest {
 
         assertThat(doc.removeField("object.nestedField2")).isTrue();
         assertThat(doc.hasField("object.nestedField2")).isFalse();
+
+        assertThat(doc.removeField("object.fieldWith\\.escaping")).isTrue();
+        assertThat(doc.hasField("object.fieldWith\\.escaping")).isFalse();
+
+        assertThat(doc.removeField("object.\\.startWithEscaping")).isTrue();
+        assertThat(doc.hasField("object.\\.startWithEscaping")).isFalse();
     }
 
     @Test
