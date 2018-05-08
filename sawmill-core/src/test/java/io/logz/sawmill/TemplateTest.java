@@ -53,7 +53,7 @@ public class TemplateTest {
 
         String value = mapTemplate.render(doc);
 
-        assertThat(value).isEqualTo("this is {field1=value1, field2=value2} and this is specific field value1");
+        assertThat(value).isEqualTo("this is {\"field1\":\"value1\",\"field2\":\"value2\"} and this is specific field value1");
     }
 
     @Test
@@ -63,7 +63,7 @@ public class TemplateTest {
 
         String value = listTemplate.render(doc);
 
-        assertThat(value).isEqualTo("this is {0=index0, 1=index1, 2=index3, last=index3, first=index0} and this is first index0, specific index index1 and last index3");
+        assertThat(value).isEqualTo("this is [index0, index1, index3] and this is first index0, specific index index1 and last index3");
     }
 
     @Test
