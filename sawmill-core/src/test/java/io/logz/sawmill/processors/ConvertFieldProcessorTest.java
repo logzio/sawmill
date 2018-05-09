@@ -1,6 +1,5 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.FieldType;
 import io.logz.sawmill.ProcessResult;
@@ -100,13 +99,12 @@ public class ConvertFieldProcessorTest {
     @Test
     public void testConvertSeveralFieldsToString() {
         Map<String,Object> config = new HashMap<>();
-        config.put("paths", Arrays.asList("field1", "field2", "field3", "field4", "nonExistsField"));
+        config.put("paths", Arrays.asList("field1", "field2", "field3", "nonExistsField"));
         config.put("type", "string");
 
         Doc doc = createDoc("field1", 50l,
                 "field2", "should be 0",
-                "field3", 5,
-                "field4", ImmutableMap.of("key", "value"));
+                "field3", 5);
 
         ConvertFieldProcessor convertFieldProcessor = createProcessor(ConvertFieldProcessor.class, config);
 
@@ -118,8 +116,6 @@ public class ConvertFieldProcessorTest {
         assertThat(doc.hasField("field1", String.class)).isTrue();
         assertThat(doc.hasField("field2", String.class)).isTrue();
         assertThat(doc.hasField("field3", String.class)).isTrue();
-        assertThat(doc.hasField("field4", String.class)).isTrue();
-        assertThat((String) doc.getField("field4")).isEqualTo("{\"key\":\"value\"}");
     }
 
     @Test

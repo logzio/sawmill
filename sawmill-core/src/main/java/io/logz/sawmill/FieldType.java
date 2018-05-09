@@ -3,9 +3,6 @@ package io.logz.sawmill;
 import com.google.common.base.MoreObjects;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Longs;
-import io.logz.sawmill.utilities.JsonUtils;
-
-import java.util.Map;
 
 public enum FieldType {
     INT {
@@ -34,10 +31,6 @@ public enum FieldType {
     STRING {
         @Override
         public Object convertFrom(Object value) {
-            if (value instanceof Map) {
-                return JsonUtils.toJsonString(value);
-            }
-
             return value.toString();
         }
     },

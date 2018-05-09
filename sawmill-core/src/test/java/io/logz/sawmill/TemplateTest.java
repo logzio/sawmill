@@ -48,12 +48,12 @@ public class TemplateTest {
 
     @Test
     public void testDocWithMapField() {
-        Template mapTemplate = templateService.createTemplate("this is {{map}} and this is specific field {{map.field1}}");
+        Template mapTemplate = templateService.createTemplate("this is {{map}} this is the json {{map_json}} and this is specific field {{map.field1}}");
         Doc doc = createDoc("map", ImmutableMap.of("field1", "value1", "field2", "value2"));
 
         String value = mapTemplate.render(doc);
 
-        assertThat(value).isEqualTo("this is {\"field1\":\"value1\",\"field2\":\"value2\"} and this is specific field value1");
+        assertThat(value).isEqualTo("this is {field1=value1, field2=value2} this is the json {\"field1\":\"value1\",\"field2\":\"value2\"} and this is specific field value1");
     }
 
     @Test
@@ -73,6 +73,16 @@ public class TemplateTest {
         String value = template.render(doc);
 
         assertThat(value).isEqualTo(" señor , Have a good day");
+    }
+
+    @Test
+    public void testFieldWithDots() {
+        Template templateWithEscapedDots = templateService.createTemplate("let's fetch field with dots {{field\\.with\\.dot}}");
+        Doc doc = createDoc("field.with.dot", "value");
+
+        String value = templateWithEscapedDots.render(doc);
+
+        assertThat(value).isEqualTo("let's fetch field with dots value");
     }
 
     @Test

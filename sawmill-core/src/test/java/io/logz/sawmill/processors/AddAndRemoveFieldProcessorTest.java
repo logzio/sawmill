@@ -48,7 +48,7 @@ public class AddAndRemoveFieldProcessorTest {
     @Test
     public void testAddAndRemoveFieldWithTemplate() {
         String path = "message{{field}}";
-        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class, "path", path, "value", "{{objectField}}");
+        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class, "path", path, "value", "{{objectField_json}}");
         RemoveFieldProcessor removeFieldProcessor = createProcessor(RemoveFieldProcessor.class, "path", path);
 
         Doc doc = createDoc("field", "Hola",

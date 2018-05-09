@@ -3,6 +3,7 @@ package io.logz.sawmill;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.MustacheException;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
+import io.logz.sawmill.utilities.JsonUtils;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -41,12 +42,19 @@ public class UnescapedMustacheFactory extends DefaultMustacheFactory {
 
             private void flatten(Map<String, Object> map, String pathContext, Map<String, Object> context) {
                 context.entrySet().stream().forEach(entry -> {
-                    String key = pathContext + entry.getKey();
+                    String key = pathContext + escape(entry.getKey());
                     Object value = entry.getValue();
                     map.put(key, STRING.convertFrom(value));
                     if (value instanceof List) flattenList(map, key + ".", (List) value);
-                    else if (value instanceof Map) flatten(map, key + ".", (Map)value);
+                    else if (value instanceof Map) {
+                        map.put(key + "_json", JsonUtils.toJsonString(value));
+                        flatten(map, key + ".", (Map)value);
+                    }
                 });
+            }
+
+            private String escape(String s) {
+                return s.replaceAll("\\.", "\\\\.");
             }
         };
 
