@@ -1,5 +1,6 @@
 package io.logz.sawmill.processors;
 
+import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Template;
 import io.logz.sawmill.exceptions.ProcessorConfigurationException;
@@ -47,14 +48,15 @@ public class AddAndRemoveFieldProcessorTest {
     @Test
     public void testAddAndRemoveFieldWithTemplate() {
         String path = "message{{field}}";
-        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class, "path", path, "value", "shalom{{field}}");
+        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class, "path", path, "value", "{{objectField_logzio_json}}");
         RemoveFieldProcessor removeFieldProcessor = createProcessor(RemoveFieldProcessor.class, "path", path);
 
-        Doc doc = createDoc("field", "Hola");
+        Doc doc = createDoc("field", "Hola",
+                "objectField", ImmutableMap.of("innerKey", "innerValue"));
 
         assertThat(addFieldProcessor.process(doc).isSucceeded()).isTrue();
 
-        assertThat((String) doc.getField("messageHola")).isEqualTo("shalomHola");
+        assertThat((String) doc.getField("messageHola")).isEqualTo("{\"innerKey\":\"innerValue\"}");
 
         assertThat(removeFieldProcessor.process(doc).isSucceeded()).isTrue();
 

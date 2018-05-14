@@ -8,38 +8,38 @@ public enum FieldType {
     INT {
         @Override
         public Object convertFrom(Object value) {
-            return Longs.tryParse(value.toString());
+            return Longs.tryParse(String.valueOf(value));
         }
     },
     LONG {
         @Override
         public Object convertFrom(Object value) {
-            return Longs.tryParse(value.toString());
+            return Longs.tryParse(String.valueOf(value));
         }
     },
     FLOAT {
         @Override
         public Object convertFrom(Object value) {
-            return Doubles.tryParse(value.toString());
+            return Doubles.tryParse(String.valueOf(value));
         }
     },
     DOUBLE {
         @Override
         public Object convertFrom(Object value) {
-            return Doubles.tryParse(value.toString()); }
+            return Doubles.tryParse(String.valueOf(value)); }
     },
     STRING {
         @Override
         public Object convertFrom(Object value) {
-            return value.toString();
+            return String.valueOf(value);
         }
     },
     BOOLEAN {
         @Override
         public Object convertFrom(Object value) {
-            if (value.toString().matches("^(t|true|yes|y|1)$")) {
+            if (String.valueOf(value).matches("^(t|true|yes|y|1)$")) {
                 return true;
-            } else if (value.toString().matches("^(f|false|no|n|0)$")) {
+            } else if (String.valueOf(value).matches("^(f|false|no|n|0)$")) {
                 return false;
             } else {
                 return null;
