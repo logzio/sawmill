@@ -37,6 +37,27 @@ public class SubstituteProcessorTest {
     }
 
     @Test
+    public void testSubstituteUsingMatchInsideReplacement() {
+        String field = "message";
+        String message = "{ some: invalid, json: keys, to: fix }";
+
+        String pattern = "[\\{,\\s]([\\$\\w\\.]+)\\:";
+        String replacement = "\"$1\":";
+        Map<String, Object> config = createConfig("field", field,
+                "pattern", pattern,
+                "replacement", replacement);
+
+        Doc doc = createDoc(field, message);
+
+        SubstituteProcessor substituteProcessor = createProcessor(SubstituteProcessor.class, config);
+
+        ProcessResult processResult = substituteProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat((String) doc.getField(field)).isEqualTo("{\"some\": invalid,\"json\": keys,\"to\": fix }");
+    }
+
+    @Test
     public void testFieldNotFound() {
         String field = "message";
         String message = "differnet field name";
