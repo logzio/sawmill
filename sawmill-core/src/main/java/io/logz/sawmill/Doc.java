@@ -1,6 +1,5 @@
 package io.logz.sawmill;
 
-import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.MapUtils;
 
 import java.util.ArrayList;
@@ -8,11 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static com.google.common.base.Preconditions.checkState;
-import static io.logz.sawmill.FieldType.STRING;
 
 public class Doc {
 
