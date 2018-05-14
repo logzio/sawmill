@@ -1,5 +1,6 @@
 package io.logz.sawmill;
 
+import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.MapUtils;
 
 import java.util.ArrayList;
@@ -7,8 +8,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.google.common.base.Preconditions.checkState;
+import static io.logz.sawmill.FieldType.STRING;
 
 public class Doc {
 
@@ -20,6 +24,39 @@ public class Doc {
     }
 
     public Map<String, Object> getSource() { return source; }
+
+    public Map<String, Object> getFlattenSource() {
+        Map<String, Object> map = new HashMap<>();
+        flatten(map, "", source);
+
+        return map;
+    }
+
+    private void flattenList(Map<String, Object> map, String pathContext, List object) {
+        List<Object> list = object;
+        map.putAll(IntStream.range(0, list.size())
+                .boxed()
+                .collect(Collectors.toMap(i -> pathContext + i.toString(), list::get)));
+        map.put(pathContext + "first", map.get(pathContext + "0"));
+        map.put(pathContext + "last", map.get(pathContext + String.valueOf(list.size() - 1)));
+    }
+
+    private void flatten(Map<String, Object> map, String pathContext, Map<String, Object> context) {
+        context.entrySet().stream().forEach(entry -> {
+            String key = pathContext + escape(entry.getKey());
+            Object value = entry.getValue();
+            map.put(key, STRING.convertFrom(value));
+            if (value instanceof List) flattenList(map, key + ".", (List) value);
+            else if (value instanceof Map) {
+                map.put(key + "_logzio_json", JsonUtils.toJsonString(value));
+                flatten(map, key + ".", (Map)value);
+            }
+        });
+    }
+
+    private String escape(String s) {
+        return s.replaceAll("\\.", "\\\\.");
+    }
 
     public boolean hasField(String path) {
         Optional<Object> field = getByPath(source, path);

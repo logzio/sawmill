@@ -48,7 +48,7 @@ public class TemplateTest {
 
     @Test
     public void testDocWithMapField() {
-        Template mapTemplate = templateService.createTemplate("this is {{map}} this is the json {{map_json}} and this is specific field {{map.field1}}");
+        Template mapTemplate = templateService.createTemplate("this is {{map}} this is the json {{map_logzio_json}} and this is specific field {{map.field1}}");
         Doc doc = createDoc("map", ImmutableMap.of("field1", "value1", "field2", "value2"));
 
         String value = mapTemplate.render(doc);
@@ -77,8 +77,8 @@ public class TemplateTest {
 
     @Test
     public void testFieldWithDots() {
-        Template templateWithEscapedDots = templateService.createTemplate("let's fetch field with dots {{field\\.with\\.dot}}");
-        Doc doc = createDoc("field.with.dot", "value");
+        Template templateWithEscapedDots = templateService.createTemplate("let's fetch field with dots {{field\\.with\\.dot.innerField}}");
+        Doc doc = createDoc("field.with.dot", ImmutableMap.of("innerField", "value"));
 
         String value = templateWithEscapedDots.render(doc);
 

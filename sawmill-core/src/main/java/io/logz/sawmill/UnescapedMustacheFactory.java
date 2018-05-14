@@ -47,7 +47,7 @@ public class UnescapedMustacheFactory extends DefaultMustacheFactory {
                     map.put(key, STRING.convertFrom(value));
                     if (value instanceof List) flattenList(map, key + ".", (List) value);
                     else if (value instanceof Map) {
-                        map.put(key + "_json", JsonUtils.toJsonString(value));
+                        map.put(key + "_logzio_json", JsonUtils.toJsonString(value));
                         flatten(map, key + ".", (Map)value);
                     }
                 });

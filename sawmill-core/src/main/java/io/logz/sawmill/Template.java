@@ -20,7 +20,7 @@ public class Template {
         if (doc == null) {
             docContext = Collections.EMPTY_MAP;
         } else {
-            docContext = doc.getSource();
+            docContext = doc.getFlattenSource();
         }
 
         StringWriter writer = new StringWriter();
