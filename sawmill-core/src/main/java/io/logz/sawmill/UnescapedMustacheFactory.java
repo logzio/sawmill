@@ -7,7 +7,7 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,8 +22,8 @@ public class UnescapedMustacheFactory extends DefaultMustacheFactory {
         ReflectionObjectHandler oh = new ReflectionObjectHandler() {
             @Override
             public Object coerce(final Object object) {
-                Map<String, Object> map = new HashMap<>();
                 if (object != null && object instanceof Map) {
+                    Map<String, Object> map = new LinkedHashMap<>();
                     flatten(map, "", (Map) object);
                     return map;
                 }

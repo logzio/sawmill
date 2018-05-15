@@ -48,12 +48,12 @@ public class TemplateTest {
 
     @Test
     public void testDocWithMapField() {
-        Template mapTemplate = templateService.createTemplate("this is {{map}} this is the json {{map_logzio_json}} and this is specific field {{map.field1}}");
+        Template mapTemplate = templateService.createTemplate("this is {{map}} this is the json {{map_logzio_json}} and this is specific field {{map.field1}} and non exists one {{map.nonExistsField}}");
         Doc doc = createDoc("map", ImmutableMap.of("field1", "value1", "field2", "value2"));
 
         String value = mapTemplate.render(doc);
 
-        assertThat(value).isEqualTo("this is {field1=value1, field2=value2} this is the json {\"field1\":\"value1\",\"field2\":\"value2\"} and this is specific field value1");
+        assertThat(value).isEqualTo("this is {field1=value1, field2=value2} this is the json {\"field1\":\"value1\",\"field2\":\"value2\"} and this is specific field value1 and non exists one ");
     }
 
     @Test
