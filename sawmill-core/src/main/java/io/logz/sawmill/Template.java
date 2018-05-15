@@ -4,7 +4,7 @@ import com.github.mustachejava.Mustache;
 
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 
 public class Template {
     private final Mustache mustache;
@@ -18,7 +18,7 @@ public class Template {
     public String render(Doc doc) {
         Object docContext;
         if (doc == null) {
-            docContext = Collections.EMPTY_MAP;
+            docContext = new LinkedHashMap<>();
         } else {
             docContext = doc.getSource();
         }
