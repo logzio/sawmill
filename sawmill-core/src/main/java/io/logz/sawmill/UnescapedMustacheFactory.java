@@ -23,38 +23,44 @@ public class UnescapedMustacheFactory extends DefaultMustacheFactory {
             @Override
             public Object coerce(final Object object) {
                 if (object != null && object instanceof Map) {
-                    Map<String, Object> map = new LinkedHashMap<>();
-                    flatten(map, "", (Map) object);
-                    return map;
+                    return flatten((Map) object);
+                }
+
+                if (object != null && object instanceof List) {
+                    return flattenList((List) object);
                 }
 
                 return super.coerce(object);
             }
 
-            private void flattenList(Map<String, Object> map, String pathContext, List object) {
+            private Map<String, Object> flattenList(List object) {
+                Map<String, Object> map = new LinkedHashMap<>();
                 List<Object> list = object;
                 map.putAll(IntStream.range(0, list.size())
                         .boxed()
-                        .collect(Collectors.toMap(i -> pathContext + i.toString(), list::get)));
-                map.put(pathContext + "first", map.get(pathContext + "0"));
-                map.put(pathContext + "last", map.get(pathContext + String.valueOf(list.size() - 1)));
+                        .collect(Collectors.toMap(i -> i.toString(), list::get)));
+                map.put("first", map.get("0"));
+                map.put("last", map.get(String.valueOf(list.size() - 1)));
+
+                return map;
             }
 
-            private void flatten(Map<String, Object> map, String pathContext, Map<String, Object> context) {
+            private Map<String, Object> flatten(Map<String, Object> context) {
+                Map<String, Object> map = new LinkedHashMap<>();
                 context.entrySet().stream().forEach(entry -> {
-                    String key = pathContext + escape(entry.getKey());
+                    String key = escape(entry.getKey());
                     Object value = entry.getValue();
-                    map.put(key, STRING.convertFrom(value));
-                    if (value instanceof List) flattenList(map, key + ".", (List) value);
-                    else if (value instanceof Map) {
+                    map.put(key, value);
+                    if (value instanceof Map) {
                         map.put(key + "_logzio_json", JsonUtils.toJsonString(value));
-                        flatten(map, key + ".", (Map)value);
                     }
                 });
+
+                return map;
             }
 
             private String escape(String s) {
-                return s.replaceAll("\\.", "\\\\.");
+                return s.replaceAll("\\.", "_");
             }
         };
 

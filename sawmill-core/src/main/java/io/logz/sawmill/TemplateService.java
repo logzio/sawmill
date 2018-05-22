@@ -21,10 +21,14 @@ public class TemplateService {
         if (template == null) {
             throw new SawmillException("template cannot be with null value");
         }
-        StringReader stringReader = new StringReader(template);
 
-        Mustache mustache = mustacheFactory.compile(stringReader, "");
+        Object value = template;
 
-        return new Template(mustache, dateTemplateHandler);
+        if (template.contains("{{") && template.contains("}}")) {
+            StringReader stringReader = new StringReader(template);
+            value = mustacheFactory.compile(stringReader, "");
+        }
+
+        return new Template(value, dateTemplateHandler);
     }
 }

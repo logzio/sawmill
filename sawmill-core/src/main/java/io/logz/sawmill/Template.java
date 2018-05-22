@@ -7,15 +7,20 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 
 public class Template {
-    private final Mustache mustache;
+    private final Object value;
     private final DateTemplateHandler dateTemplateHandler;
 
-    public Template(Mustache mustache, DateTemplateHandler dateTemplateHandler) {
-        this.mustache = mustache;
+    public Template(Object value, DateTemplateHandler dateTemplateHandler) {
+        this.value = value;
         this.dateTemplateHandler = dateTemplateHandler;
     }
 
     public String render(Doc doc) {
+        if (value instanceof String) {
+            return (String) value;
+        }
+
+        Mustache mustache = (Mustache) value;
         Object docContext;
         if (doc == null) {
             docContext = new LinkedHashMap<>();

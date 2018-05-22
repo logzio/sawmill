@@ -63,7 +63,7 @@ public class TemplateTest {
 
         String value = listTemplate.render(doc);
 
-        assertThat(value).isEqualTo("this is [index0, index1, index3] and this is first index0, specific index index1 and last index3");
+        assertThat(value).isEqualTo("this is {0=index0, 1=index1, 2=index3, first=index0, last=index3} and this is first index0, specific index index1 and last index3");
     }
 
     @Test
@@ -77,7 +77,7 @@ public class TemplateTest {
 
     @Test
     public void testFieldWithDots() {
-        Template templateWithEscapedDots = templateService.createTemplate("let's fetch field with dots {{field\\.with\\.dot.innerField}}");
+        Template templateWithEscapedDots = templateService.createTemplate("let's fetch field with dots {{field_with_dot.innerField}}");
         Doc doc = createDoc("field.with.dot", ImmutableMap.of("innerField", "value"));
 
         String value = templateWithEscapedDots.render(doc);
