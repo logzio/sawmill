@@ -32,7 +32,16 @@ public class BenchmarkTest {
 
     @Test
     public void testApache() throws IOException, RunnerException {
-        String scenario = Resources.toString(Resources.getResource("ApacheScenario.conf"), Charsets.UTF_8);
+        testScenario("ApacheScenario.conf", 35000.0);
+    }
+
+    @Test
+    public void testTemplate() throws IOException, RunnerException {
+        testScenario("TemplateScenario.conf", 35000.0);
+    }
+
+    private void testScenario(String scenarioName, double threshold) throws RunnerException, IOException {
+        String scenario = Resources.toString(Resources.getResource(scenarioName), Charsets.UTF_8);
         scenario = scenario.replaceAll("DOCUMENTPLACEHOLDER", tempFolder.getRoot().getAbsolutePath());
 
         String json = ConfigFactory.parseString(scenario).root().render(ConfigRenderOptions.concise());
@@ -48,7 +57,7 @@ public class BenchmarkTest {
 
         while ( results.hasNext()) {
             RunResult runResults = results.next();
-            assertThat(runResults.getPrimaryResult().getScore()).isGreaterThan(35000.0);
+            assertThat(runResults.getPrimaryResult().getScore()).isGreaterThan(threshold);
         }
     }
 

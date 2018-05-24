@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
@@ -25,6 +26,8 @@ public class JsonUtils {
         mapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
         mapper.enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL);
         mapper.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
+        mapper.registerModule(new AfterburnerModule());
+
     }
 
     public static <T> T fromJsonString(Class<T> type, String json) {

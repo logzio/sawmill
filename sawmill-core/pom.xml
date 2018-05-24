@@ -48,6 +48,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-afterburner</artifactId>
+        </dependency>
+        <dependency>
             <groupId>net.objecthunter</groupId>
             <artifactId>exp4j</artifactId>
         </dependency>
