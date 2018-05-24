@@ -3,18 +3,13 @@ package io.logz.sawmill;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.MustacheException;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
-    import io.logz.sawmill.utilities.JsonUtils;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static io.logz.sawmill.FieldType.STRING;
 
 public class UnescapedMustacheFactory extends DefaultMustacheFactory {
     public UnescapedMustacheFactory() {
@@ -47,6 +42,4 @@ public class UnescapedMustacheFactory extends DefaultMustacheFactory {
             throw new MustacheException("Failed to encode value: " + value);
         }
     }
-
-
 }
