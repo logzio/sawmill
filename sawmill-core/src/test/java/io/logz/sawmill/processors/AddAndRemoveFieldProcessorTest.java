@@ -9,6 +9,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.logz.sawmill.TemplateService.JSON_STRING_SUFFIX;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static io.logz.sawmill.utils.FactoryUtils.templateService;
@@ -48,7 +49,7 @@ public class AddAndRemoveFieldProcessorTest {
     @Test
     public void testAddAndRemoveFieldWithTemplate() {
         String path = "message{{field}}";
-        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class, "path", path, "value", "{{objectField_logzio_json}}");
+        AddFieldProcessor addFieldProcessor = createProcessor(AddFieldProcessor.class, "path", path, "value", "{{objectField" + JSON_STRING_SUFFIX + "}}");
         RemoveFieldProcessor removeFieldProcessor = createProcessor(RemoveFieldProcessor.class, "path", path);
 
         Doc doc = createDoc("field", "Hola",
