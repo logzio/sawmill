@@ -1,5 +1,7 @@
 package io.logz.sawmill.conditions;
 
+import com.google.common.primitives.Doubles;
+import com.google.common.primitives.Longs;
 import io.logz.sawmill.Condition;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Template;
@@ -35,7 +37,7 @@ public class FieldHasValueCondition implements Condition {
         return possibleValues.stream()
                 .map(possibleValue -> {
                     if (possibleValue instanceof Template) {
-                        return ((Template)possibleValue).render(doc);
+                        return ((Template) possibleValue).render(doc);
                     } else {
                         return possibleValue;
                     }
@@ -57,6 +59,10 @@ public class FieldHasValueCondition implements Condition {
                     .map(value -> {
                         if (value instanceof String) {
                             return templateService.createTemplate((String)value);
+                        } else if (value instanceof Integer) {
+                            return Longs.tryParse(value.toString());
+                        } else if (value instanceof Float) {
+                            return Doubles.tryParse(value.toString());
                         } else {
                             return value;
                         }

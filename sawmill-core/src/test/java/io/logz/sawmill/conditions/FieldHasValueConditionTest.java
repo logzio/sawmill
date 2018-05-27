@@ -38,23 +38,27 @@ public class FieldHasValueConditionTest {
     public void testFieldHasValue() {
         String field = "field1";
         String stringValue = "value1";
-        int intValue = 1;
+        Integer intValue = 1;
         long longValue = 2l;
+        Float floatValue = 4.7f;
         double doubleValue = 3.5d;
         boolean boolValue = true;
         List<String> listValue = Arrays.asList("some", "list");
         ImmutableMap<String, String> mapValue = ImmutableMap.of("some", "map");
         String templateValue = "{{templateField}}";
-        List<Object> possibleValues = Arrays.asList(stringValue, intValue, longValue, doubleValue, boolValue, listValue, mapValue, templateValue);
+        List<Object> possibleValues = Arrays.asList(stringValue, intValue, longValue, floatValue, doubleValue, boolValue, listValue, mapValue, templateValue);
         FieldHasValueCondition fieldHasValueCondition = createCondition(FieldHasValueCondition.class, "field", field, "possibleValues", possibleValues);
 
         Doc doc = createDoc("field1", stringValue);
         assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
 
-        doc = createDoc("field1", intValue);
+        doc = createDoc("field1", intValue.longValue());
         assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
 
         doc = createDoc("field1", longValue);
+        assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
+
+        doc = createDoc("field1", floatValue.doubleValue());
         assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
 
         doc = createDoc("field1", doubleValue);
