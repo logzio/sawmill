@@ -1,6 +1,7 @@
 package io.logz.sawmill.conditions;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Doubles;
 import io.logz.sawmill.Doc;
 import org.junit.Test;
 
@@ -58,7 +59,7 @@ public class FieldHasValueConditionTest {
         doc = createDoc("field1", longValue);
         assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
 
-        doc = createDoc("field1", floatValue.doubleValue());
+        doc = createDoc("field1", Doubles.tryParse(floatValue.toString()));
         assertThat(fieldHasValueCondition.evaluate(doc)).isTrue();
 
         doc = createDoc("field1", doubleValue);
