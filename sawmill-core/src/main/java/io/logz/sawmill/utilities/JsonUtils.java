@@ -111,7 +111,7 @@ public class JsonUtils {
         return keys.iterator().next();
     }
 
-    public static Boolean getBoolean(PipelineDefinitionJsonParser pipelineDefinitionJsonParser, Map<String, Object> map, String key, boolean requiredField) {
+    public static Boolean getBoolean(Map<String, Object> map, String key, boolean requiredField) {
         return getValueAs(map, key, Boolean.class, requiredField);
     }
 

@@ -36,7 +36,6 @@ public class Pipeline {
 
     public static final class Factory {
 
-        private final PipelineDefinitionJsonParser pipelineDefinitionJsonParser;
         private final ExecutionStepsParser executionStepsParser;
 
         public Factory() {
@@ -44,7 +43,6 @@ public class Pipeline {
         }
 
         public Factory(ProcessorFactoryRegistry processorFactoryRegistry, ConditionFactoryRegistry conditionFactoryRegistry) {
-            pipelineDefinitionJsonParser = new PipelineDefinitionJsonParser();
             executionStepsParser = new ExecutionStepsParser(processorFactoryRegistry, conditionFactoryRegistry);
         }
 
@@ -54,7 +52,7 @@ public class Pipeline {
         }
 
         public Pipeline create(String id, String config) {
-            PipelineDefinition pipelineDefinition = pipelineDefinitionJsonParser.parse(config);
+            PipelineDefinition pipelineDefinition = PipelineDefinitionJsonParser.parse(config);
             return create(id, pipelineDefinition);
         }
 
