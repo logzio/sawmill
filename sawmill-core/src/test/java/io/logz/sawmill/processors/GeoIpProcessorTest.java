@@ -39,7 +39,17 @@ public class GeoIpProcessorTest {
 
     @Test
     public void testValidIp() {
-        String ip = "172.217.7.206";
+        /**
+         * ATTENTION!
+         *
+         * if test fails try changing the ip address
+         * this test relies on an ip address that maps to a valid major city in the US
+         * if this ip address starts mapping to another place the result returned by GeoIpDatabase
+         * will not contain all expected field
+         *
+         *  - current ip address maps to NewYork
+         */
+        String ip = "108.41.24.23";
         String source = "ipString";
         String target = "{{geoipField}}";
 
