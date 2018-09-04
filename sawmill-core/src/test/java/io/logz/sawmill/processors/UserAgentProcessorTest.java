@@ -200,7 +200,7 @@ public class UserAgentProcessorTest {
         assertThat(userAgent.get("minor")).isEqualTo("0");
 
         assertThat(userAgent.get("os")).isEqualTo("Windows Vista");
-        assertThat(userAgent.get("os_name")).isEqualTo("Windows Vista");
+        assertThat(userAgent.get("os_name")).isEqualTo("Windows");
 
         assertThat(userAgent.get("device")).isEqualTo("Other");
 
