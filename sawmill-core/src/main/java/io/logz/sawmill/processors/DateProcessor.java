@@ -36,7 +36,7 @@ import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "date", factory = DateProcessor.Factory.class)
 public class DateProcessor implements Processor {
-    public static final DateTimeFormatter elasticPrintFormat = new DateTimeFormatterBuilder()
+    public static final DateTimeFormatter ELASTIC = new DateTimeFormatterBuilder()
             .parseCaseInsensitive()
             .append(ISO_LOCAL_DATE)
             .appendLiteral('T')
@@ -69,7 +69,7 @@ public class DateProcessor implements Processor {
      * offset            = 'Z' | (('+' | '-') HH [':' mm [':' ss [('.' | ',') SSS]]])
      * </pre>
      */
-    public static final DateTimeFormatter iso8601 = new DateTimeFormatterBuilder()
+    public static final DateTimeFormatter ISO8601 = new DateTimeFormatterBuilder()
             .parseCaseInsensitive()
             .append(ISO_LOCAL_DATE)
             .appendLiteral('T')
@@ -77,35 +77,41 @@ public class DateProcessor implements Processor {
             .appendLiteral(':')
             .appendValue(MINUTE_OF_HOUR, 2)
             .optionalStart()
-                .appendLiteral(':')
-                .appendValue(SECOND_OF_MINUTE, 2)
-                .optionalStart()
-                    .optionalStart()
-                        .appendLiteral(',')
-                    .optionalEnd()
-                    .optionalStart()
-                        .appendLiteral('.')
-                    .optionalEnd()
-                .appendFraction(NANO_OF_SECOND, 0, 9, false)
-                    .optionalStart()
-                        .appendOffsetId()
-                    .optionalEnd()
-                .optionalEnd()
+            .appendLiteral(':')
+            .appendValue(SECOND_OF_MINUTE, 2)
+            .optionalStart()
+            .optionalStart()
+            .appendLiteral(',')
+            .optionalEnd()
+            .optionalStart()
+            .appendLiteral('.')
+            .optionalEnd()
+            .appendFraction(NANO_OF_SECOND, 0, 9, false)
+            .optionalStart()
+            .appendOffsetId()
+            .optionalEnd()
+            .optionalEnd()
             .optionalEnd()
             .toFormatter()
             .withChronology(IsoChronology.INSTANCE)
             .withResolverStyle(ResolverStyle.STRICT);
+
+    public static final DateTimeFormatter UNIX = new DateTimeFormatterBuilder()
+            .appendValue(ChronoField.INSTANT_SECONDS, 1, 10, SignStyle.NEVER)
+            .toFormatter();
+
+    public static final DateTimeFormatter UNIX_MS = new DateTimeFormatterBuilder()
+            .appendValue(ChronoField.INSTANT_SECONDS, 1, 10, SignStyle.NEVER)
+            .appendValue(ChronoField.MILLI_OF_SECOND, 3)
+            .toFormatter();
+
     private static Map<String, DateTimeFormatter> dateTimePatternToFormatter = new ConcurrentHashMap<>();
 
     static {
-        dateTimePatternToFormatter.put("ISO8601", iso8601);
-        dateTimePatternToFormatter.put("UNIX", new DateTimeFormatterBuilder()
-                .appendValue(ChronoField.INSTANT_SECONDS, 1, 10, SignStyle.NEVER)
-                .toFormatter());
-        dateTimePatternToFormatter.put("UNIX_MS", new DateTimeFormatterBuilder()
-                .appendValue(ChronoField.INSTANT_SECONDS, 1, 10, SignStyle.NEVER)
-                .appendValue(ChronoField.MILLI_OF_SECOND, 3)
-                .toFormatter());
+        dateTimePatternToFormatter.put("ISO8601", ISO8601);
+        dateTimePatternToFormatter.put("UNIX", UNIX);
+        dateTimePatternToFormatter.put("UNIX_MS", UNIX_MS);
+        dateTimePatternToFormatter.put("ELASTIC", ELASTIC);
     }
 
     private final String field;
@@ -113,29 +119,44 @@ public class DateProcessor implements Processor {
     private final List<String> formats;
     private final List<DateTimeFormatter> formatters;
     private final ZoneId timeZone;
+    private final DateTimeFormatter outputFormatter;
 
-    public DateProcessor(String field, String targetField, List<String> formats, ZoneId timeZone) {
+    public DateProcessor(String field, String targetField, List<String> formats, ZoneId timeZone, String outputFormat) {
         checkState(CollectionUtils.isNotEmpty(formats), "formats cannot be empty");
         this.field = requireNonNull(field, "field cannot be null");
         this.targetField = requireNonNull(targetField, "target field cannot be null");
         this.formats = formats;
         this.timeZone = timeZone;
 
+        computeFormatter(outputFormat);
+
+        outputFormatter = getDateTimeFormatter(timeZone, outputFormat);
+
         this.formatters = new ArrayList<>();
 
         formats.forEach(format -> {
-            try {
-                dateTimePatternToFormatter.computeIfAbsent(format, k -> new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern(format).toFormatter());
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException(String.format("failed to create date processor, format [%s] is not valid", format), e);
-            }
-            DateTimeFormatter formatter = dateTimePatternToFormatter.get(format);
-            if (format.toUpperCase().startsWith("UNIX")) {
-                formatter = formatter.withZone(timeZone == null ? ZoneId.of("UTC") : timeZone);
-            }
+            computeFormatter(format);
+            DateTimeFormatter formatter = getDateTimeFormatter(timeZone, format);
 
             formatters.add(formatter);
         });
+
+    }
+
+    private DateTimeFormatter getDateTimeFormatter(ZoneId timeZone, String format) {
+        DateTimeFormatter formatter = dateTimePatternToFormatter.get(format);
+        if (format.toUpperCase().startsWith("UNIX")) {
+            formatter = formatter.withZone(timeZone == null ? ZoneId.of("UTC") : timeZone);
+        }
+        return formatter;
+    }
+
+    private void computeFormatter(String format) {
+        try {
+            dateTimePatternToFormatter.computeIfAbsent(format, k -> new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern(format).toFormatter());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(String.format("failed to create date processor, format [%s] is not valid", format), e);
+        }
     }
 
     @Override
@@ -158,7 +179,7 @@ public class DateProcessor implements Processor {
             return ProcessResult.failure(String.format("failed to parse date in path [%s], [%s] is not one of the formats [%s]", field, dateTimeDocValue, formats));
         }
 
-        doc.addField(targetField, dateTime.format(elasticPrintFormat));
+        doc.addField(targetField, dateTime.format(outputFormatter));
 
         return ProcessResult.success();
     }
@@ -220,8 +241,9 @@ public class DateProcessor implements Processor {
             List<String> formats = dateConfig.getFormats();
             String timeZone = dateConfig.getTimeZone();
             ZoneId zoneId = timeZone != null ? ZoneId.of(timeZone) : null;
+            String outputFormat = dateConfig.getOutputFormat();
 
-            return new DateProcessor(field, targetField, formats, zoneId);
+            return new DateProcessor(field, targetField, formats, zoneId, outputFormat);
         }
     }
 
@@ -245,6 +267,8 @@ public class DateProcessor implements Processor {
          */
         private String timeZone;
 
+        private String outputFormat = "ELASTIC";
+
         public Configuration() { }
 
         public String getField() { return field; }
@@ -259,6 +283,10 @@ public class DateProcessor implements Processor {
 
         public String getTimeZone() {
             return timeZone;
+        }
+
+        public String getOutputFormat() {
+            return outputFormat;
         }
     }
 }
