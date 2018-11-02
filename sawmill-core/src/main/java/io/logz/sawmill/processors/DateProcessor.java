@@ -127,33 +127,24 @@ public class DateProcessor implements Processor {
         this.targetField = requireNonNull(targetField, "target field cannot be null");
         this.formats = formats;
         this.timeZone = timeZone;
-
-        computeFormatter(outputFormat);
-
-        outputFormatter = getDateTimeFormatter(timeZone, outputFormat);
+        this.outputFormatter = computeAndGetFormatter(outputFormat, timeZone);
 
         this.formatters = new ArrayList<>();
-
         formats.forEach(format -> {
-            computeFormatter(format);
-            DateTimeFormatter formatter = getDateTimeFormatter(timeZone, format);
+            DateTimeFormatter formatter = computeAndGetFormatter(format, timeZone);
 
             formatters.add(formatter);
         });
 
     }
 
-    private DateTimeFormatter getDateTimeFormatter(ZoneId timeZone, String format) {
-        DateTimeFormatter formatter = dateTimePatternToFormatter.get(format);
+    private DateTimeFormatter computeAndGetFormatter(String format, ZoneId timeZone) {
         if (format.toUpperCase().startsWith("UNIX")) {
-            formatter = formatter.withZone(timeZone == null ? ZoneId.of("UTC") : timeZone);
+            return dateTimePatternToFormatter.get(format).withZone(timeZone == null ? ZoneId.of("UTC") : timeZone);
         }
-        return formatter;
-    }
 
-    private void computeFormatter(String format) {
         try {
-            dateTimePatternToFormatter.computeIfAbsent(format, k -> new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern(format).toFormatter());
+            return dateTimePatternToFormatter.computeIfAbsent(format, k -> new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern(format).toFormatter());
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(String.format("failed to create date processor, format [%s] is not valid", format), e);
         }
