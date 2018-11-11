@@ -38,7 +38,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -49,10 +49,15 @@ public class DateProcessorTest {
         ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
         Doc doc = createDoc(field, String.valueOf(zonedDateTime.toInstant().toEpochMilli()));
 
-        DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX_MS"), zoneId);
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("UNIX_MS"),
+                "timeZone", zoneId.toString());
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -71,7 +76,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -90,7 +95,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -101,10 +106,15 @@ public class DateProcessorTest {
         ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId).truncatedTo(ChronoUnit.SECONDS);
         Doc doc = createDoc(field, String.valueOf(zonedDateTime.toInstant().toEpochMilli() / 1000));
 
-        DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX"), zoneId);
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("UNIX"),
+                "timeZone", zoneId.toString());
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -125,14 +135,12 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
 
         doc = createDoc(field, iso8601Format2);
 
-        dateProcessor = new DateProcessor(field, targetField, Arrays.asList("ISO8601"), zoneId);
-
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -158,7 +166,7 @@ public class DateProcessorTest {
             ZonedDateTime expectedDateTime = LocalDateTime.parse(dateString, formatter).atZone(zoneId);
 
             assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-            assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.elasticPrintFormat));
+            assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.ELASTIC));
         });
     }
 
@@ -203,7 +211,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -226,7 +234,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -250,7 +258,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -291,7 +299,7 @@ public class DateProcessorTest {
 
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(expectedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -309,7 +317,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
 
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -320,10 +328,14 @@ public class DateProcessorTest {
         ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId).truncatedTo(ChronoUnit.SECONDS);
         Doc doc = createDoc(field, String.valueOf(zonedDateTime.toInstant().toEpochMilli() / 1000));
 
-        DateProcessor dateProcessor = new DateProcessor(field, targetField, Arrays.asList("UNIX"), null);
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("UNIX"),
+                "timeZone", null);
 
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.elasticPrintFormat));
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
     }
 
     @Test
@@ -331,5 +343,95 @@ public class DateProcessorTest {
         assertThatThrownBy(() -> createProcessor(DateProcessor.class)).isInstanceOf(ProcessorConfigurationException.class);
         assertThatThrownBy(() -> createProcessor(DateProcessor.class, "field", "aaaa")).isInstanceOf(ProcessorConfigurationException.class);
         assertThatThrownBy(() -> createProcessor(DateProcessor.class, "formats", Arrays.asList("aaaa"))).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createProcessor(DateProcessor.class, "field", "bla", "formats", Arrays.asList("notValid"))).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> createProcessor(DateProcessor.class, "field", "bla", "formats", Arrays.asList("UNIX"), "outputFormat", "notValid")).isInstanceOf(RuntimeException.class);
+    }
+    @Test
+    public void testOutputForamtUnix() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("Europe/Paris");
+        String outputFormat = "UNIX";
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
+        String iso8601Format = zonedDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss,SSS"));
+        Doc doc = createDoc(field, iso8601Format);
+
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("ISO8601"),
+                "outputFormat", outputFormat,
+                "timeZone", zoneId.toString());
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.UNIX));
+    }
+
+    @Test
+    public void testOutputFormatElastic() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("Europe/Paris");
+        String outputFormat = "ELASTIC";
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
+        Doc doc = createDoc(field, zonedDateTime.toInstant().toEpochMilli());
+
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("UNIX_MS"),
+                "outputFormat", outputFormat,
+                "timeZone", zoneId.toString());
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
+    }
+
+    @Test
+    public void testOutputFormatCustom() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("Europe/Paris");
+        String outputFormat = "yyyy-MM-ss HH:mm:ss Z";
+
+        DateTimeFormatter customOutputFormatter = new DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern(outputFormat).toFormatter();
+
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
+        Doc doc = createDoc(field, zonedDateTime.toInstant().toEpochMilli() / 1000);
+
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("UNIX"),
+                "outputFormat", outputFormat,
+                "timeZone", zoneId.toString());
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(customOutputFormatter));
+    }
+
+    @Test
+    public void testCustomFormatToUnixMs() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("UTC");
+        ZonedDateTime zonedDateTime = LocalDateTime.now().atZone(zoneId);
+        String format = zonedDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss,SSS"));
+        String outputFormat = "UNIX_MS";
+        Doc doc = createDoc(field, format);
+
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("yyyy-MM-dd HH:mm:ss,SSS"),
+                "outputFormat", outputFormat,
+                "timeZone", zoneId.toString());
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String) doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.UNIX_MS));
     }
 }
