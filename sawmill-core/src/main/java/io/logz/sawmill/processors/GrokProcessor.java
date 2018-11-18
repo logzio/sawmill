@@ -111,7 +111,7 @@ public class GrokProcessor implements Processor {
         private static final String[] PATTERN_NAMES = new String[] {
                 "gpfs", "grok-patterns", "haproxy",
                 "java", "linux-syslog", "mcollective", "mcollective-patterns", "mongodb", "nagios",
-                "postgresql", "redis", "ruby", "SYSLOG5424BASEOLDER", "firewalls"
+                "postgresql", "redis", "ruby", "SYSLOG5424BASEOLDER", "firewalls", "postfix"
         };
 
         private final Map<String,String> patternsBank;
