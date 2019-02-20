@@ -5,6 +5,7 @@ import io.logz.sawmill.exceptions.PipelineExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -12,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
-public class PipelineExecutor {
+public class PipelineExecutor implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(PipelineExecutor.class);
 
     private final PipelineExecutionTimeWatchdog watchdog;
@@ -145,6 +146,11 @@ public class PipelineExecutor {
         } else {
             return ExecutionResult.failure(message, processorName);
         }
+    }
+
+    @Override
+    public void close() {
+        this.watchdog.close();
     }
 
     private static class PipelineStopwatch {
