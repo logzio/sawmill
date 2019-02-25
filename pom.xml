@@ -53,6 +53,7 @@
         <assertj.version>3.5.2</assertj.version>
         <logback.version>1.1.7</logback.version>
         <commonsIO.version>2.5</commonsIO.version>
+        <jrubyJoni.version>2.1.16</jrubyJoni.version>
     </properties>
 
     <build>
@@ -146,7 +147,7 @@
             <dependency>
                 <groupId>org.jruby.joni</groupId>
                 <artifactId>joni</artifactId>
-                <version>2.1.11</version>
+                <version>${jrubyJoni.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.ua-parser</groupId>
