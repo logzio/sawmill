@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class DeDotProcessorTest {
 
-    String messageExample = "{\n" +
+    private final String messageExample = "{\n" +
             "  \"inner.object\": {\n" +
             "    \"_id\": \"5c9ce370f7edc93603cfcc5a\",\n" +
             "    \"index\": 3,\n" +
