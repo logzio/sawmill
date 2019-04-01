@@ -176,6 +176,13 @@ public class Doc {
         return pathTokens;
     }
 
+    public void replace(Map<String,Object> otherMap){
+        if(source!=null){
+            source.clear();
+        }
+        source.putAll(otherMap);
+    }
+
     @Override
     public String toString() {
         return "Doc{" +

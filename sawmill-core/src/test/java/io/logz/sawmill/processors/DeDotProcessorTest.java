@@ -2,9 +2,9 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
@@ -85,40 +85,36 @@ public class DeDotProcessorTest {
             "}";
 
     @Test
-    public void testDefaultSeperator() {
+    public void testDefaultSeperator() throws InterruptedException {
 
-        //Map<String, Object> config = createConfig("seperator","-");
-        AssertOnSeperator(messageExample, null);
-    }
-    @Test
-    public void testCustomSeperator() {
-
-        Map<String, Object> config = createConfig("seperator","_");
-        AssertOnSeperator(messageExample, config);
-
-        config = createConfig("seperator","#");
-        AssertOnSeperator(messageExample, config);
-    }
-
-
-    private void AssertOnSeperator(String messageExample, Map<String, Object> config) {
+        Map<String, Object> config = new HashMap<>();
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
-
-        Object obk = doc.getSource().get("inner.object");
-
-        assertThat(doc.getSource().get("inner.object")).isNotNull();
-        assertThat(doc.getSource().get("first.name")).isNotNull();
-        assertThat(((Map<String,Object>) doc.getSource().get("inner.object")).get("gps.latitude")).isNotNull();
-        assertThat(((Map<String,Object>) doc.getSource().get("inner.object")).get("about.us")).isNotNull();
-
         DeDotProcessor deDotProcessor = createProcessor(DeDotProcessor.class, config);
-
         assertThat(deDotProcessor.process(doc).isSucceeded()).isTrue();
 
         assertThat(doc.getSource().get("inner.object")).isNull();
         assertThat(doc.getSource().get("first.name")).isNull();
 
-        String seperator = config!=null ? (String)config.get("seperator") : DeDotProcessor.Configuration.DEDOT_DEFAULT_VAL;
+        String seperator =  "_";
+
+        assertThat(doc.getSource().get("first"+ seperator +"name")).isNotNull();
+        assertThat(((Map<String,Object>) doc.getSource().get("inner"+ seperator +"object")).get("gps"+ seperator +"latitude")).isNotNull();
+        assertThat(((Map<String,Object>) doc.getSource().get("inner"+ seperator +"object")).get("about"+ seperator +"us")).isNotNull();
+        assertThat(doc.getSource().get("inner"+ seperator +"object")).isNotNull();
+    }
+    @Test
+    public void testCustomSeperator() throws InterruptedException {
+
+        Map<String, Object> config = createConfig("seperator","*");
+        Doc doc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
+
+        DeDotProcessor deDotProcessor = createProcessor(DeDotProcessor.class, config);
+        assertThat(deDotProcessor.process(doc).isSucceeded()).isTrue();
+
+        assertThat(doc.getSource().get("inner.object")).isNull();
+        assertThat(doc.getSource().get("first.name")).isNull();
+
+        String seperator = "*";
 
         assertThat(doc.getSource().get("first"+ seperator +"name")).isNotNull();
         assertThat(((Map<String,Object>) doc.getSource().get("inner"+ seperator +"object")).get("gps"+ seperator +"latitude")).isNotNull();
