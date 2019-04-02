@@ -31,7 +31,7 @@ public class DeDotProcessor implements Processor {
 
         Map<String,Object> mapClone = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : docAsMap.entrySet()) {
-            if (Thread.interrupted()) throw new InterruptedException();
+            if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
             String dedotedKey = deDotKey(entry.getKey());
             if (entry.getValue() instanceof Map) {
                 Map<String, Object> deDotedMap = deDotMap((Map) entry.getValue());
