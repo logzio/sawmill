@@ -177,9 +177,7 @@ public class Doc {
     }
 
     public void replace(Map<String,Object> otherMap){
-        if(source!=null){
-            source.clear();
-        }
+        source.clear();
         source.putAll(otherMap);
     }
 

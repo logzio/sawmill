@@ -5,6 +5,7 @@ import io.logz.sawmill.utilities.JsonUtils;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
@@ -15,45 +16,10 @@ public class DeDotProcessorTest {
 
     private final String messageExample = "{\n" +
             "  \"inner.object\": {\n" +
-            "    \"_id\": \"5c9ce370f7edc93603cfcc5a\",\n" +
-            "    \"index\": 3,\n" +
-            "    \"guid\": \"6028894d-1aca-4c25-9b65-bb9d496d3b93\",\n" +
-            "    \"isActive\": false,\n" +
-            "    \"balance\": \"$2,333.93\",\n" +
-            "    \"picture\": \"http://placehold.it/32x32\",\n" +
-            "    \"age\": 36,\n" +
-            "    \"eyeColor\": \"blue\",\n" +
-            "    \"name\": {\n" +
-            "      \"first\": \"Robin\",\n" +
-            "      \"last\": \"Mckay\"\n" +
-            "    },\n" +
-            "    \"company\": \"FITCORE\",\n" +
-            "    \"email\": \"robin.mckay@fitcore.ca\",\n" +
-            "    \"phone\": \"+1 (998) 522-3511\",\n" +
-            "    \"address\": \"536 Bennet Court, Mappsville, District Of Columbia, 5733\",\n" +
-            "    \"about.us\": \"Ut id sint sint proident laboris exercitation cupidatat deserunt aliquip eu cillum officia. Culpa sit ex irure officia eu qui. Non excepteur aliqua voluptate sint magna esse elit consequat mollit mollit reprehenderit dolor. Nisi sit laboris ullamco culpa ullamco laborum commodo fugiat commodo eu aliqua Lorem eiusmod amet. Voluptate sunt consequat mollit quis anim fugiat cillum mollit dolor pariatur. Ipsum ut esse elit tempor. Do ea amet eiusmod laboris tempor deserunt.\",\n" +
+            "    \"about.us\": \"value\",\n" +
             "    \"registered\": \"Tuesday, March 8, 2016 2:35 PM\",\n" +
             "    \"gps.latitude\": \"-83.019706\",\n" +
             "    \"longitude\": \"6.023174\",\n" +
-            "    \"tags\": [\n" +
-            "      \"mollit\",\n" +
-            "      \"qui\",\n" +
-            "      \"anim\",\n" +
-            "      \"pariatur\",\n" +
-            "      \"pariatur\"\n" +
-            "    ],\n" +
-            "    \"range\": [\n" +
-            "      0,\n" +
-            "      1,\n" +
-            "      2,\n" +
-            "      3,\n" +
-            "      4,\n" +
-            "      5,\n" +
-            "      6,\n" +
-            "      7,\n" +
-            "      8,\n" +
-            "      9\n" +
-            "    ],\n" +
             "    \"friends\": [{\n" +
             "        \"id\": 0,\n" +
             "        \"first.name\": \"Sheena James\"\n" +
@@ -66,18 +32,9 @@ public class DeDotProcessorTest {
             "        \"id\": 2,\n" +
             "        \"first.name\": \"Della Curry\"\n" +
             "      }\n" +
-            "    ],\n" +
-            "    \"greeting\": \"Hello, Robin! You have 10 unread messages.\",\n" +
-            "    \"favoriteFruit\": \"banana\"\n" +
+            "    ]\n" +
             "  },\n" +
             "  \"_id\": \"5c9ce370543222f1cf6b53e0\",\n" +
-            "  \"index\": 0,\n" +
-            "  \"guid\": \"d055c342-4c62-4af3-944d-541a835f79a4\",\n" +
-            "  \"isActive\": false,\n" +
-            "  \"balance\": \"$3,331.30\",\n" +
-            "  \"picture\": \"http://placehold.it/32x32\",\n" +
-            "  \"age\": 29,\n" +
-            "  \"eyeColor\": \"blue\",\n" +
             "  \"first.name\": {\n" +
             "    \"first\": \"Magdalena\",\n" +
             "    \"last\": \"Stewart\"\n" +
@@ -100,12 +57,14 @@ public class DeDotProcessorTest {
         assertThat(doc.getSource().get("first"+ seperator +"name")).isNotNull();
         assertThat(((Map<String,Object>) doc.getSource().get("inner"+ seperator +"object")).get("gps"+ seperator +"latitude")).isNotNull();
         assertThat(((Map<String,Object>) doc.getSource().get("inner"+ seperator +"object")).get("about"+ seperator +"us")).isNotNull();
-        assertThat(doc.getSource().get("inner"+ seperator +"object")).isNotNull();
+        ((List<Map<String,Object>>)((Map<String, Object>)
+                doc.getSource().get("inner" + seperator + "object")).get("friends")).stream().forEach(
+                        friend -> assertThat(friend.get("first"+ seperator +"name")).isNotNull());
     }
     @Test
     public void testCustomSeperator() throws InterruptedException {
 
-        Map<String, Object> config = createConfig("seperator","*");
+        Map<String, Object> config = createConfig("separator","*");
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
 
         DeDotProcessor deDotProcessor = createProcessor(DeDotProcessor.class, config);
@@ -119,6 +78,8 @@ public class DeDotProcessorTest {
         assertThat(doc.getSource().get("first"+ seperator +"name")).isNotNull();
         assertThat(((Map<String,Object>) doc.getSource().get("inner"+ seperator +"object")).get("gps"+ seperator +"latitude")).isNotNull();
         assertThat(((Map<String,Object>) doc.getSource().get("inner"+ seperator +"object")).get("about"+ seperator +"us")).isNotNull();
-        assertThat(doc.getSource().get("inner"+ seperator +"object")).isNotNull();
+        ((List<Map<String,Object>>)((Map<String, Object>)
+                doc.getSource().get("inner" + seperator + "object")).get("friends")).stream().forEach(
+                friend -> assertThat(friend.get("first"+ seperator +"name")).isNotNull());
     }
 }

@@ -7,64 +7,59 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@ProcessorProvider(type = "de_dot", factory = DeDotProcessor.Factory.class)
+@ProcessorProvider(type = "deDot", factory = DeDotProcessor.Factory.class)
 public class DeDotProcessor implements Processor {
-    private String fieldSplit;
+    private String separator;
 
-    public DeDotProcessor(String fieldSplit) {
-        this.fieldSplit = fieldSplit;
+    public DeDotProcessor(String separator) {
+        this.separator = separator;
     }
 
     @Override
     public ProcessResult process(Doc doc) throws InterruptedException {
         Map<String,Object> docAsMap = doc.getSource();
-        //Creating a copy of the Map in this level , and also in each level in the recursive level is required
-        //in order to avoid ConcurrentModificationException , because in our case we want to replace the key thus actually we remove & add .
-        //add is not supported while iterating , and the end result is to create a copy of the map.
-        Map<String,Object> dedotedMap = new LinkedHashMap<>();
-        deDotMap(docAsMap,dedotedMap);
-        doc.replace(dedotedMap);
+        doc.replace(deDotMap(docAsMap));
         return ProcessResult.success();
     }
 
 
-    private void deDotMap(Map<String, Object> docAsMap, Map<String,Object> mapClone) throws InterruptedException {
-        Iterator<Map.Entry<String,Object>> iterator = docAsMap.entrySet().iterator();
+    private Map<String,Object> deDotMap(Map<String, Object> docAsMap) throws InterruptedException {
 
-        while(iterator.hasNext()){
+        Map<String,Object> mapClone = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : docAsMap.entrySet()) {
             if (Thread.interrupted()) throw new InterruptedException();
-            Map.Entry<String,Object> entry = iterator.next();
-            String dedotedKey = deDotString(entry.getKey());
-            if(entry.getValue() instanceof Map){
-                Map<String,Object> newInnerMap = new LinkedHashMap<>();
-                mapClone.put(dedotedKey,newInnerMap);
-                deDotMap((Map)entry.getValue(),newInnerMap);
+            String dedotedKey = deDotKey(entry.getKey());
+            if (entry.getValue() instanceof Map) {
+                Map<String, Object> deDotedMap = deDotMap((Map) entry.getValue());
+                mapClone.put(dedotedKey, deDotedMap);
+            } else if (isListOfMaps(entry)) {
+                deDotListOfMaps(mapClone, entry, dedotedKey);
+            } else {
+                mapClone.put(dedotedKey, entry.getValue());
             }
-            else if(entry.getValue() instanceof List && !((List) entry.getValue()).isEmpty() && ((List) entry.getValue()).get(0) instanceof Map){
-                List<Map<String,Object>> newInnerMapList = new ArrayList<>();
-                mapClone.put(dedotedKey,newInnerMapList);
-                for(Object singleMapFromArray : (List)entry.getValue()){
-                    Map<String,Object> newInnerMap = new LinkedHashMap<>();
-                    newInnerMapList.add(newInnerMap);
-                    deDotMap((Map<String, Object>) singleMapFromArray,newInnerMap);
-                }
-            }else{
-                mapClone.put(dedotedKey,entry.getValue());
-            }
+        }
+        return mapClone;
+    }
+
+    private boolean isListOfMaps(Map.Entry<String, Object> entry) {
+        return entry.getValue() instanceof List && !((List) entry.getValue()).isEmpty() && ((List) entry.getValue()).get(0) instanceof Map;
+    }
+
+    private void deDotListOfMaps(Map<String, Object> mapClone, Map.Entry<String, Object> entry, String dedotedKey) throws InterruptedException {
+        List<Map<String,Object>> newInnerMapList = new ArrayList<>();
+        mapClone.put(dedotedKey,newInnerMapList);
+        for(Object singleMapFromArray : (List)entry.getValue()){
+            Map<String,Object> deDotedMap = deDotMap((Map<String, Object>) singleMapFromArray);
+            newInnerMapList.add(deDotedMap);
         }
     }
 
-    private String deDotString(String originalKey) {
-        String dedotedKey = originalKey;
-        if(dedotedKey.contains(".")){
-            dedotedKey = dedotedKey.replace(".",fieldSplit);
-        }
-        return dedotedKey;
+    private String deDotKey(String originalKey) {
+        return originalKey.contains(".") ? originalKey.replace(".", separator) : originalKey;
     }
 
     public static class Factory implements Processor.Factory {
@@ -72,20 +67,16 @@ public class DeDotProcessor implements Processor {
         @Override
         public Processor create(Map<String,Object> config) {
             DeDotProcessor.Configuration dedotConfiguration = JsonUtils.fromJsonMap(DeDotProcessor.Configuration.class, config);
-            return new DeDotProcessor(dedotConfiguration.getSeperator());
+            return new DeDotProcessor(dedotConfiguration.getSeparator());
         }
     }
 
     public static class Configuration implements Processor.Configuration {
-        private String seperator="_";
+        private String separator ="_";
 
         public Configuration() { }
-
-        public Configuration(String seperator) {
-            this.seperator = seperator;
-        }
-        public String getSeperator() {
-            return seperator;
+        public String getSeparator() {
+            return separator;
         }
     }
 }
