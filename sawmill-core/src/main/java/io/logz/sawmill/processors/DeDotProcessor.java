@@ -33,29 +33,27 @@ public class DeDotProcessor implements Processor {
         for (Map.Entry<String, Object> entry : docAsMap.entrySet()) {
             if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
             String dedotedKey = deDotKey(entry.getKey());
+            Object value = entry.getValue();
             if (entry.getValue() instanceof Map) {
-                Map<String, Object> deDotedMap = deDotMap((Map) entry.getValue());
-                mapClone.put(dedotedKey, deDotedMap);
-            } else if (isListOfMaps(entry)) {
-                deDotListOfMaps(mapClone, entry, dedotedKey);
-            } else {
-                mapClone.put(dedotedKey, entry.getValue());
+                value = deDotMap((Map) entry.getValue());
+            } else if (isListOfMaps(entry.getValue())) {
+                value = deDotListOfMaps((List<Map<String, Object>>) entry.getValue());
             }
+            mapClone.put(dedotedKey, value);
         }
         return mapClone;
     }
 
-    private boolean isListOfMaps(Map.Entry<String, Object> entry) {
-        return entry.getValue() instanceof List && !((List) entry.getValue()).isEmpty() && ((List) entry.getValue()).get(0) instanceof Map;
-    }
-
-    private void deDotListOfMaps(Map<String, Object> mapClone, Map.Entry<String, Object> entry, String dedotedKey) throws InterruptedException {
+    private List<Map<String,Object>> deDotListOfMaps(List<Map<String,Object>> listOfMaps) throws InterruptedException {
         List<Map<String,Object>> newInnerMapList = new ArrayList<>();
-        mapClone.put(dedotedKey,newInnerMapList);
-        for(Object singleMapFromArray : (List)entry.getValue()){
+        for(Object singleMapFromArray :listOfMaps){
             Map<String,Object> deDotedMap = deDotMap((Map<String, Object>) singleMapFromArray);
             newInnerMapList.add(deDotedMap);
         }
+        return newInnerMapList;
+    }
+    private boolean isListOfMaps(Object object) {
+        return object instanceof List && !((List) object).isEmpty() && ((List) object).get(0) instanceof Map;
     }
 
     private String deDotKey(String originalKey) {
