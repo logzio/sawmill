@@ -128,7 +128,7 @@ public class UrlDecodeProcessorTest {
     }
 
     @Test
-    public void testBadConfigField() throws InterruptedException {
+    public void testBadConfigField()  {
         Map<String, Object> config = createConfig("charset","noneExistingCharset");
         assertThatThrownBy(() -> createProcessor(UrlDecodeProcessor.class, config)).isInstanceOf(ProcessorConfigurationException.class);
     }
