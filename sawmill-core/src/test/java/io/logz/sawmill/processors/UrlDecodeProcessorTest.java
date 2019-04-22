@@ -50,7 +50,7 @@ public class UrlDecodeProcessorTest {
 
 
     @Test
-    public void testAllFieldsAndCodec() throws InterruptedException, UnsupportedEncodingException {
+    public void testAllFieldsThatShouldBeDecoded() throws InterruptedException, UnsupportedEncodingException {
         String encoding = "ibm856";
 
         Map<String, Object> config = createConfig("allFields","true","charset",encoding);
@@ -73,6 +73,34 @@ public class UrlDecodeProcessorTest {
 
         for(int i = 0;i<processedfriends.size();++i){
             assertThat(processedfriends.get(i).get("url")).isEqualTo(decode((String) unProcessedfriends.get(i).get("url"),encoding));
+        }
+
+        List<String> processedUrls = processedDoc.getField("innerObject.urls");
+        List<String> unProcessedUrls = unprocessedDoc.getField("innerObject.urls");
+
+        for(int i =0;i<processedUrls.size();i++){
+           assertThat(processedUrls.get(i).equals(decode(unProcessedUrls.get(i),encoding)));
+        }
+    }
+
+    @Test
+    public void testAllFieldsThatShouldNotBeDecoded() throws UnsupportedEncodingException, InterruptedException {
+        String encoding = "UTF-8";
+
+        Map<String, Object> config = createConfig("allFields","true","charset",encoding);
+
+        UrlDecodeProcessor urlDecodeProcessor = createProcessor(UrlDecodeProcessor.class, config);
+
+        Doc processedDoc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
+
+        assertThat(urlDecodeProcessor.process(processedDoc).isSucceeded()).isTrue();
+
+        Doc unprocessedDoc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
+
+        List<Map<String,Object>> processedfriends = ((List)processedDoc.getField("innerObject.friends"));
+        List<Map<String,Object>> unProcessedfriends = ((List)unprocessedDoc.getField("innerObject.friends"));
+
+        for(int i = 0;i<processedfriends.size();++i){
             assertThat(processedfriends.get(i).get("id")).isEqualTo((String)unProcessedfriends.get(i).get("id"));
             assertThat(processedfriends.get(i).get("numOfFriends")).isEqualTo(unProcessedfriends.get(i).get("numOfFriends"));
             assertThat(processedfriends.get(i).get("hasLaptop")).isEqualTo(unProcessedfriends.get(i).get("hasLaptop"));
@@ -96,13 +124,6 @@ public class UrlDecodeProcessorTest {
 
         for(int i =0;i<processedShadows.size();i++){
             assertThat(processedShadows.get(i).equals(unProcessedShadows.get(i)));
-        }
-
-        List<String> processedUrls = processedDoc.getField("innerObject.urls");
-        List<String> unProcessedUrls = unprocessedDoc.getField("innerObject.urls");
-
-        for(int i =0;i<processedUrls.size();i++){
-           assertThat(processedUrls.get(i).equals(decode(unProcessedUrls.get(i),encoding)));
         }
     }
 
