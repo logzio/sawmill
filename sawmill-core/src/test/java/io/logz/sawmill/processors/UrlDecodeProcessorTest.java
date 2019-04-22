@@ -45,7 +45,7 @@ public class UrlDecodeProcessorTest {
             "    \"urls\": [\"https://github.com/logzio/sawmill/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aclosed\",\"https://github.com/logzio/sawmill/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aclosed\"]\n" +
             "  },\n" +
             "\"url\": \"https://github.com/logzio/sawmill/pulls?utf8=%E2%9C%93&q=is%3Apr+is%3Aclosed\",\n" +
-            "\"id\": \"1%20%3A\"\n" +
+            "\"id\": \"1%%20%3A\"\n" +
             "}";
 
 
@@ -64,7 +64,6 @@ public class UrlDecodeProcessorTest {
         Doc unprocessedDoc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
 
         assertThat((String) processedDoc.getField("url")).isEqualTo(decode(unprocessedDoc.getField("url"), encoding));
-        assertThat((String) processedDoc.getField("id")).isEqualTo(decode(unprocessedDoc.getField("id"),encoding));
         assertThat((String) processedDoc.getField("innerObject.url")).isEqualTo(decode(unprocessedDoc.getField("innerObject.url"),encoding));
         assertThat((String) processedDoc.getField("innerObject.anotherUrl")).isEqualTo(decode(unprocessedDoc.getField("innerObject.anotherUrl"),encoding));
 
@@ -90,12 +89,12 @@ public class UrlDecodeProcessorTest {
         Map<String, Object> config = createConfig("allFields","true","charset",encoding);
 
         UrlDecodeProcessor urlDecodeProcessor = createProcessor(UrlDecodeProcessor.class, config);
-
         Doc processedDoc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
-
         assertThat(urlDecodeProcessor.process(processedDoc).isSucceeded()).isTrue();
 
         Doc unprocessedDoc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
+
+        assertThat((String) processedDoc.getField("id")).isEqualTo(unprocessedDoc.getField("id"));
 
         List<Map<String,Object>> processedfriends = ((List)processedDoc.getField("innerObject.friends"));
         List<Map<String,Object>> unProcessedfriends = ((List)unprocessedDoc.getField("innerObject.friends"));
