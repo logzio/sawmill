@@ -9,7 +9,6 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -19,13 +18,11 @@ public class UrlDecodeProcessor implements Processor {
     private boolean allFields;
     private String charSet;
     private String field;
-    private List<String> tagOnFailure;
 
-    public UrlDecodeProcessor(Boolean allFields, String charSet, String field, List<String> tagOnFailure) {
+    public UrlDecodeProcessor(Boolean allFields, String charSet, String field) {
         this.allFields = allFields;
         this.charSet = charSet;
         this.field = field;
-        this.tagOnFailure = tagOnFailure;
     }
 
     @Override
@@ -36,7 +33,6 @@ public class UrlDecodeProcessor implements Processor {
         }else if(doc.hasField(field)){
             doc.replaceFieldValue(field,decodeUrl(doc.getField(field)));
         }else{
-            doc.appendList("tags", tagOnFailure);
             return ProcessResult.failure(String.format("failed to decode field [%s], field is missing", field));
         }
         return ProcessResult.success();
@@ -65,7 +61,7 @@ public class UrlDecodeProcessor implements Processor {
     private String decodeUrl(String valueToDecode) {
         String decodedUrl = valueToDecode;
         try{
-            decodedUrl = URLDecoder.decode(valueToDecode,charSet);
+            decodedUrl = URLDecoder.decode(valueToDecode.replace("+","%2B"),charSet);
         }
         catch (Exception ignored){}
         return decodedUrl;
@@ -81,7 +77,7 @@ public class UrlDecodeProcessor implements Processor {
                 throw new ProcessorConfigurationException("The given charset is not Supported:"+urlDecodeConfiguration.getCharset());
             }
             return new UrlDecodeProcessor(urlDecodeConfiguration.getAllFields(),urlDecodeConfiguration.getCharset(),
-                    urlDecodeConfiguration.getField(),urlDecodeConfiguration.getTagOnFailure());
+                    urlDecodeConfiguration.getField());
         }
     }
 
@@ -90,13 +86,11 @@ public class UrlDecodeProcessor implements Processor {
         private boolean allFields=false;
         private String charset ="UTF-8";
         private String field="message";
-        private List<String> tagOnFailure = Collections.singletonList("_urldecodefailure");
 
         public Configuration() { }
 
         public boolean getAllFields() { return allFields; }
         public String getCharset() { return charset; }
         public String getField() { return field; }
-        public List<String> getTagOnFailure() { return tagOnFailure; }
     }
 }

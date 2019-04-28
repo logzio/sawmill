@@ -48,7 +48,6 @@ public class UrlDecodeProcessorTest {
             "\"id\": \"1%%20%3A\"\n" +
             "}";
 
-
     @Test
     public void testAllFieldsThatShouldBeDecoded() throws InterruptedException, UnsupportedEncodingException {
         String encoding = "ibm856";
@@ -143,8 +142,6 @@ public class UrlDecodeProcessorTest {
         UrlDecodeProcessor urlDecodeProcessor = createProcessor(UrlDecodeProcessor.class, config);
         Doc processedDoc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
         assertThat(urlDecodeProcessor.process(processedDoc).isSucceeded()).isFalse();
-
-        assertThat(((List) processedDoc.getField("tags")).get(0).equals("_urldecodefailure"));
     }
 
     @Test
