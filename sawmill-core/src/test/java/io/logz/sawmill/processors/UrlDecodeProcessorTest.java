@@ -11,7 +11,6 @@ import java.util.Map;
 
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
-import static java.net.URLDecoder.decode;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -62,22 +61,22 @@ public class UrlDecodeProcessorTest {
 
         Doc unprocessedDoc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
 
-        assertThat((String) processedDoc.getField("url")).isEqualTo(decode(unprocessedDoc.getField("url"), encoding));
-        assertThat((String) processedDoc.getField("innerObject.url")).isEqualTo(decode(unprocessedDoc.getField("innerObject.url"),encoding));
-        assertThat((String) processedDoc.getField("innerObject.anotherUrl")).isEqualTo(decode(unprocessedDoc.getField("innerObject.anotherUrl"),encoding));
+        assertThat((String) processedDoc.getField("url")).isEqualTo(UrlDecodeProcessor.decodeURIComponent(unprocessedDoc.getField("url"), encoding));
+        assertThat((String) processedDoc.getField("innerObject.url")).isEqualTo(UrlDecodeProcessor.decodeURIComponent(unprocessedDoc.getField("innerObject.url"),encoding));
+        assertThat((String) processedDoc.getField("innerObject.anotherUrl")).isEqualTo(UrlDecodeProcessor.decodeURIComponent(unprocessedDoc.getField("innerObject.anotherUrl"),encoding));
 
         List<Map<String,Object>> processedfriends = ((List)processedDoc.getField("innerObject.friends"));
         List<Map<String,Object>> unProcessedfriends = ((List)unprocessedDoc.getField("innerObject.friends"));
 
         for(int i = 0;i<processedfriends.size();++i){
-            assertThat(processedfriends.get(i).get("url")).isEqualTo(decode((String) unProcessedfriends.get(i).get("url"),encoding));
+            assertThat(processedfriends.get(i).get("url")).isEqualTo(UrlDecodeProcessor.decodeURIComponent((String) unProcessedfriends.get(i).get("url"),encoding));
         }
 
         List<String> processedUrls = processedDoc.getField("innerObject.urls");
         List<String> unProcessedUrls = unprocessedDoc.getField("innerObject.urls");
 
         for(int i =0;i<processedUrls.size();i++){
-           assertThat(processedUrls.get(i).equals(decode(unProcessedUrls.get(i),encoding)));
+           assertThat(processedUrls.get(i).equals(UrlDecodeProcessor.decodeURIComponent(unProcessedUrls.get(i),encoding)));
         }
     }
 
@@ -133,7 +132,7 @@ public class UrlDecodeProcessorTest {
         Doc processedDoc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
         assertThat(urlDecodeProcessor.process(processedDoc).isSucceeded()).isTrue();
         Doc unprocessedDoc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
-        assertThat((String) processedDoc.getField("innerObject.url")).isEqualTo(decode(unprocessedDoc.getField("innerObject.url"),encoding));
+        assertThat((String) processedDoc.getField("innerObject.url")).isEqualTo(UrlDecodeProcessor.decodeURIComponent(unprocessedDoc.getField("innerObject.url"),encoding));
     }
 
     @Test

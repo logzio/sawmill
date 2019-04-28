@@ -59,6 +59,10 @@ public class UrlDecodeProcessor implements Processor {
     }
 
     private String decodeUrl(String valueToDecode) {
+        return decodeURIComponent(valueToDecode, charSet);
+    }
+
+    public static String decodeURIComponent(String valueToDecode, String charSet) {
         String decodedUrl = valueToDecode;
         try{
             decodedUrl = URLDecoder.decode(valueToDecode.replace("+","%2B"),charSet);
