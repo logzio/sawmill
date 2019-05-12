@@ -175,6 +175,14 @@ public class Doc {
 
         return pathTokens;
     }
+    public boolean replaceFieldValue(String path,Object newValue){
+        if (hasField(path)) {
+            removeField(path);
+            addField(path,newValue);
+            return true;
+        }
+        return false;
+    }
 
     public void replace(Map<String,Object> otherMap){
         source.clear();
