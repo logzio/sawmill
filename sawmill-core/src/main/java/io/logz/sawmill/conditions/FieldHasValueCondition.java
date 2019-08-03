@@ -31,8 +31,7 @@ public class FieldHasValueCondition implements Condition {
     @Override
     public boolean evaluate(Doc doc) {
         if (!doc.hasField(field)) return false;
-
-        Object value = doc.getField(field);
+        Object value = getValueFromDoc(doc);
 
         return possibleValues.stream()
                 .map(possibleValue -> {
@@ -42,6 +41,16 @@ public class FieldHasValueCondition implements Condition {
                         return possibleValue;
                     }
                 }).anyMatch(value::equals);
+    }
+
+    private Object getValueFromDoc(Doc doc) {
+        Object value = doc.getField(field);
+
+        if (value instanceof Float)
+            return new Float((float)value).doubleValue();
+        else if (value instanceof Integer)
+            return new Integer((int)value).longValue();
+        return value;
     }
 
     public static class Factory implements Condition.Factory {
