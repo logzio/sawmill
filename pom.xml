@@ -41,7 +41,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jackson.version>2.9.9.1</jackson.version>
+        <jackson.version>2.9.9</jackson.version>
         <typesafe.config.version>1.3.1</typesafe.config.version>
         <commonsLang.version>3.4</commonsLang.version>
         <guava.version>27.1-jre</guava.version>
