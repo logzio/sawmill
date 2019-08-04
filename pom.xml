@@ -42,6 +42,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jackson.version>2.9.9</jackson.version>
+        <!--
+            There’s an override to `jackson-databind` because not all jackson modules were published at the time.
+            Next time when changing the version we should change `jackson-databind` to use this property
+        -->
         <typesafe.config.version>1.3.1</typesafe.config.version>
         <commonsLang.version>3.4</commonsLang.version>
         <guava.version>27.1-jre</guava.version>
