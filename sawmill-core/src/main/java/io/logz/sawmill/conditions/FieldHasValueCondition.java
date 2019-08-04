@@ -47,9 +47,9 @@ public class FieldHasValueCondition implements Condition {
         Object value = doc.getField(field);
 
         if (value instanceof Float)
-            return new Float((float)value).doubleValue();
+            return ((Float) value).doubleValue();
         else if (value instanceof Integer)
-            return new Integer((int)value).longValue();
+            return ((Integer) value).longValue();
         return value;
     }
 
