@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
-import io.logz.sawmill.parser.PipelineDefinitionJsonParser;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
@@ -94,6 +93,10 @@ public class JsonUtils {
     }
 
     public static Map<String, Object> createMap(Object... objects) {
+        if (objects.length % 2 != 0) {
+            throw new RuntimeException("Can't construct map out of uneven number of elements");
+        }
+
         Map<String, Object> map = new LinkedHashMap<>();
         if (objects != null) {
             for (int i = 0; i < objects.length; i++) {
