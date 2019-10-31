@@ -41,7 +41,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jackson.version>2.9.9</jackson.version>
+        <jackson.version>2.10.0</jackson.version>
         <!--
             There’s an override to `jackson-databind` because not all jackson modules were published at the time.
             Next time when changing the version we should change `jackson-databind` to use this property
