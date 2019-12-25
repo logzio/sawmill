@@ -3,8 +3,10 @@ package io.logz.sawmill.processors;
 import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.exceptions.ProcessorConfigurationException;
+import io.logz.sawmill.utilities.JsonUtils;
 import org.junit.Test;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -15,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static io.logz.sawmill.FieldType.DOUBLE;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
@@ -22,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class DateProcessorTest {
+
     @Test
     public void testUnixMsFormat() {
         String field = "datetime";
@@ -33,6 +37,27 @@ public class DateProcessorTest {
         Map<String,Object> config = createConfig("field", field,
                 "targetField", targetField,
                 "formats", Arrays.asList("UNIX_MS"),
+                "timeZone", zoneId.toString());
+
+        DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
+
+        assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
+    }
+    @Test
+    public void testUnixSFormat() {
+        String field = "datetime";
+        String targetField = "@timestamp";
+        ZoneId zoneId = ZoneId.of("Europe/Paris");
+        String messageExample = "{\"datetime\" : 1557315444.223578}";
+
+        Doc doc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
+        Double dateTimeFromDoc = ((Double)DOUBLE.convertFrom(doc.getField("datetime")));
+        ZonedDateTime zonedDateTime =  ZonedDateTime.ofInstant(Instant.ofEpochMilli(((Double)(dateTimeFromDoc*1000)).longValue()),zoneId);
+
+        Map<String,Object> config = createConfig("field", field,
+                "targetField", targetField,
+                "formats", Arrays.asList("UNIX"),
                 "timeZone", zoneId.toString());
 
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);

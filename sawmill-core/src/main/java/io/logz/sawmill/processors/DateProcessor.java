@@ -161,7 +161,13 @@ public class DateProcessor implements Processor {
         ZonedDateTime dateTime = null;
         boolean unixParseRequested = formats.contains("UNIX") || formats.contains("UNIX_MS");
         if (dateTimeDocValue instanceof Number && unixParseRequested) {
-            dateTime = getUnixDateTime(((Number) dateTimeDocValue).longValue());
+            long epocTimeInMilis;
+            if(formats.contains("UNIX")){
+                epocTimeInMilis = ((Number)(((Number) dateTimeDocValue).doubleValue()*1000)).longValue();
+            }else{
+                epocTimeInMilis = ((Number) dateTimeDocValue).longValue();
+            }
+            dateTime = getUnixDateTime(epocTimeInMilis);
         } else if (dateTimeDocValue instanceof String) {
             dateTime = getISODateTime((String) dateTimeDocValue);
         }
@@ -202,12 +208,7 @@ public class DateProcessor implements Processor {
     private ZonedDateTime getUnixDateTime(Long value) {
         long unixTimestamp = value;
         Instant instant;
-        if (formats.contains("UNIX_MS")) {
-            instant = Instant.ofEpochMilli(unixTimestamp);
-        } else {
-            instant = Instant.ofEpochSecond(unixTimestamp);
-        }
-
+        instant = Instant.ofEpochMilli(unixTimestamp);
         if (timeZone == null) {
             return ZonedDateTime.ofInstant(instant, ZoneId.of("UTC"));
         } else {
