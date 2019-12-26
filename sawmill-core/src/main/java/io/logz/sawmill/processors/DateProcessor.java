@@ -159,15 +159,14 @@ public class DateProcessor implements Processor {
         Object dateTimeDocValue = doc.getField(field);
 
         ZonedDateTime dateTime = null;
-        boolean unixParseRequested = formats.contains("UNIX") || formats.contains("UNIX_MS");
-        if (dateTimeDocValue instanceof Number && unixParseRequested) {
-            long epocTimeInMilis;
-            if(formats.contains("UNIX")){
-                epocTimeInMilis = ((Number)(((Number) dateTimeDocValue).doubleValue()*1000)).longValue();
-            }else{
-                epocTimeInMilis = ((Number) dateTimeDocValue).longValue();
-            }
-            dateTime = getUnixDateTime(epocTimeInMilis);
+        if (dateTimeDocValue instanceof Number && formats.contains("UNIX")) {
+            long epocTimeInMilis = ((Number) (((Number) dateTimeDocValue).doubleValue() * 1000)).longValue();
+            dateTime = getEpochMillisDateTime(epocTimeInMilis);
+
+        } else if (dateTimeDocValue instanceof Number && formats.contains("UNIX_MS")) {
+            long epocTimeInMilis = ((Number) dateTimeDocValue).longValue();
+            dateTime = getEpochMillisDateTime(epocTimeInMilis);
+
         } else if (dateTimeDocValue instanceof String) {
             dateTime = getISODateTime((String) dateTimeDocValue);
         }
@@ -205,10 +204,8 @@ public class DateProcessor implements Processor {
         }
     }
 
-    private ZonedDateTime getUnixDateTime(Long value) {
-        long unixTimestamp = value;
-        Instant instant;
-        instant = Instant.ofEpochMilli(unixTimestamp);
+    private ZonedDateTime getEpochMillisDateTime(Long unixTimestamp) {
+        Instant instant = Instant.ofEpochMilli(unixTimestamp);
         if (timeZone == null) {
             return ZonedDateTime.ofInstant(instant, ZoneId.of("UTC"));
         } else {

@@ -53,7 +53,6 @@ public class DateProcessorTest {
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
         Double dateTimeFromDoc = ((Double)DOUBLE.convertFrom(doc.getField("datetime")));
-        ZonedDateTime zonedDateTime =  ZonedDateTime.ofInstant(Instant.ofEpochMilli(((Double)(dateTimeFromDoc*1000)).longValue()),zoneId);
 
         Map<String,Object> config = createConfig("field", field,
                 "targetField", targetField,
@@ -61,8 +60,9 @@ public class DateProcessorTest {
                 "timeZone", zoneId.toString());
 
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
-
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
+
+        ZonedDateTime zonedDateTime =  ZonedDateTime.ofInstant(Instant.ofEpochMilli(((Double)(dateTimeFromDoc*1000)).longValue()),zoneId);
         assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
     }
 
