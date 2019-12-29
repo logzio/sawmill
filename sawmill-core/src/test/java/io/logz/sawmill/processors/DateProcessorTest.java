@@ -49,10 +49,8 @@ public class DateProcessorTest {
         String field = "datetime";
         String targetField = "@timestamp";
         ZoneId zoneId = ZoneId.of("Europe/Paris");
-        String messageExample = "{\"datetime\" : 1557315444.223578}";
-
-        Doc doc = new Doc(JsonUtils.fromJsonString(Map.class,messageExample));
-        Double dateTimeFromDoc = ((Double)DOUBLE.convertFrom(doc.getField("datetime")));
+        Double dateTimeAsEpocSecondsWithMili = 1557315444.223578;
+        Doc doc = createDoc("datetime",dateTimeAsEpocSecondsWithMili);
 
         Map<String,Object> config = createConfig("field", field,
                 "targetField", targetField,
@@ -62,7 +60,7 @@ public class DateProcessorTest {
         DateProcessor dateProcessor = createProcessor(DateProcessor.class, config);
         assertThat(dateProcessor.process(doc).isSucceeded()).isTrue();
 
-        ZonedDateTime zonedDateTime =  ZonedDateTime.ofInstant(Instant.ofEpochMilli(((Double)(dateTimeFromDoc*1000)).longValue()),zoneId);
+        ZonedDateTime zonedDateTime =  ZonedDateTime.ofInstant(Instant.ofEpochMilli(((Double)(dateTimeAsEpocSecondsWithMili*1000)).longValue()),zoneId);
         assertThat((String)doc.getField(targetField)).isEqualTo(zonedDateTime.format(DateProcessor.ELASTIC));
     }
 
