@@ -40,10 +40,6 @@ import static java.util.Objects.requireNonNull;
 public class GeoIpProcessor implements Processor {
     private static DatabaseReader databaseReader;
 
-    static {
-        loadDatabaseReader();
-    }
-
     private static void loadDatabaseReader() {
         try (InputStream gzipInputStream = new GZIPInputStream(Resources.getResource("GeoLite2-City.tar.gz").openStream())) {
             try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream)) {
@@ -135,6 +131,7 @@ public class GeoIpProcessor implements Processor {
         @Inject
         public Factory(TemplateService templateService) {
             this.templateService = templateService;
+            loadDatabaseReader();
         }
 
         @Override

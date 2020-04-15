@@ -47,7 +47,7 @@ public class FactoryUtils {
         try {
             return (T) ProcessorFactoriesLoader.getInstance().getFactory(annotation);
         } catch (Exception e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 
