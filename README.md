@@ -4,7 +4,7 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.logz.sawmill/sawmill/badge.svg)](http://mvnrepository.com/artifact/io.logz.sawmill/sawmill)
 
 *Update: April 22, 2020*
-__Please note: there is currently a known build error due to our dependency on MaxMind GEOIP changes. We are working to resolve this, and hope that happens by the middle of May 2020__
+__Please note: there is currently a known build error due to our dependency on MaxMind GEOIP changes. We are working to resolve this by May, 15th 2020. Please contact for additional information__
 
 Sawmill is a JSON transformation open source library. 
 
