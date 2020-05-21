@@ -152,10 +152,11 @@ public class Doc {
                 } else {
                     return Optional.empty();
                 }
+
+                if (cursor == null) return Optional.empty();
+
             }
         }
-
-        if (cursor == null) return Optional.empty();
         return Optional.of((T) cursor);
     }
 

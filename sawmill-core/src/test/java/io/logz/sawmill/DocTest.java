@@ -121,10 +121,10 @@ public class DocTest {
     public void testNonNestedMapGetByPath() {
         Doc doc = createDoc("message", "hola", "name", "test");
         String nonExistentField = RandomStringUtils.randomAlphanumeric(10);
-//
-//        assertThat(doc.hasField("message")).isTrue();
-//        assertThat(doc.hasField("message.hola")).isTrue();
-//        assertThat(doc.hasField("message." + nonExistentField)).isFalse();
+
+        assertThat(doc.hasField("message")).isTrue();
+        assertThat(doc.hasField("message.hola")).isTrue();
+        assertThat(doc.hasField("message." + nonExistentField)).isFalse();
         assertThat(doc.hasField(nonExistentField)).isFalse();
     }
 }
