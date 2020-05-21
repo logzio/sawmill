@@ -1,15 +1,15 @@
 package io.logz.sawmill;
 
 import io.logz.sawmill.utilities.JsonUtils;
+import static io.logz.sawmill.utils.DocUtils.createDoc;
+import org.apache.commons.lang3.RandomStringUtils;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static io.logz.sawmill.utils.DocUtils.createDoc;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 public class DocTest {
 
@@ -115,5 +115,16 @@ public class DocTest {
         assertThat(((List) doc.getField("list"))).isEqualTo(Arrays.asList("value1"));
 
         assertThat(doc.removeFromList("list", Arrays.asList("value1"))).isTrue();
+    }
+
+    @Test
+    public void testNonNestedMapGetByPath() {
+        Doc doc = createDoc("message", "hola", "name", "test");
+        String nonExistentField = RandomStringUtils.randomAlphanumeric(10);
+//
+//        assertThat(doc.hasField("message")).isTrue();
+//        assertThat(doc.hasField("message.hola")).isTrue();
+//        assertThat(doc.hasField("message." + nonExistentField)).isFalse();
+        assertThat(doc.hasField(nonExistentField)).isFalse();
     }
 }

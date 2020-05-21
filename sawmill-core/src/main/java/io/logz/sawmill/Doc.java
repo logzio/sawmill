@@ -147,11 +147,15 @@ public class Doc {
             for (String pathElement : tokenizePath(path)) {
                 if (cursor instanceof Map) {
                     cursor = ((Map) cursor).get(pathElement);
+                } else if (cursor.equals(pathElement)) {
+                    return Optional.of((T) cursor);
+                } else {
+                    return Optional.empty();
                 }
-
-                if (cursor == null) return Optional.empty();
             }
         }
+
+        if (cursor == null) return Optional.empty();
         return Optional.of((T) cursor);
     }
 
