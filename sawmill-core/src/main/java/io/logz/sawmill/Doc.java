@@ -145,16 +145,10 @@ public class Doc {
         Object cursor = json;
         for (String path : paths) {
             for (String pathElement : tokenizePath(path)) {
-                if (cursor instanceof Map) {
-                    cursor = ((Map) cursor).get(pathElement);
-                } else if (cursor.equals(pathElement)) {
-                    return Optional.of((T) cursor);
-                } else {
-                    return Optional.empty();
-                }
+                if (!(cursor instanceof Map)) return Optional.empty();
 
+                cursor = ((Map) cursor).get(pathElement);
                 if (cursor == null) return Optional.empty();
-
             }
         }
         return Optional.of((T) cursor);
