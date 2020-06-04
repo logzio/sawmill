@@ -13,10 +13,6 @@
         <version>0-SNAPSHOT</version>
     </parent>
 
-    <properties>
-        <maxMindGeoIpCityUrl>http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.tar.gz</maxMindGeoIpCityUrl>
-    </properties>
-
     <build>
         <plugins>
             <plugin>
@@ -34,10 +30,6 @@
                                 <!--User Agent processor regexes file (download from github by commit id)-->
                                 <get src="https://raw.githubusercontent.com/ua-parser/uap-core/f4d16a53e4771cf6deed18eb7273226606a4de21/regexes.yaml"
                                      dest="${project.build.outputDirectory}/regexes.yaml" />
-                                <!--GeoIp processor DB file (download from maxmind)-->
-                                <get src="${maxMindGeoIpCityUrl}"
-                                     dest="${project.build.outputDirectory}/GeoLite2-City.tar.gz"
-                                     usetimestamp="true"/>
                             </tasks>
                         </configuration>
                     </execution>

@@ -1,26 +1,28 @@
 package io.logz.sawmill.processors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Resources;
 import com.google.common.net.InetAddresses;
 import com.maxmind.db.CHMCache;
+import com.maxmind.db.Reader;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.GeoIpConfiguration;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.Template;
 import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
+import io.logz.sawmill.exceptions.SawmillException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +30,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
 import static com.google.common.base.Preconditions.checkState;
 import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
@@ -38,28 +39,19 @@ import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "geoIp", factory = GeoIpProcessor.Factory.class)
 public class GeoIpProcessor implements Processor {
+
     private static DatabaseReader databaseReader;
 
-    private static void loadDatabaseReader() {
-        try (InputStream gzipInputStream = new GZIPInputStream(Resources.getResource("GeoLite2-City.tar.gz").openStream())) {
-            try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream)) {
-                databaseReader = new DatabaseReader.Builder(seekToDbFile(tarArchiveInputStream)).withCache(new CHMCache()).build();
-            }
+    @VisibleForTesting
+    static void loadDatabaseReader(String location) {
+        try {
+            databaseReader = new DatabaseReader.Builder(Resources.getResource(location).openStream())
+                    .fileMode(Reader.FileMode.MEMORY)
+                    .withCache(new CHMCache())
+                    .build();
         } catch (Exception e) {
-            throw new RuntimeException("failed to load geoip database", e);
+            throw new SawmillException("Failed to load geoip database", e);
         }
-    }
-
-    private static TarArchiveInputStream seekToDbFile(TarArchiveInputStream tarArchiveInputStream) throws IOException {
-        while (tarArchiveInputStream.getNextEntry() != null) {
-            boolean dbFile = tarArchiveInputStream.getCurrentEntry().getName().endsWith(".mmdb");
-
-            if (dbFile) {
-                return tarArchiveInputStream;
-            }
-        }
-
-        throw new RuntimeException("DB file not found");
     }
 
     private final String sourceField;
@@ -129,9 +121,9 @@ public class GeoIpProcessor implements Processor {
         private final TemplateService templateService;
 
         @Inject
-        public Factory(TemplateService templateService) {
+        public Factory(TemplateService templateService, GeoIpConfiguration configuration) {
             this.templateService = templateService;
-            loadDatabaseReader();
+            loadDatabaseReader(configuration.getGeoIpDatabasePath());
         }
 
         @Override

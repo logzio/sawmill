@@ -2,6 +2,8 @@ package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
+import io.logz.sawmill.exceptions.SawmillException;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -11,15 +13,17 @@ import java.util.Map;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
+import static io.logz.sawmill.utils.FactoryUtils.defaultProcessorFactoryRegistry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertNotNull;
 
 public class GeoIpProcessorTest {
+
     @Test
     public void testValidIpWithSpecificProperties() {
-        String ip = "1.0.0.0";
+        String ip = "81.2.69.144";
         String source = "ipString";
-
 
         Map<String,Object> config = createConfig("sourceField", source,
                 "properties", Arrays.asList("ip", "country_name", "country_code2", "city_name"));
@@ -33,23 +37,13 @@ public class GeoIpProcessorTest {
         assertThat(doc.hasField("geoip")).isTrue();
         Map<String, Object> geoIp = doc.getField("geoip");
         assertThat(geoIp.size()).isGreaterThanOrEqualTo(3);
-        assertThat(geoIp.get("country_name")).isEqualTo("Australia");
+        assertThat(geoIp.get("country_name")).isEqualTo("United Kingdom");
         assertThat(geoIp.get("ip")).isEqualTo(ip);
     }
 
     @Test
     public void testValidIp() {
-        /**
-         * ATTENTION!
-         *
-         * if test fails try changing the ip address
-         * this test relies on an ip address that maps to a valid major city in the US
-         * if this ip address starts mapping to another place the result returned by GeoIpDatabase
-         * will not contain all expected field
-         *
-         *  - current ip address maps to NewYork
-         */
-        String ip = "108.41.24.23";
+        String ip = "216.160.83.56";
         String source = "ipString";
         String target = "{{geoipField}}";
 
@@ -64,8 +58,8 @@ public class GeoIpProcessorTest {
         assertThat(geoIpProcessor.process(doc).isSucceeded()).isTrue();
         assertThat(doc.hasField("geo")).isTrue();
         Map<String, Object> geoIp = doc.getField("geo");
-        GeoIpProcessor.Property.ALL_PROPERTIES.stream().forEach(property -> {
-            assertThat(geoIp.get(property.toString())).isNotNull();
+        GeoIpProcessor.Property.ALL_PROPERTIES.forEach(property -> {
+            assertNotNull(String.format("%s field should be present", property), geoIp.get(property.toString()));
         });
         assertThat(((List)doc.getField("tags")).contains("geoip")).isTrue();
     }
@@ -125,5 +119,15 @@ public class GeoIpProcessorTest {
     @Test
     public void testBadConfigs() {
         assertThatThrownBy(() -> createProcessor(GeoIpProcessor.class)).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test(expected = SawmillException.class)
+    public void shouldThrowOnMmdbFileDoesNotExist() throws Exception {
+        GeoIpProcessor.loadDatabaseReader("non-existing-file");
+    }
+
+    @Test(expected = SawmillException.class)
+    public void shouldThrowOnInvalidMmdbFile() throws Exception {
+        GeoIpProcessor.loadDatabaseReader("LICENSE");
     }
 }

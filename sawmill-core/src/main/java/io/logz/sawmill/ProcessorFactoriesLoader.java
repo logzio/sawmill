@@ -2,12 +2,14 @@ package io.logz.sawmill;
 
 import com.google.common.base.Stopwatch;
 import io.logz.sawmill.annotations.ProcessorProvider;
+import io.logz.sawmill.exceptions.SawmillException;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -18,26 +20,14 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ProcessorFactoriesLoader {
     private static final Logger logger = LoggerFactory.getLogger(ProcessorFactoriesLoader.class);
-    private static ProcessorFactoriesLoader instance;
     private final Reflections reflections;
     private final Map<Class<?>, Object> services;
 
-    private ProcessorFactoriesLoader() {
-        this(new TemplateService());
-    }
-
-    public ProcessorFactoriesLoader(TemplateService templateService) {
+    public ProcessorFactoriesLoader(TemplateService templateService, SawmillConfiguration... sawmillConfigurations) {
         reflections = new Reflections("io.logz.sawmill");
         services = new HashMap<>();
         services.put(TemplateService.class, templateService);
-    }
-
-    public static ProcessorFactoriesLoader getInstance() {
-        if (instance == null) {
-            instance = new ProcessorFactoriesLoader();
-        }
-
-        return instance;
+        Arrays.stream(sawmillConfigurations).forEach(config -> services.put(config.getClass(), config));
     }
 
     public void loadAnnotatedProcessors(ProcessorFactoryRegistry processorFactoryRegistry) {
@@ -69,7 +59,18 @@ public class ProcessorFactoriesLoader {
                 .filter(constructor -> constructor.isAnnotationPresent(Inject.class)).findFirst();
         if (injectConstructor.isPresent()) {
             Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
-            Object[] servicesInstance = Stream.of(servicesToInject).map(services::get).toArray();
+            Object[] servicesInstance = Stream.of(servicesToInject)
+                    .peek(serviceType -> {
+                        if (!services.containsKey(serviceType)) {
+                            throw new SawmillException(String.format(
+                                    "Could not instantiate %s processor, %s dependency missing",
+                                    processorProvider.type(),
+                                    serviceType.getSimpleName()
+                            ));
+                        }
+                    })
+                    .map(services::get)
+                    .toArray();
             return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
         } else {
             return factoryType.getConstructor().newInstance();
