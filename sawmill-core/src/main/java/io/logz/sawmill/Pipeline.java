@@ -39,10 +39,14 @@ public class Pipeline {
         private final ExecutionStepsParser executionStepsParser;
 
         public Factory() {
-            this(ProcessorFactoryRegistry.getInstance(), ConditionFactoryRegistry.getInstance());
+            this(
+                    new ProcessorFactoryRegistry(new ProcessorFactoriesLoader(new TemplateService())),
+                    new ConditionFactoryRegistry(new ConditionalFactoriesLoader(new TemplateService()))
+            );
         }
+        public Factory(ProcessorFactoryRegistry processorFactoryRegistry,
+                       ConditionFactoryRegistry conditionFactoryRegistry) {
 
-        public Factory(ProcessorFactoryRegistry processorFactoryRegistry, ConditionFactoryRegistry conditionFactoryRegistry) {
             executionStepsParser = new ExecutionStepsParser(processorFactoryRegistry, conditionFactoryRegistry);
         }
 
@@ -63,6 +67,5 @@ public class Pipeline {
 
             return new Pipeline(id, executionSteps, stopOnFailure);
         }
-
     }
 }

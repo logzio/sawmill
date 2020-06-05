@@ -17,27 +17,16 @@ import java.util.stream.Stream;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ConditionalFactoriesLoader {
+
     private static final Logger logger = LoggerFactory.getLogger(ConditionalFactoriesLoader.class);
-    private static ConditionalFactoriesLoader instance;
+
     private final Reflections reflections;
     private final Map<Class<?>, Object> services;
 
-    private ConditionalFactoriesLoader() {
-        this(new TemplateService());
-    }
-
-    private ConditionalFactoriesLoader(TemplateService templateService) {
+    public ConditionalFactoriesLoader(TemplateService templateService) {
         reflections = new Reflections("io.logz.sawmill");
         services = new HashMap<>();
         services.put(TemplateService.class, templateService);
-    }
-
-    public static ConditionalFactoriesLoader getInstance() {
-        if (instance == null) {
-            instance = new ConditionalFactoriesLoader();
-        }
-
-        return instance;
     }
 
     public void loadAnnotatedProcessors(ConditionFactoryRegistry conditionFactoryRegistry) {
@@ -45,7 +34,7 @@ public class ConditionalFactoriesLoader {
         long timeElapsed = 0;
 
         int conditionsLoaded = 0;
-        Set<Class<?>> conditions =  reflections.getTypesAnnotatedWith(ConditionProvider.class);
+        Set<Class<?>> conditions = reflections.getTypesAnnotatedWith(ConditionProvider.class);
         for (Class<?> condition : conditions) {
             try {
                 ConditionProvider conditionProvider = condition.getAnnotation(ConditionProvider.class);
@@ -55,8 +44,7 @@ public class ConditionalFactoriesLoader {
                 conditionsLoaded++;
             } catch (Exception e) {
                 logger.error("failed to load condition {}", condition.getName(), e);
-            }
-            finally {
+            } finally {
                 timeElapsed = stopwatch.elapsed(MILLISECONDS);
             }
         }

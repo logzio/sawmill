@@ -6,16 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ProcessorFactoryRegistry {
+
     private final Map<String, Processor.Factory> processorFactories = new HashMap<>();
 
-    private final static ProcessorFactoryRegistry processorFactoryRegistry = new ProcessorFactoryRegistry();
-
-    private ProcessorFactoryRegistry() {
-        ProcessorFactoriesLoader.getInstance().loadAnnotatedProcessors(this);
-    }
-
-    public static ProcessorFactoryRegistry getInstance() {
-        return processorFactoryRegistry;
+    public ProcessorFactoryRegistry(ProcessorFactoriesLoader loader) {
+        loader.loadAnnotatedProcessors(this);
     }
 
     public void register(String name, Processor.Factory factory) {

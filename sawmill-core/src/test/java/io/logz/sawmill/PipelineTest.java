@@ -20,10 +20,14 @@ public class PipelineTest {
 
     @Before
     public void init() {
-        processorFactoryRegistry = ProcessorFactoryRegistry.getInstance();
+        processorFactoryRegistry = new ProcessorFactoryRegistry(
+                new ProcessorFactoriesLoader(
+                        new TemplateService()
+                )
+        );
         processorFactoryRegistry.register("test", new TestProcessor.Factory());
 
-        conditionFactoryRegistry = ConditionFactoryRegistry.getInstance();
+        conditionFactoryRegistry = new ConditionFactoryRegistry(new ConditionalFactoriesLoader(new TemplateService()));
         conditionFactoryRegistry.register("testCondition", new TestCondition.Factory());
 
         factory = new Pipeline.Factory(processorFactoryRegistry, conditionFactoryRegistry);
