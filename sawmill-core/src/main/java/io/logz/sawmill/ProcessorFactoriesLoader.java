@@ -60,20 +60,22 @@ public class ProcessorFactoriesLoader {
         if (injectConstructor.isPresent()) {
             Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
             Object[] servicesInstance = Stream.of(servicesToInject)
-                    .peek(serviceType -> {
-                        if (!services.containsKey(serviceType)) {
-                            throw new SawmillException(String.format(
-                                    "Could not instantiate %s processor, %s dependency missing",
-                                    processorProvider.type(),
-                                    serviceType.getSimpleName()
-                            ));
-                        }
-                    })
+                    .peek(serviceType -> checkDependencyPresent(processorProvider, serviceType))
                     .map(services::get)
                     .toArray();
             return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
         } else {
             return factoryType.getConstructor().newInstance();
+        }
+    }
+
+    private void checkDependencyPresent(ProcessorProvider processorProvider, Class<?> serviceType) {
+        if (!services.containsKey(serviceType)) {
+            throw new SawmillException(String.format(
+                    "Could not instantiate %s processor, %s dependency missing",
+                    processorProvider.type(),
+                    serviceType.getSimpleName()
+            ));
         }
     }
 }

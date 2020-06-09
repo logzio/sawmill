@@ -54,7 +54,6 @@ public class ConditionalFactoriesLoader {
         logger.debug("{} conditions factories loaded, took {}ms", conditionsLoaded, stopwatch.elapsed(MILLISECONDS));
     }
 
-    // TODO add test case
     public Condition.Factory getFactory(ConditionProvider conditionProvider) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException, NoSuchMethodException {
         Class<? extends Condition.Factory> factoryType = conditionProvider.factory();
         Optional<? extends Constructor<?>> injectConstructor = Stream.of(factoryType.getConstructors())
@@ -62,20 +61,22 @@ public class ConditionalFactoriesLoader {
         if (injectConstructor.isPresent()) {
             Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
             Object[] servicesInstance = Stream.of(servicesToInject)
-                    .peek(serviceType -> {
-                        if (!services.containsKey(serviceType)) {
-                            throw new SawmillException(String.format(
-                                    "Could not instantiate %s condition, %s dependency missing",
-                                    conditionProvider.type(),
-                                    serviceType.getSimpleName()
-                            ));
-                        }
-                    })
+                    .peek(serviceType -> checkDependencyPresent(conditionProvider, serviceType))
                     .map(services::get)
                     .toArray();
             return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
         } else {
             return factoryType.getConstructor().newInstance();
+        }
+    }
+
+    private void checkDependencyPresent(ConditionProvider conditionProvider, Class<?> serviceType) {
+        if (!services.containsKey(serviceType)) {
+            throw new SawmillException(String.format(
+                    "Could not instantiate %s condition, %s dependency missing",
+                    conditionProvider.type(),
+                    serviceType.getSimpleName()
+            ));
         }
     }
 }
