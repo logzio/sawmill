@@ -21,7 +21,7 @@ public class ConditionalFactoriesLoader {
     private static final Logger logger = LoggerFactory.getLogger(ConditionalFactoriesLoader.class);
 
     private final Reflections reflections;
-    private final Map<Class<?>, Object> services;
+    private final Map<Class<?>, Object> dependenciesToInject;
 
     public ConditionalFactoriesLoader(TemplateService templateService) {
         reflections = new Reflections("io.logz.sawmill");
