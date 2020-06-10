@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -21,12 +20,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class ProcessorFactoriesLoader {
     private static final Logger logger = LoggerFactory.getLogger(ProcessorFactoriesLoader.class);
     private final Reflections reflections;
-    private final Map<Class<?>, Object> services;
+    private final Map<Class<?>, Object> dependenciesToInject;
 
     public ProcessorFactoriesLoader(TemplateService templateService) {
         reflections = new Reflections("io.logz.sawmill");
-        services = new HashMap<>();
-        services.put(TemplateService.class, templateService);
+        dependenciesToInject = new HashMap<>();
+        dependenciesToInject.put(TemplateService.class, templateService);
     }
 
     public void loadAnnotatedProcessors(ProcessorFactoryRegistry processorFactoryRegistry) {
@@ -60,7 +59,7 @@ public class ProcessorFactoriesLoader {
             Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
             Object[] servicesInstance = Stream.of(servicesToInject)
                     .peek(serviceType -> {
-                        if (!services.containsKey(serviceType)) {
+                        if (!dependenciesToInject.containsKey(serviceType)) {
                             throw new SawmillException(String.format(
                                     "Could not instantiate %s processor, %s dependency missing",
                                     processorProvider.type(),
@@ -68,7 +67,7 @@ public class ProcessorFactoriesLoader {
                             ));
                         }
                     })
-                    .map(services::get)
+                    .map(dependenciesToInject::get)
                     .toArray();
             return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
         } else {

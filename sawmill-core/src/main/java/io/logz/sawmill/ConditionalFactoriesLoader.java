@@ -25,8 +25,8 @@ public class ConditionalFactoriesLoader {
 
     public ConditionalFactoriesLoader(TemplateService templateService) {
         reflections = new Reflections("io.logz.sawmill");
-        services = new HashMap<>();
-        services.put(TemplateService.class, templateService);
+        dependenciesToInject = new HashMap<>();
+        dependenciesToInject.put(TemplateService.class, templateService);
     }
 
     public void loadAnnotatedProcessors(ConditionFactoryRegistry conditionFactoryRegistry) {
@@ -57,7 +57,7 @@ public class ConditionalFactoriesLoader {
                 .filter(constructor -> constructor.isAnnotationPresent(Inject.class)).findFirst();
         if (injectConstructor.isPresent()) {
             Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
-            Object[] servicesInstance = Stream.of(servicesToInject).map(services::get).toArray();
+            Object[] servicesInstance = Stream.of(servicesToInject).map(dependenciesToInject::get).toArray();
             return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
         } else {
             return factoryType.getConstructor().newInstance();
