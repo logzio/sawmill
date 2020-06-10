@@ -23,13 +23,13 @@ public class ConditionalFactoriesLoader {
     private static final Logger logger = LoggerFactory.getLogger(ConditionalFactoriesLoader.class);
 
     private final Reflections reflections;
-    private final Map<Class<?>, Object> services;
+    private final Map<Class<?>, Object> dependenciesToInject;
 
     public ConditionalFactoriesLoader(TemplateService templateService, SawmillConfiguration... sawmillConfigurations) {
         reflections = new Reflections("io.logz.sawmill");
-        services = new HashMap<>();
-        services.put(TemplateService.class, templateService);
-        Arrays.stream(sawmillConfigurations).forEach(config -> services.put(config.getClass(), config));
+        dependenciesToInject = new HashMap<>();
+        dependenciesToInject.put(TemplateService.class, templateService);
+        Arrays.stream(sawmillConfigurations).forEach(config -> dependenciesToInject.put(config.getClass(), config));
     }
 
     public void loadAnnotatedProcessors(ConditionFactoryRegistry conditionFactoryRegistry) {
@@ -62,7 +62,7 @@ public class ConditionalFactoriesLoader {
             Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
             Object[] servicesInstance = Stream.of(servicesToInject)
                     .peek(serviceType -> checkDependencyPresent(conditionProvider, serviceType))
-                    .map(services::get)
+                    .map(dependenciesToInject::get)
                     .toArray();
             return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
         } else {
@@ -71,7 +71,7 @@ public class ConditionalFactoriesLoader {
     }
 
     private void checkDependencyPresent(ConditionProvider conditionProvider, Class<?> serviceType) {
-        if (!services.containsKey(serviceType)) {
+        if (!dependenciesToInject.containsKey(serviceType)) {
             throw new SawmillException(String.format(
                     "Could not instantiate %s condition, %s dependency missing",
                     conditionProvider.type(),
