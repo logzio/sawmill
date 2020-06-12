@@ -6,16 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ConditionFactoryRegistry {
+
     private final Map<String, Condition.Factory> conditionFactory = new HashMap<>();
 
-    private static final ConditionFactoryRegistry conditionFactoryRegistry = new ConditionFactoryRegistry();
-
-    private ConditionFactoryRegistry() {
-        ConditionalFactoriesLoader.getInstance().loadAnnotatedProcessors(this);
-    }
-
-    public static ConditionFactoryRegistry getInstance() {
-        return conditionFactoryRegistry;
+    public ConditionFactoryRegistry(ConditionalFactoriesLoader loader) {
+        loader.loadAnnotatedProcessors(this);
     }
 
     public void register(String name, Condition.Factory factory) {

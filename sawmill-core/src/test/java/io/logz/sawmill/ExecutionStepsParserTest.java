@@ -21,6 +21,8 @@ import java.util.Optional;
 
 import static io.logz.sawmill.utilities.JsonUtils.createList;
 import static io.logz.sawmill.utilities.JsonUtils.createMap;
+import static io.logz.sawmill.utils.FactoryUtils.defaultConditionFactoryRegistry;
+import static io.logz.sawmill.utils.FactoryUtils.defaultProcessorFactoryRegistry;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class ExecutionStepsParserTest {
@@ -29,13 +31,10 @@ public class ExecutionStepsParserTest {
 
     @Before
     public void init() {
-        ProcessorFactoryRegistry processorFactoryRegistry = ProcessorFactoryRegistry.getInstance();
-        processorFactoryRegistry.register("test", new TestProcessor.Factory());
+        defaultProcessorFactoryRegistry.register("test", new TestProcessor.Factory());
+        defaultConditionFactoryRegistry.register("testCondition", new TestCondition.Factory());
 
-        ConditionFactoryRegistry conditionFactoryRegistry = ConditionFactoryRegistry.getInstance();
-        conditionFactoryRegistry.register("testCondition", new TestCondition.Factory());
-
-        executionStepsParser = new ExecutionStepsParser(processorFactoryRegistry, conditionFactoryRegistry);
+        executionStepsParser = new ExecutionStepsParser(defaultProcessorFactoryRegistry, defaultConditionFactoryRegistry);
     }
 
     @Test
@@ -58,7 +57,7 @@ public class ExecutionStepsParserTest {
     public void testParseOnFailureExecutionStep() {
         List<ExecutionStepDefinition> executionStepDefinitionList = Collections.singletonList(
                 createAddTagStepDefinition(Collections.singletonList(
-                    createAddTagStepDefinition()
+                        createAddTagStepDefinition()
                 ))
         );
 

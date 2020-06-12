@@ -1,7 +1,9 @@
 package io.logz.sawmill.conditions;
 
 import io.logz.sawmill.ConditionFactoryRegistry;
+import io.logz.sawmill.ConditionalFactoriesLoader;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.parser.ConditionParser;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +21,9 @@ public class MatchRegexConditionTest {
 
     @Before
     public void init() {
-        ConditionFactoryRegistry conditionFactoryRegistry = ConditionFactoryRegistry.getInstance();
+        ConditionFactoryRegistry conditionFactoryRegistry = new ConditionFactoryRegistry(
+                new ConditionalFactoriesLoader(new TemplateService())
+        );
         conditionParser = new ConditionParser(conditionFactoryRegistry);
     }
 
