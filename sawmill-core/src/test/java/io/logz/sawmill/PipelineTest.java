@@ -2,6 +2,7 @@ package io.logz.sawmill;
 
 import io.logz.sawmill.conditions.AndCondition;
 import io.logz.sawmill.conditions.TestCondition;
+import io.logz.sawmill.exceptions.ProcessorMissingException;
 import io.logz.sawmill.exceptions.SawmillException;
 import io.logz.sawmill.parser.PipelineDefinition;
 import io.logz.sawmill.parser.ProcessorDefinition;
@@ -9,6 +10,7 @@ import io.logz.sawmill.parser.ProcessorExecutionStepDefinition;
 import io.logz.sawmill.processors.AddTagProcessor;
 import io.logz.sawmill.processors.GeoIpProcessor;
 import io.logz.sawmill.processors.TestProcessor;
+import io.logz.sawmill.processors.TestProcessorWithDependencies;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -78,7 +80,7 @@ public class PipelineTest {
     @Test
     public void testFactoryCreationHoconWithoutId() {
         String configHocon =
-                        "steps: [" +
+                "steps: [" +
                         "    {" +
                         "        test: {" +
                         "            config.value: message" +
@@ -162,6 +164,26 @@ public class PipelineTest {
 
         ProcessorExecutionStep onFalseExecutionStep = (ProcessorExecutionStep) conditionalExecutionStep.getOnFalse().get(0);
         assertThat(onFalseExecutionStep.getProcessor()).isInstanceOf(AddTagProcessor.class);
+    }
+
+    @Test
+    public void shouldCreatePipelineAndProcessorFactory() throws Exception {
+        new Pipeline.Factory(new TestProcessorWithDependencies.FactoryConfiguration()).create("test", new PipelineDefinition(
+                singletonList(new ProcessorExecutionStepDefinition(new ProcessorDefinition(
+                        "testProcessorWithDependencies", new HashMap<>()), null, null, null
+                )),
+                true
+        ));
+    }
+
+    @Test(expected = ProcessorMissingException.class)
+    public void shouldFailPipelineCreationOnNoProcessorFactoryConfigurationGiven() throws Exception {
+        new Pipeline.Factory().create("test", new PipelineDefinition(
+                singletonList(new ProcessorExecutionStepDefinition(new ProcessorDefinition(
+                        "testProcessorWithDependencies", new HashMap<>()), null, null, null
+                )),
+                true
+        ));
     }
 
     @Test(expected = SawmillException.class)
