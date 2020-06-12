@@ -3,8 +3,10 @@ package io.logz.sawmill.utils;
 import io.logz.sawmill.Condition;
 import io.logz.sawmill.ConditionFactoryRegistry;
 import io.logz.sawmill.ConditionalFactoriesLoader;
+import io.logz.sawmill.GeoIpConfiguration;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.ProcessorFactoriesLoader;
+import io.logz.sawmill.ProcessorFactoryRegistry;
 import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ConditionProvider;
 import io.logz.sawmill.annotations.ProcessorProvider;
@@ -14,13 +16,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class FactoryUtils {
-    public static final TemplateService templateService = new TemplateService();
-    public static final ConditionParser conditionParser;
 
-    static {
-        ConditionFactoryRegistry conditionFactoryRegistry = ConditionFactoryRegistry.getInstance();
-        conditionParser = new ConditionParser(conditionFactoryRegistry);
-    }
+    public static final TemplateService templateService = new TemplateService();
+    public static final ProcessorFactoryRegistry defaultProcessorFactoryRegistry = new ProcessorFactoryRegistry(
+            new ProcessorFactoriesLoader(templateService, new GeoIpConfiguration("GeoIP2-City-Test.mmdb"))
+    );
+    public static final ConditionFactoryRegistry defaultConditionFactoryRegistry = new ConditionFactoryRegistry(
+            new ConditionalFactoriesLoader(templateService)
+    );
+    public static final ConditionParser conditionParser = new ConditionParser(defaultConditionFactoryRegistry);
+
 
     public static <T extends Processor> T createProcessor(Class<? extends Processor> clazz, Object... objects) {
         Map<String, Object> config = createConfig(objects);
@@ -45,7 +50,7 @@ public class FactoryUtils {
     public static <T extends Processor.Factory> T createProcessorFactory(Class<? extends Processor> clazz) {
         ProcessorProvider annotation = clazz.getAnnotation(ProcessorProvider.class);
         try {
-            return (T) ProcessorFactoriesLoader.getInstance().getFactory(annotation);
+            return (T) defaultProcessorFactoryRegistry.get(annotation.type());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -54,7 +59,7 @@ public class FactoryUtils {
     public static <T extends Condition.Factory> T createConditionFactory(Class<? extends Condition> clazz) {
         ConditionProvider annotation = clazz.getAnnotation(ConditionProvider.class);
         try {
-            return (T) ConditionalFactoriesLoader.getInstance().getFactory(annotation);
+            return (T) defaultConditionFactoryRegistry.get(annotation.type());
         } catch (Exception e) {
             throw new RuntimeException();
         }
