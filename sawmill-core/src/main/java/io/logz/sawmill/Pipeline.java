@@ -44,7 +44,6 @@ public class Pipeline {
                     new ConditionFactoryRegistry(new ConditionalFactoriesLoader(new TemplateService(), sawmillConfigurations))
             );
         }
-
         public Factory(ProcessorFactoryRegistry processorFactoryRegistry,
                        ConditionFactoryRegistry conditionFactoryRegistry) {
 

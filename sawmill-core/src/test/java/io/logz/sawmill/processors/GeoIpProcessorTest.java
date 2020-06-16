@@ -120,4 +120,14 @@ public class GeoIpProcessorTest {
     public void testBadConfigs() {
         assertThatThrownBy(() -> createProcessor(GeoIpProcessor.class)).isInstanceOf(NullPointerException.class);
     }
+
+    @Test(expected = SawmillException.class)
+    public void shouldThrowOnMmdbFileDoesNotExist() throws Exception {
+        GeoIpProcessor.loadDatabaseReader("non-existing-file");
+    }
+
+    @Test(expected = SawmillException.class)
+    public void shouldThrowOnInvalidMmdbFile() throws Exception {
+        GeoIpProcessor.loadDatabaseReader("LICENSE");
+    }
 }
