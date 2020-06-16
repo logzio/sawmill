@@ -3,6 +3,7 @@ package io.logz.sawmill.utils;
 import io.logz.sawmill.Condition;
 import io.logz.sawmill.ConditionFactoryRegistry;
 import io.logz.sawmill.ConditionalFactoriesLoader;
+import io.logz.sawmill.GeoIpConfiguration;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.ProcessorFactoriesLoader;
 import io.logz.sawmill.ProcessorFactoryRegistry;
@@ -18,7 +19,7 @@ public class FactoryUtils {
 
     public static final TemplateService templateService = new TemplateService();
     public static final ProcessorFactoryRegistry defaultProcessorFactoryRegistry = new ProcessorFactoryRegistry(
-            new ProcessorFactoriesLoader(templateService)
+            new ProcessorFactoriesLoader(templateService, new GeoIpConfiguration("GeoIP2-City-Test.mmdb"))
     );
     public static final ConditionFactoryRegistry defaultConditionFactoryRegistry = new ConditionFactoryRegistry(
             new ConditionalFactoriesLoader(templateService)

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -22,10 +23,11 @@ public class ProcessorFactoriesLoader {
     private final Reflections reflections;
     private final Map<Class<?>, Object> dependenciesToInject;
 
-    public ProcessorFactoriesLoader(TemplateService templateService) {
+    public ProcessorFactoriesLoader(TemplateService templateService, SawmillConfiguration... sawmillConfigurations) {
         reflections = new Reflections("io.logz.sawmill");
         dependenciesToInject = new HashMap<>();
         dependenciesToInject.put(TemplateService.class, templateService);
+        Arrays.stream(sawmillConfigurations).forEach(config -> dependenciesToInject.put(config.getClass(), config));
     }
 
     public void loadAnnotatedProcessors(ProcessorFactoryRegistry processorFactoryRegistry) {
@@ -58,20 +60,22 @@ public class ProcessorFactoriesLoader {
         if (injectConstructor.isPresent()) {
             Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
             Object[] servicesInstance = Stream.of(servicesToInject)
-                    .peek(serviceType -> {
-                        if (!dependenciesToInject.containsKey(serviceType)) {
-                            throw new SawmillException(String.format(
-                                    "Could not instantiate %s processor, %s dependency missing",
-                                    processorProvider.type(),
-                                    serviceType.getSimpleName()
-                            ));
-                        }
-                    })
+                    .peek(serviceType -> checkDependencyPresent(processorProvider, serviceType))
                     .map(dependenciesToInject::get)
                     .toArray();
             return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
         } else {
             return factoryType.getConstructor().newInstance();
+        }
+    }
+
+    private void checkDependencyPresent(ProcessorProvider processorProvider, Class<?> serviceType) {
+        if (!dependenciesToInject.containsKey(serviceType)) {
+            throw new SawmillException(String.format(
+                    "Could not instantiate %s processor, %s dependency missing",
+                    processorProvider.type(),
+                    serviceType.getSimpleName()
+            ));
         }
     }
 }

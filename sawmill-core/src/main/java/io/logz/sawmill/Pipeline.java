@@ -38,10 +38,10 @@ public class Pipeline {
 
         private final ExecutionStepsParser executionStepsParser;
 
-        public Factory() {
+        public Factory(SawmillConfiguration... sawmillConfigurations) {
             this(
-                    new ProcessorFactoryRegistry(new ProcessorFactoriesLoader(new TemplateService())),
-                    new ConditionFactoryRegistry(new ConditionalFactoriesLoader(new TemplateService()))
+                    new ProcessorFactoryRegistry(new ProcessorFactoriesLoader(new TemplateService(), sawmillConfigurations)),
+                    new ConditionFactoryRegistry(new ConditionalFactoriesLoader(new TemplateService(), sawmillConfigurations))
             );
         }
         public Factory(ProcessorFactoryRegistry processorFactoryRegistry,
