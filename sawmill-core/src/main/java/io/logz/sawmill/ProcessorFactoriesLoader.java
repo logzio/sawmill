@@ -2,6 +2,8 @@ package io.logz.sawmill;
 
 import com.google.common.base.Stopwatch;
 import io.logz.sawmill.annotations.ProcessorProvider;
+import io.logz.sawmill.exceptions.FactoryInstantiationException;
+import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.exceptions.SawmillException;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
@@ -9,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,6 +46,11 @@ public class ProcessorFactoriesLoader {
                 processorFactoryRegistry.register(typeName, getFactory(processorProvider));
                 logger.debug("{} processor factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
                 processorsLoaded++;
+            } catch(InvocationTargetException e) {
+                if (e.getCause() instanceof FactoryInstantiationException) {
+                    throw new FactoryInstantiationException(
+                            String.format("Could not instantiate %s processor factory", processor.getName()), e);
+                }
             } catch (Exception e) {
                 logger.error("failed to load processor {}", processor.getName(), e);
             }
