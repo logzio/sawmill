@@ -16,7 +16,6 @@ import io.logz.sawmill.Processor;
 import io.logz.sawmill.Template;
 import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
-import io.logz.sawmill.exceptions.FactoryInstantiationException;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.exceptions.SawmillException;
 import io.logz.sawmill.utilities.JsonUtils;
@@ -51,7 +50,7 @@ public class GeoIpProcessor implements Processor {
                     .withCache(new CHMCache())
                     .build();
         } catch (Exception e) {
-            throw new FactoryInstantiationException("Failed to load geoip database", e);
+            throw new SawmillException("Failed to load geoip database", e);
         }
     }
 
@@ -124,7 +123,9 @@ public class GeoIpProcessor implements Processor {
         @Inject
         public Factory(TemplateService templateService, GeoIpConfiguration configuration) {
             this.templateService = templateService;
-            loadDatabaseReader(configuration.getGeoIpDatabasePath());
+            if (null != configuration) {
+                loadDatabaseReader(configuration.getGeoIpDatabasePath());
+            }
         }
 
         @Override

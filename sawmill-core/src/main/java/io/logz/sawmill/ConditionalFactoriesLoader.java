@@ -46,7 +46,7 @@ public class ConditionalFactoriesLoader {
                 logger.debug("{} condition factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
                 conditionsLoaded++;
             } catch (Exception e) {
-                logger.error("failed to load condition {}", condition.getName(), e);
+                throw new SawmillException(String.format("failed to load condition %s", condition.getName()), e);
             } finally {
                 timeElapsed = stopwatch.elapsed(MILLISECONDS);
             }
@@ -61,22 +61,11 @@ public class ConditionalFactoriesLoader {
         if (injectConstructor.isPresent()) {
             Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
             Object[] servicesInstance = Stream.of(servicesToInject)
-                    .peek(serviceType -> checkDependencyPresent(conditionProvider, serviceType))
                     .map(dependenciesToInject::get)
                     .toArray();
             return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
         } else {
             return factoryType.getConstructor().newInstance();
-        }
-    }
-
-    private void checkDependencyPresent(ConditionProvider conditionProvider, Class<?> serviceType) {
-        if (!dependenciesToInject.containsKey(serviceType)) {
-            throw new SawmillException(String.format(
-                    "Could not instantiate %s condition, %s dependency missing",
-                    conditionProvider.type(),
-                    serviceType.getSimpleName()
-            ));
         }
     }
 }
