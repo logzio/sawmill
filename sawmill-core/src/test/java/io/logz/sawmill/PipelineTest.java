@@ -2,20 +2,18 @@ package io.logz.sawmill;
 
 import io.logz.sawmill.conditions.AndCondition;
 import io.logz.sawmill.conditions.TestCondition;
+import io.logz.sawmill.exceptions.FactoryInstantiationException;
 import io.logz.sawmill.exceptions.ProcessorMissingException;
 import io.logz.sawmill.exceptions.SawmillException;
 import io.logz.sawmill.parser.PipelineDefinition;
 import io.logz.sawmill.parser.ProcessorDefinition;
 import io.logz.sawmill.parser.ProcessorExecutionStepDefinition;
 import io.logz.sawmill.processors.AddTagProcessor;
-import io.logz.sawmill.processors.GeoIpProcessor;
 import io.logz.sawmill.processors.TestProcessor;
 import io.logz.sawmill.processors.TestProcessorWithDependencies;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 
 import static io.logz.sawmill.utilities.JsonUtils.createJson;
@@ -187,7 +185,7 @@ public class PipelineTest {
     }
 
     @Test(expected = SawmillException.class)
-    public void shouldFailPipelineCreationOnNoGeoIpConfigurationGiven() throws Exception {
+    public void shouldFailProcessorCreationOnNoGeoIpConfigurationGiven() throws Exception {
         new Pipeline.Factory().create("test", new PipelineDefinition(
                 singletonList(new ProcessorExecutionStepDefinition(new ProcessorDefinition(
                         "geoIp", new HashMap<>()), null, null, null
@@ -196,23 +194,13 @@ public class PipelineTest {
         ));
     }
 
-    @Test(expected = SawmillException.class)
+    @Test(expected = FactoryInstantiationException.class)
     public void shouldFailPipelineCreationOnGeoIpConfigurationInvalidFileGiven() throws Exception {
-        new Pipeline.Factory(new GeoIpConfiguration("LICENSE")).create("test", new PipelineDefinition(
-                singletonList(new ProcessorExecutionStepDefinition(new ProcessorDefinition(
-                        "geoIp", new HashMap<>()), null, null, null
-                )),
-                true
-        ));
+        new Pipeline.Factory(new GeoIpConfiguration("LICENSE"));
     }
 
-    @Test(expected = SawmillException.class)
+    @Test(expected = FactoryInstantiationException.class)
     public void shouldFailPipelineCreationOnGeoIpConfigurationFileDoesNotExist() throws Exception {
-        new Pipeline.Factory(new GeoIpConfiguration("non-existing-file")).create("test", new PipelineDefinition(
-                singletonList(new ProcessorExecutionStepDefinition(new ProcessorDefinition(
-                        "geoIp", new HashMap<>()), null, null, null
-                )),
-                true
-        ));
+        new Pipeline.Factory(new GeoIpConfiguration("non-existing-file"));
     }
 }
