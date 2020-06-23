@@ -123,9 +123,7 @@ public class GeoIpProcessor implements Processor {
         @Inject
         public Factory(TemplateService templateService, GeoIpConfiguration configuration) {
             this.templateService = templateService;
-            if (null != configuration) {
-                loadDatabaseReader(configuration.getGeoIpDatabasePath());
-            }
+            loadDatabaseReader(configuration.getGeoIpDatabasePath());
         }
 
         @Override

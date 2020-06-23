@@ -40,9 +40,12 @@ public class ProcessorFactoriesLoader {
             try {
                 ProcessorProvider processorProvider = processor.getAnnotation(ProcessorProvider.class);
                 String typeName = processorProvider.type();
-                processorFactoryRegistry.register(typeName, getFactory(processorProvider));
-                logger.debug("{} processor factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
-                processorsLoaded++;
+                Processor.Factory factory = getFactory(processorProvider);
+                if (null != factory) {
+                    processorFactoryRegistry.register(typeName, factory);
+                    logger.debug("{} processor factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
+                    processorsLoaded++;
+                }
             } catch (Exception e) {
                 throw new SawmillException(String.format("failed to load processor %s", processor.getName()), e);
             }
@@ -58,13 +61,29 @@ public class ProcessorFactoriesLoader {
         Optional<? extends Constructor<?>> injectConstructor = Stream.of(factoryType.getConstructors())
                 .filter(constructor -> constructor.isAnnotationPresent(Inject.class)).findFirst();
         if (injectConstructor.isPresent()) {
+
             Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
-            Object[] servicesInstance = Stream.of(servicesToInject)
-                    .map(dependenciesToInject::get)
-                    .toArray();
-            return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
+            if (Arrays.stream(servicesToInject).allMatch(
+                    serviceType -> checkDependencyPresent(processorProvider, serviceType))) {
+
+                Object[] servicesInstance = Stream.of(servicesToInject).map(dependenciesToInject::get).toArray();
+                return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
+            }
+            return null;
         } else {
             return factoryType.getConstructor().newInstance();
         }
+    }
+
+    private boolean checkDependencyPresent(ProcessorProvider processorProvider, Class<?> serviceType) {
+        if (!dependenciesToInject.containsKey(serviceType)) {
+            logger.warn(String.format(
+                    "Could not instantiate %s processor factory, %s dependency missing",
+                    processorProvider.factory().getName(),
+                    serviceType.getSimpleName()
+            ));
+            return false;
+        }
+        return true;
     }
 }
