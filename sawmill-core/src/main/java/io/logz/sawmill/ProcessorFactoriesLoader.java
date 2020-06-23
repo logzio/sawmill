@@ -40,9 +40,9 @@ public class ProcessorFactoriesLoader {
             try {
                 ProcessorProvider processorProvider = processor.getAnnotation(ProcessorProvider.class);
                 String typeName = processorProvider.type();
-                Processor.Factory factory = getFactory(processorProvider);
-                if (null != factory) {
-                    processorFactoryRegistry.register(typeName, factory);
+                Optional<Processor.Factory> factoryOptional = getFactory(processorProvider);
+                if (factoryOptional.isPresent()) {
+                    processorFactoryRegistry.register(typeName, factoryOptional.get());
                     logger.debug("{} processor factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
                     processorsLoaded++;
                 }
@@ -56,7 +56,7 @@ public class ProcessorFactoriesLoader {
         logger.debug("{} processor factories loaded, took {}ms", processorsLoaded, stopwatch.elapsed(MILLISECONDS));
     }
 
-    public Processor.Factory getFactory(ProcessorProvider processorProvider) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException, NoSuchMethodException {
+    private Optional<Processor.Factory> getFactory(ProcessorProvider processorProvider) throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException, NoSuchMethodException {
         Class<? extends Processor.Factory> factoryType = processorProvider.factory();
         Optional<? extends Constructor<?>> injectConstructor = Stream.of(factoryType.getConstructors())
                 .filter(constructor -> constructor.isAnnotationPresent(Inject.class)).findFirst();
@@ -67,11 +67,11 @@ public class ProcessorFactoriesLoader {
                     serviceType -> checkDependencyPresent(processorProvider, serviceType))) {
 
                 Object[] servicesInstance = Stream.of(servicesToInject).map(dependenciesToInject::get).toArray();
-                return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
+                return Optional.of(factoryType.getConstructor(servicesToInject).newInstance(servicesInstance));
             }
-            return null;
+            return Optional.empty();
         } else {
-            return factoryType.getConstructor().newInstance();
+            return Optional.of(factoryType.getConstructor().newInstance());
         }
     }
 
