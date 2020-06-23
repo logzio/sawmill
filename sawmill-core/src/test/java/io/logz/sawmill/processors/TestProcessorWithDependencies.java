@@ -9,8 +9,8 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import javax.inject.Inject;
 import java.util.Map;
 
-@ProcessorProvider(type = "testProcessorWithOptionalDependencies", factory = TestProcessorWithOptionalDependencies.Factory.class)
-public class TestProcessorWithOptionalDependencies implements Processor {
+@ProcessorProvider(type = "testProcessorWithDependencies", factory = TestProcessorWithDependencies.Factory.class)
+public class TestProcessorWithDependencies implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
@@ -28,7 +28,7 @@ public class TestProcessorWithOptionalDependencies implements Processor {
 
         @Override
         public Processor create(Map<String, Object> config) {
-            return new TestProcessorWithOptionalDependencies();
+            return new TestProcessorWithDependencies();
         }
     }
 }
