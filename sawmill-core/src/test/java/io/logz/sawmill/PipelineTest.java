@@ -2,8 +2,6 @@ package io.logz.sawmill;
 
 import io.logz.sawmill.conditions.AndCondition;
 import io.logz.sawmill.conditions.TestCondition;
-import io.logz.sawmill.exceptions.FactoryInstantiationException;
-import io.logz.sawmill.exceptions.ProcessorMissingException;
 import io.logz.sawmill.exceptions.SawmillException;
 import io.logz.sawmill.parser.PipelineDefinition;
 import io.logz.sawmill.parser.ProcessorDefinition;
@@ -174,9 +172,10 @@ public class PipelineTest {
         ));
     }
 
-    @Test(expected = ProcessorMissingException.class)
-    public void shouldFailPipelineCreationOnNoProcessorFactoryConfigurationGiven() throws Exception {
-        new Pipeline.Factory().create("test", new PipelineDefinition(
+    @Test(expected = SawmillException.class)
+    public void shouldCreatePipelineAndFailToCreateProcessorOnFactoryDependencyMissing() throws Exception {
+        Pipeline.Factory factory = new Pipeline.Factory();
+        factory.create("test", new PipelineDefinition(
                 singletonList(new ProcessorExecutionStepDefinition(new ProcessorDefinition(
                         "testProcessorWithDependencies", new HashMap<>()), null, null, null
                 )),
@@ -185,21 +184,11 @@ public class PipelineTest {
     }
 
     @Test(expected = SawmillException.class)
-    public void shouldFailProcessorCreationOnNoGeoIpConfigurationGiven() throws Exception {
-        new Pipeline.Factory().create("test", new PipelineDefinition(
-                singletonList(new ProcessorExecutionStepDefinition(new ProcessorDefinition(
-                        "geoIp", new HashMap<>()), null, null, null
-                )),
-                true
-        ));
-    }
-
-    @Test(expected = FactoryInstantiationException.class)
     public void shouldFailPipelineCreationOnGeoIpConfigurationInvalidFileGiven() throws Exception {
         new Pipeline.Factory(new GeoIpConfiguration("LICENSE"));
     }
 
-    @Test(expected = FactoryInstantiationException.class)
+    @Test(expected = SawmillException.class)
     public void shouldFailPipelineCreationOnGeoIpConfigurationFileDoesNotExist() throws Exception {
         new Pipeline.Factory(new GeoIpConfiguration("non-existing-file"));
     }
