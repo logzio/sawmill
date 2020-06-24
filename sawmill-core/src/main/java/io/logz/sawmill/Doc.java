@@ -1,5 +1,6 @@
 package io.logz.sawmill;
 
+import static com.google.common.base.Preconditions.checkState;
 import org.apache.commons.collections4.MapUtils;
 
 import java.util.ArrayList;
@@ -7,8 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import static com.google.common.base.Preconditions.checkState;
 
 public class Doc {
 
@@ -146,6 +145,8 @@ public class Doc {
         Object cursor = json;
         for (String path : paths) {
             for (String pathElement : tokenizePath(path)) {
+                if (!(cursor instanceof Map)) return Optional.empty();
+
                 cursor = ((Map) cursor).get(pathElement);
                 if (cursor == null) return Optional.empty();
             }
