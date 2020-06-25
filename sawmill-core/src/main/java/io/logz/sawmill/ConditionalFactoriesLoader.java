@@ -2,12 +2,14 @@ package io.logz.sawmill;
 
 import com.google.common.base.Stopwatch;
 import io.logz.sawmill.annotations.ConditionProvider;
+import io.logz.sawmill.exceptions.SawmillException;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.lang.reflect.Constructor;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -17,27 +19,17 @@ import java.util.stream.Stream;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class ConditionalFactoriesLoader {
+
     private static final Logger logger = LoggerFactory.getLogger(ConditionalFactoriesLoader.class);
-    private static ConditionalFactoriesLoader instance;
+
     private final Reflections reflections;
-    private final Map<Class<?>, Object> services;
+    private final Map<Class<?>, Object> dependenciesToInject;
 
-    private ConditionalFactoriesLoader() {
-        this(new TemplateService());
-    }
-
-    private ConditionalFactoriesLoader(TemplateService templateService) {
+    public ConditionalFactoriesLoader(TemplateService templateService, SawmillConfiguration... sawmillConfigurations) {
         reflections = new Reflections("io.logz.sawmill");
-        services = new HashMap<>();
-        services.put(TemplateService.class, templateService);
-    }
-
-    public static ConditionalFactoriesLoader getInstance() {
-        if (instance == null) {
-            instance = new ConditionalFactoriesLoader();
-        }
-
-        return instance;
+        dependenciesToInject = new HashMap<>();
+        dependenciesToInject.put(TemplateService.class, templateService);
+        Arrays.stream(sawmillConfigurations).forEach(config -> dependenciesToInject.put(config.getClass(), config));
     }
 
     public void loadAnnotatedProcessors(ConditionFactoryRegistry conditionFactoryRegistry) {
@@ -45,7 +37,7 @@ public class ConditionalFactoriesLoader {
         long timeElapsed = 0;
 
         int conditionsLoaded = 0;
-        Set<Class<?>> conditions =  reflections.getTypesAnnotatedWith(ConditionProvider.class);
+        Set<Class<?>> conditions = reflections.getTypesAnnotatedWith(ConditionProvider.class);
         for (Class<?> condition : conditions) {
             try {
                 ConditionProvider conditionProvider = condition.getAnnotation(ConditionProvider.class);
@@ -54,9 +46,8 @@ public class ConditionalFactoriesLoader {
                 logger.debug("{} condition factory loaded successfully, took {}ms", typeName, stopwatch.elapsed(MILLISECONDS) - timeElapsed);
                 conditionsLoaded++;
             } catch (Exception e) {
-                logger.error("failed to load condition {}", condition.getName(), e);
-            }
-            finally {
+                throw new SawmillException(String.format("failed to load condition %s", condition.getName()), e);
+            } finally {
                 timeElapsed = stopwatch.elapsed(MILLISECONDS);
             }
         }
@@ -69,7 +60,9 @@ public class ConditionalFactoriesLoader {
                 .filter(constructor -> constructor.isAnnotationPresent(Inject.class)).findFirst();
         if (injectConstructor.isPresent()) {
             Class<?>[] servicesToInject = injectConstructor.get().getParameterTypes();
-            Object[] servicesInstance = Stream.of(servicesToInject).map(services::get).toArray();
+            Object[] servicesInstance = Stream.of(servicesToInject)
+                    .map(dependenciesToInject::get)
+                    .toArray();
             return factoryType.getConstructor(servicesToInject).newInstance(servicesInstance);
         } else {
             return factoryType.getConstructor().newInstance();
