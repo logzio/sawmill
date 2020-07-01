@@ -32,12 +32,12 @@ public class BenchmarkTest {
 
     @Test
     public void testApache() throws IOException, RunnerException {
-        testScenario("ApacheScenario.conf", 35000.0);
+        testScenario("ApacheScenario.conf", 20_000.0);
     }
 
     @Test
     public void testTemplate() throws IOException, RunnerException {
-        testScenario("TemplateScenario.conf", 35000.0);
+        testScenario("TemplateScenario.conf", 20_000.0);
     }
 
     private void testScenario(String scenarioName, double threshold) throws RunnerException, IOException {
