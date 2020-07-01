@@ -2,6 +2,7 @@ package io.logz.sawmill.benchmark;
 
 import com.google.common.collect.Iterables;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.GeoIpConfiguration;
 import io.logz.sawmill.Pipeline;
 import io.logz.sawmill.PipelineExecutionMetricsMBean;
 import io.logz.sawmill.PipelineExecutionMetricsTracker;
@@ -84,7 +85,7 @@ public class SawmillBenchmark {
         pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
         watchdog = new PipelineExecutionTimeWatchdog(warningThresholdTimeMs, expiredThresholdTimeMs, pipelineExecutorMetrics, context -> { });
         pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
-        Pipeline.Factory pipelineFactory = new Pipeline.Factory();
+        Pipeline.Factory pipelineFactory = new Pipeline.Factory(new GeoIpConfiguration("GeoIP2-City-Test.mmdb"));
         pipeline = pipelineFactory.create(pipelineConfig);
     }
 
