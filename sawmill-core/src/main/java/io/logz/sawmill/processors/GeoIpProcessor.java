@@ -20,9 +20,11 @@ import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.exceptions.SawmillException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +32,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 import static com.google.common.base.Preconditions.checkState;
 import static io.logz.sawmill.processors.GeoIpProcessor.Property.ALL_PROPERTIES;
@@ -37,21 +40,49 @@ import static io.logz.sawmill.processors.GeoIpProcessor.Property.LOCATION;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.Objects.requireNonNull;
 
+@SuppressWarnings("UnstableApiUsage")
 @ProcessorProvider(type = "geoIp", factory = GeoIpProcessor.Factory.class)
 public class GeoIpProcessor implements Processor {
+
+    private static final String TAR_GZ_SUFFIX = ".tar.gz";
 
     private static DatabaseReader databaseReader;
 
     @VisibleForTesting
     static void loadDatabaseReader(String location) {
         try {
-            databaseReader = new DatabaseReader.Builder(Resources.getResource(location).openStream())
-                    .fileMode(Reader.FileMode.MEMORY)
-                    .withCache(new CHMCache())
-                    .build();
+            try (InputStream mmdbStream = Resources.getResource(location).openStream()) {
+
+                if (location.endsWith(TAR_GZ_SUFFIX)) {
+                    try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new GZIPInputStream(mmdbStream))) {
+                        databaseReader = initReader(seekToDbFile(tarArchiveInputStream));
+                    }
+                } else {
+                    databaseReader = initReader(mmdbStream);
+                }
+            }
         } catch (Exception e) {
             throw new SawmillException("Failed to load geoip database", e);
         }
+    }
+
+    static DatabaseReader initReader(InputStream inputStream) throws IOException {
+        return databaseReader = new DatabaseReader.Builder(inputStream)
+                .fileMode(Reader.FileMode.MEMORY)
+                .withCache(new CHMCache())
+                .build();
+    }
+
+    private static TarArchiveInputStream seekToDbFile(TarArchiveInputStream tarArchiveInputStream) throws IOException {
+        while (tarArchiveInputStream.getNextEntry() != null) {
+            boolean dbFile = tarArchiveInputStream.getCurrentEntry().getName().endsWith(".mmdb");
+
+            if (dbFile) {
+                return tarArchiveInputStream;
+            }
+        }
+
+        throw new SawmillException("DB file not found");
     }
 
     private final String sourceField;
