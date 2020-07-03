@@ -1,32 +1,64 @@
 package io.logz.sawmill.processors;
 
+import com.maxmind.db.InvalidDatabaseException;
+import com.sun.deploy.security.ruleset.ExceptionRule;
 import io.logz.sawmill.exceptions.SawmillException;
+import org.hamcrest.CoreMatchers;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class GeoIpDbReaderFactoryTest {
 
     @Test
     public void shouldCreateDbReaderFromMmdb() throws Exception {
-        GeoIpDbReaderFactory.createDatabaseReader("GeoIP2-City-Test.mmdb");
+        assertNotNull(GeoIpDbReaderFactory.createDatabaseReader("GeoIP2-City-Test.mmdb"));
     }
 
     @Test
     public void shouldCreateDbReaderFromTarGz() throws Exception {
-        GeoIpDbReaderFactory.createDatabaseReader("GeoIP2-City-Test.tar.gz");
+        assertNotNull(GeoIpDbReaderFactory.createDatabaseReader("GeoIP2-City-Test.tar.gz"));
     }
 
-    @Test(expected = SawmillException.class)
+    @Test
     public void shouldThrowOnTarGzDoesNotContainMmdb() throws Exception {
-        GeoIpDbReaderFactory.createDatabaseReader("GeoIP2-City-Test-broken.tar.gz");
+        String location = "GeoIP2-City-Test-broken.tar.gz";
+        try {
+            GeoIpDbReaderFactory.createDatabaseReader(location);
+            fail();
+        } catch (SawmillException e) {
+            assertEquals("Failed to load geoip database from '" + location + "'", e.getMessage());
+            Throwable cause = e.getCause();
+            assertEquals("Could not find a valid .mmdb file within archive", cause.getMessage());
+        }
     }
 
-    @Test(expected = SawmillException.class)
+    @Test
     public void shouldThrowOnMmdbFileDoesNotExist() throws Exception {
-        GeoIpDbReaderFactory.createDatabaseReader("non-existing-file");
+        String location = "non-existing-file";
+        try {
+            GeoIpDbReaderFactory.createDatabaseReader(location);
+            fail();
+        } catch (SawmillException e) {
+            assertEquals("Failed to load geoip database from '" + location + "'", e.getMessage());
+            assertTrue(e.getCause() instanceof IllegalArgumentException);
+        }
     }
 
-    @Test(expected = SawmillException.class)
+    @Test
     public void shouldThrowOnInvalidMmdbFile() throws Exception {
-        GeoIpDbReaderFactory.createDatabaseReader("LICENSE");
+        String location = "LICENSE";
+        try {
+            GeoIpDbReaderFactory.createDatabaseReader(location);
+            fail();
+        } catch (SawmillException e) {
+            assertEquals("Failed to load geoip database from '" + location + "'", e.getMessage());
+            assertTrue(e.getCause() instanceof InvalidDatabaseException);
+        }
     }
 }

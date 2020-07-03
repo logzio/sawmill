@@ -7,6 +7,7 @@ import com.maxmind.geoip2.DatabaseReader;
 import io.logz.sawmill.exceptions.SawmillException;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
@@ -16,18 +17,16 @@ class GeoIpDbReaderFactory {
     private static final String TAR_GZ_SUFFIX = ".tar.gz";
 
     static DatabaseReader createDatabaseReader(String location) {
-        try {
-            try (InputStream mmdbStream = Resources.getResource(location).openStream()) {
+        try (InputStream mmdbStream = Resources.getResource(location).openStream()) {
 
-                if (location.endsWith(TAR_GZ_SUFFIX)) {
-                    try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new GZIPInputStream(mmdbStream))) {
-                        return initReader(seekToDbFile(tarArchiveInputStream));
-                    }
+            if (location.endsWith(TAR_GZ_SUFFIX)) {
+                try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new GZIPInputStream(mmdbStream))) {
+                    return initReader(seekToDbFile(tarArchiveInputStream));
                 }
-                return initReader(mmdbStream);
             }
+            return initReader(mmdbStream);
         } catch (Exception e) {
-            throw new SawmillException("Failed to load geoip database", e);
+            throw new SawmillException(String.format("Failed to load geoip database from '%s'", location), e);
         }
     }
 
@@ -47,6 +46,6 @@ class GeoIpDbReaderFactory {
             }
         }
 
-        throw new SawmillException("DB file not found");
+        throw new FileNotFoundException("Could not find a valid .mmdb file within archive");
     }
 }
