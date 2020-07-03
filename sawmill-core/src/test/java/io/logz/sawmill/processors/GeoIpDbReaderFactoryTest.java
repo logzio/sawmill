@@ -1,12 +1,8 @@
 package io.logz.sawmill.processors;
 
 import com.maxmind.db.InvalidDatabaseException;
-import com.sun.deploy.security.ruleset.ExceptionRule;
 import io.logz.sawmill.exceptions.SawmillException;
-import org.hamcrest.CoreMatchers;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
