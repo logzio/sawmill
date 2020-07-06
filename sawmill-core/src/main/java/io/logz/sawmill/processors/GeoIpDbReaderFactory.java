@@ -32,7 +32,7 @@ class GeoIpDbReaderFactory {
 
     private static DatabaseReader initReader(InputStream inputStream) throws IOException {
         return new DatabaseReader.Builder(inputStream)
-                .fileMode(Reader.FileMode.MEMORY)
+                .fileMode(Reader.FileMode.MEMORY_MAPPED)
                 .withCache(new CHMCache())
                 .build();
     }
