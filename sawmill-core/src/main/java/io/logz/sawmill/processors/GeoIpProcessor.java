@@ -1,10 +1,6 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.Resources;
 import com.google.common.net.InetAddresses;
-import com.maxmind.db.CHMCache;
-import com.maxmind.db.Reader;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.AddressNotFoundException;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
@@ -17,7 +13,6 @@ import io.logz.sawmill.Template;
 import io.logz.sawmill.TemplateService;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
-import io.logz.sawmill.exceptions.SawmillException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -41,18 +36,6 @@ import static java.util.Objects.requireNonNull;
 public class GeoIpProcessor implements Processor {
 
     private static DatabaseReader databaseReader;
-
-    @VisibleForTesting
-    static void loadDatabaseReader(String location) {
-        try {
-            databaseReader = new DatabaseReader.Builder(Resources.getResource(location).openStream())
-                    .fileMode(Reader.FileMode.MEMORY)
-                    .withCache(new CHMCache())
-                    .build();
-        } catch (Exception e) {
-            throw new SawmillException("Failed to load geoip database", e);
-        }
-    }
 
     private final String sourceField;
     private final Template targetField;
@@ -123,7 +106,7 @@ public class GeoIpProcessor implements Processor {
         @Inject
         public Factory(TemplateService templateService, GeoIpConfiguration configuration) {
             this.templateService = templateService;
-            loadDatabaseReader(configuration.getGeoIpDatabasePath());
+            databaseReader = GeoIpDbReaderFactory.createDatabaseReader(configuration.getGeoIpDatabasePath());
         }
 
         @Override

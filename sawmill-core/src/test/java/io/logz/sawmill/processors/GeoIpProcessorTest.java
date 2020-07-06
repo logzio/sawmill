@@ -3,7 +3,6 @@ package io.logz.sawmill.processors;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.exceptions.SawmillException;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -13,7 +12,6 @@ import java.util.Map;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
-import static io.logz.sawmill.utils.FactoryUtils.defaultProcessorFactoryRegistry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertNotNull;
@@ -119,15 +117,5 @@ public class GeoIpProcessorTest {
     @Test
     public void testBadConfigs() {
         assertThatThrownBy(() -> createProcessor(GeoIpProcessor.class)).isInstanceOf(NullPointerException.class);
-    }
-
-    @Test(expected = SawmillException.class)
-    public void shouldThrowOnMmdbFileDoesNotExist() throws Exception {
-        GeoIpProcessor.loadDatabaseReader("non-existing-file");
-    }
-
-    @Test(expected = SawmillException.class)
-    public void shouldThrowOnInvalidMmdbFile() throws Exception {
-        GeoIpProcessor.loadDatabaseReader("LICENSE");
     }
 }
