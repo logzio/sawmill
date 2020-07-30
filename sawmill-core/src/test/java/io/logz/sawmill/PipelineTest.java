@@ -182,14 +182,4 @@ public class PipelineTest {
                 true
         ));
     }
-
-    @Test(expected = SawmillException.class)
-    public void shouldFailPipelineCreationOnGeoIpConfigurationInvalidFileGiven() throws Exception {
-        new Pipeline.Factory(new GeoIpConfiguration("LICENSE"));
-    }
-
-    @Test(expected = SawmillException.class)
-    public void shouldFailPipelineCreationOnGeoIpConfigurationFileDoesNotExist() throws Exception {
-        new Pipeline.Factory(new GeoIpConfiguration("non-existing-file"));
-    }
 }

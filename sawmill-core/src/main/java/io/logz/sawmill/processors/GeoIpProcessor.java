@@ -35,7 +35,9 @@ import static java.util.Objects.requireNonNull;
 @ProcessorProvider(type = "geoIp", factory = GeoIpProcessor.Factory.class)
 public class GeoIpProcessor implements Processor {
 
-    private static DatabaseReader databaseReader;
+    private static final Object databaseReaderInitMonitor = new Object();
+
+    private static volatile DatabaseReader databaseReader;
 
     private final String sourceField;
     private final Template targetField;
@@ -101,12 +103,19 @@ public class GeoIpProcessor implements Processor {
     }
 
     public static class Factory implements Processor.Factory {
+
         private final TemplateService templateService;
 
         @Inject
         public Factory(TemplateService templateService, GeoIpConfiguration configuration) {
             this.templateService = templateService;
-            databaseReader = GeoIpDbReaderFactory.createDatabaseReader(configuration.getGeoIpDatabasePath());
+            if (null == databaseReader) {
+                synchronized (databaseReaderInitMonitor) {
+                    if (null == databaseReader) {
+                        databaseReader = GeoIpDbReaderFactory.createDatabaseReader(configuration.getGeoIpDatabasePath());
+                    }
+                }
+            }
         }
 
         @Override
