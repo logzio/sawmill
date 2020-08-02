@@ -44,6 +44,7 @@ public class SawmillMicroBenchmark {
     private Pipeline pipelineWithVariableRenamesInOneProcessor;
     private Pipeline pipelineWithVariableRenameProcessors;
     private Pipeline pipelineWithOneRemoveProcessor;
+    private Pipeline pipelineWithVariableRemoveProcessors;
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
@@ -79,13 +80,6 @@ public class SawmillMicroBenchmark {
                 )
         );
 
-        pipelineWithOneRemoveProcessor = createPipeline(
-                new ProcessorExecutionStep("drop1",
-                        new RemoveFieldProcessor(Arrays.asList(templateService.createTemplate("FieldFrom1"))
-                        )
-                )
-        );
-
         pipelineWithTwoRenameProcessors = createPipeline(
                 new ProcessorExecutionStep("rename1",
                         new RenameFieldProcessor(renamesWithSingleRename1)
@@ -118,6 +112,24 @@ public class SawmillMicroBenchmark {
                         ).collect(Collectors.toList()).toArray(new ExecutionStep[0])
                 );
 
+        pipelineWithOneRemoveProcessor = createPipeline(
+                new ProcessorExecutionStep("drop1",
+                        new RemoveFieldProcessor(Arrays.asList(templateService.createTemplate("FieldFrom1"))
+                        )
+                )
+        );
+
+        pipelineWithVariableRemoveProcessors =
+                createPipeline(
+                        IntStream.range(0, NUMBER_OF_FIELDS).boxed().map(
+                                i -> new ProcessorExecutionStep("drop" + i,
+                                        new RemoveFieldProcessor(
+                                                Arrays.asList(templateService.createTemplate("FieldFrom" + i))
+                                        )
+                                )
+                        ).collect(Collectors.toList()).toArray(new ExecutionStep[0])
+                );
+
 
         documentTemplate = IntStream.range(0, NUMBER_OF_FIELDS).boxed().collect(Collectors.toMap(i -> "FieldFrom" + i, i -> "Value" + i));
 
@@ -135,50 +147,44 @@ public class SawmillMicroBenchmark {
 
     @Benchmark
     public void benchmarkPipelineWithOneRename() {
-
         Doc doc = createDocFromTemplate(documentTemplate);
         ExecutionResult executionResult = pipelineExecutor.execute(pipelineWithOneRename, doc);
-
     }
 
     @Benchmark
     public void benchmarkPipelineWithOneRemove() {
-
         Doc doc = createDocFromTemplate(documentTemplate);
         ExecutionResult executionResult = pipelineExecutor.execute(pipelineWithOneRemoveProcessor, doc);
-
     }
 
     @Benchmark
     public void benchmarkPipelineWithTwoRenameProcessors() {
-
         Doc doc = createDocFromTemplate(documentTemplate);
         ExecutionResult executionResult = pipelineExecutor.execute(pipelineWithTwoRenameProcessors, doc);
-
     }
 
     @Benchmark
     public void benchmarkPipelineWithTwoRenamesInOneProcessor() {
-
         Doc doc = createDocFromTemplate(documentTemplate);
         ExecutionResult executionResult = pipelineExecutor.execute(pipelineWithTwoRenamesInOneProcessor, doc);
-
     }
 
     @Benchmark
     public void benchmarkPipelineWithVariableRenamesInOneProcessor() {
-
         Doc doc = createDocFromTemplate(documentTemplate);
         ExecutionResult executionResult = pipelineExecutor.execute(pipelineWithVariableRenamesInOneProcessor, doc);
-
     }
 
     @Benchmark
     public void benchmarkPipelineWithVariableRenameProcessors() {
-
         Doc doc = createDocFromTemplate(documentTemplate);
         ExecutionResult executionResult = pipelineExecutor.execute(pipelineWithVariableRenameProcessors, doc);
+    }
 
+    @Benchmark
+    public void benchmarkPipelineWithVariableRemoveProcessors() {
+        Doc doc = createDocFromTemplate(documentTemplate);
+        ExecutionResult executionResult = pipelineExecutor.execute(pipelineWithVariableRemoveProcessors, doc);
     }
 
     private Pipeline createPipeline(ExecutionStep... steps) {
