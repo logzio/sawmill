@@ -1,5 +1,6 @@
 package io.logz.sawmill.benchmark;
 
+import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ExecutionResult;
 import io.logz.sawmill.ExecutionStep;
@@ -36,7 +37,7 @@ import java.util.stream.IntStream;
 public class SawmillMicroBenchmark {
     private static final int NUMBER_OF_FIELDS = 100;
 
-    private Map<String, String> documentTemplate;
+    private Map<String, Object> documentTemplate;
     private PipelineExecutor pipelineExecutor;
     private Pipeline pipelineWithTwoRenameProcessors;
     private Pipeline pipelineWithOneRename;
@@ -94,7 +95,6 @@ public class SawmillMicroBenchmark {
                 )
         );
 
-
         pipelineWithVariableRenamesInOneProcessor = createPipeline(
                 new ProcessorExecutionStep("rename1",
                         createRenameProcessor(0, NUMBER_OF_FIELDS, templateService)
@@ -108,7 +108,7 @@ public class SawmillMicroBenchmark {
                                         "rename" + i,
                                         createRenameProcessor(i, 1, templateService)
                                 )
-                        ).collect(Collectors.toList()).toArray(new ExecutionStep[0])
+                        ).toArray(ExecutionStep[]::new)
                 );
 
         pipelineWithOneRemoveProcessor = createPipeline(
@@ -126,7 +126,7 @@ public class SawmillMicroBenchmark {
                                                 Arrays.asList(templateService.createTemplate("FieldFrom" + i))
                                         )
                                 )
-                        ).collect(Collectors.toList()).toArray(new ExecutionStep[0])
+                        ).toArray(ExecutionStep[]::new)
                 );
 
 
@@ -187,30 +187,10 @@ public class SawmillMicroBenchmark {
     }
 
     private Pipeline createPipeline(ExecutionStep... steps) {
-        return createPipeline(false, steps);
+        return new Pipeline("test-pipeline-id", Arrays.asList(steps), true);
     }
 
-    private Pipeline createPipeline(boolean stopOnFailure, ExecutionStep... steps) {
-        String id = "abc";
-        return new Pipeline(id, Arrays.asList(steps), stopOnFailure);
-    }
-
-    public Doc createDoc(Object... objects) {
-        if (objects.length % 2 != 0) {
-            throw new RuntimeException("Can't construct map out of uneven number of elements");
-        }
-
-        LinkedHashMap map = new LinkedHashMap<>();
-        if (objects != null) {
-            for (int i = 0; i < objects.length; i++) {
-                map.put(objects[i], objects[++i]);
-            }
-        }
-
-        return new Doc(map);
-    }
-
-    public Doc createDocFromTemplate(Map<String, String> original) {
+    public Doc createDocFromTemplate(Map<String, Object> original) {
         return new Doc(new LinkedHashMap<>(original));
     }
 }
