@@ -60,19 +60,18 @@ public class SawmillMicroBenchmark {
         pipelineExecutor = new PipelineExecutor();
         TemplateService templateService = new TemplateService();
 
-        HashMap<Template, Template> renamesWithSingleRename1 = new HashMap<>();
-        renamesWithSingleRename1.put(templateService.createTemplate("FieldFrom1"),
+        Map<Template, Template> renamesWithSingleRename1 = ImmutableMap.of(
+                templateService.createTemplate("FieldFrom1"),
                 templateService.createTemplate("FieldTo1"));
 
-        HashMap<Template, Template> renamesWithSingleRename2 = new HashMap<>();
-        renamesWithSingleRename1.put(templateService.createTemplate("FieldFrom2"),
+        Map<Template, Template> renamesWithSingleRename2 = ImmutableMap.of(
+                templateService.createTemplate("FieldFrom2"),
                 templateService.createTemplate("FieldTo2"));
 
-        HashMap<Template, Template> renamesWithTwoRenames = new HashMap<>();
-        renamesWithTwoRenames.put(templateService.createTemplate("FieldFrom1"),
-                templateService.createTemplate("FieldTo1"));
-        renamesWithTwoRenames.put(templateService.createTemplate("FieldFrom2"),
-                templateService.createTemplate("FieldTo2"));
+        Map<Template, Template> renamesWithTwoRenames = new HashMap<Template, Template>() {{
+            putAll(renamesWithSingleRename1);
+            putAll(renamesWithSingleRename2);
+        }};
 
         pipelineWithOneRename = createPipeline(
                 new ProcessorExecutionStep("rename1",
