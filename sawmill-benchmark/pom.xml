@@ -89,6 +89,9 @@
                     <compilerVersion>${javac.target}</compilerVersion>
                     <source>${javac.target}</source>
                     <target>${javac.target}</target>
+                    <excludes>
+                        <exclude>**/benchmark/SawmillMicroBenchmark.java</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
             <plugin>

@@ -32,6 +32,9 @@ import java.util.stream.IntStream;
  * JMH based micro-benchmark suite used to compare pipeline configurations.
  * Use this as a baseline for comparing the performance of pipelines and specific processors.
  * The benchmark can be launched from the main() method in this class.
+ *
+ * To enable this micro benchmark, the file must removed from the excludes list in the pom file.
+ * This is intentional, to prevent this utility from slowing down build times.
  */
 @State(Scope.Thread)
 public class SawmillMicroBenchmark {
