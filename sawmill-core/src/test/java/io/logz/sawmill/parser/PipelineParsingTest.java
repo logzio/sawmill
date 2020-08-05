@@ -1,5 +1,6 @@
 package io.logz.sawmill.parser;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.Pipeline;
@@ -11,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,9 +44,12 @@ public class PipelineParsingTest {
         Pipeline pipeline = new Pipeline.Factory().create(pipelineText);
         PipelineExecutor pipelineExecutor = new PipelineExecutor();
 
-        HashMap<String, Object> map = new HashMap<String, Object>();
-        map.put("FieldFrom1", "MyValue1");
-        map.put("FieldFrom2", "MyValue2");
+        Map<String, Object> map = new HashMap<>(
+                ImmutableMap.of(
+                        "FieldFrom1", "MyValue1",
+                        "FieldFrom2", "MyValue2"
+                )
+        );
         Doc doc = new Doc(map);
 
         pipelineExecutor.execute(pipeline, doc);
