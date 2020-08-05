@@ -5,13 +5,14 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.Pipeline;
 import io.logz.sawmill.PipelineExecutor;
 import org.assertj.core.util.Maps;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+
+import static org.junit.Assert.assertEquals;
 
 public class PipelineParsingTest {
     @Test
@@ -22,7 +23,7 @@ public class PipelineParsingTest {
 
         Doc doc = new Doc(Maps.newHashMap("FieldFrom1", "MyValue1"));
         pipelineExecutor.execute(pipeline, doc);
-        Assert.assertTrue(doc.getField("FieldTo1").equals("MyValue1"));
+        assertEquals("MyValue1", doc.getField("FieldTo1"));
     }
 
     @Test
@@ -47,8 +48,8 @@ public class PipelineParsingTest {
         Doc doc = new Doc(map);
 
         pipelineExecutor.execute(pipeline, doc);
-        Assert.assertTrue(doc.getField("FieldTo1").equals("MyValue1"));
-        Assert.assertTrue(doc.getField("FieldTo2").equals("MyValue2"));
+        assertEquals("MyValue1", doc.getField("FieldTo1"));
+        assertEquals("MyValue2", doc.getField("FieldTo2"));
     }
 
     private String getFileResourceAsString(final String resourceName) throws IOException {
