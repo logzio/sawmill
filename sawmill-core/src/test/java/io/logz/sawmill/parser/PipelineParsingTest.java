@@ -14,7 +14,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class PipelineParsingTest {
     @Test
@@ -25,7 +25,7 @@ public class PipelineParsingTest {
 
         Doc doc = new Doc(Maps.newHashMap("FieldFrom1", "MyValue1"));
         pipelineExecutor.execute(pipeline, doc);
-        assertEquals("MyValue1", doc.getField("FieldTo1"));
+        assertThat((String) doc.getField("FieldTo1")).isEqualTo("MyValue1");
     }
 
     @Test
@@ -53,8 +53,10 @@ public class PipelineParsingTest {
         Doc doc = new Doc(map);
 
         pipelineExecutor.execute(pipeline, doc);
-        assertEquals("MyValue1", doc.getField("FieldTo1"));
-        assertEquals("MyValue2", doc.getField("FieldTo2"));
+
+        assertThat((String) doc.getField("FieldTo1")).isEqualTo("MyValue1");
+        assertThat((String) doc.getField("FieldTo2")).isEqualTo("MyValue2");
+
     }
 
     private String getFileResourceAsString(final String resourceName) throws IOException {
