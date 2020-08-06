@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {
+      "rename": {
+        "config": {
+          "from": "FieldFrom1",
+          "to": "FieldTo1"
+        }
+      }
+    }
+  ]
+}
