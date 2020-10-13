@@ -53,7 +53,7 @@
         <reflections.version>0.9.10</reflections.version>
         <slf4j.version>1.7.21</slf4j.version>
         <weakref.jmxutils.version>1.19</weakref.jmxutils.version>
-        <junit.version>4.11</junit.version>
+        <junit.version>4.13.1</junit.version>
         <assertj.version>3.5.2</assertj.version>
         <logback.version>1.1.7</logback.version>
         <commonsIO.version>2.5</commonsIO.version>
