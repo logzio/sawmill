@@ -6,7 +6,6 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import org.apache.commons.io.IOUtils;
-import org.assertj.core.error.OptionalShouldBeEmpty;
 import org.junit.Test;
 
 import java.io.IOException;
