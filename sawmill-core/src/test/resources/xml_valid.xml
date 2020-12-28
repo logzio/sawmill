@@ -1,6 +1,7 @@
 <country>
     <id>1</id>
     <name>Israel</name>
+    <TestEmptyField></TestEmptyField>
     <cities>
         <city><name>Jerusalem</name></city>
         <city><name>Tel Aviv</name></city>

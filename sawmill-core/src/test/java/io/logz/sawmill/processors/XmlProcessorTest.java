@@ -6,6 +6,7 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import org.apache.commons.io.IOUtils;
+import org.assertj.core.error.OptionalShouldBeEmpty;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -47,6 +48,7 @@ public class XmlProcessorTest {
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat((String) doc.getField("country.id")).isEqualTo("1");
         assertThat((String) doc.getField("country.name")).isEqualTo("Israel");
+        assertThat((Object) doc.getField("country.TestEmptyField")).isEqualTo(IllegalStateException.class);
         assertThat((List) doc.getField("country.cities.city"))
                 .isEqualTo(Arrays.asList(ImmutableMap.of("name", "Jerusalem"),
                         ImmutableMap.of("name", "Tel Aviv")));

@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
@@ -116,14 +117,16 @@ public class XmlProcessor implements Processor {
             String key = node.getNodeName();
             Object value;
 
-            if (node.getChildNodes().getLength() == 1 &&
-                    node.getChildNodes().item(0).getNodeValue() != null) {
+            if (node.getChildNodes().getLength() == 1
+                    && node.getChildNodes().item(0) != null
+                    && node.getChildNodes().item(0).getNodeValue() != null ) {
                 value = node.getChildNodes().item(0).getNodeValue();
             } else {
                 value = extractNodes(node);
             }
 
             xmlNodes.compute(key, (k, oldVal) -> {
+                if (node.getChildNodes().item(0) == null) { return oldVal; }
                 if (oldVal == null) return value;
                 if (oldVal instanceof List) {
                     ((List) oldVal).add(value);

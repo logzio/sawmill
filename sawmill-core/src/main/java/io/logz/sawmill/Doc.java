@@ -32,7 +32,11 @@ public class Doc {
 
     public <T> T getField(String path) {
         Optional<Object> field = getByPath(source, path);
-        checkState(field.isPresent(), "Couldn't resolve field in path [%s]", path);
+        try {
+            checkState(field.isPresent(), "Couldn't resolve field in path [%s]", path);
+        } catch (IllegalStateException e) {
+            return (T) e.getClass();
+        }
         return (T) field.get();
     }
 
