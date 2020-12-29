@@ -40,13 +40,15 @@ public class XmlProcessor implements Processor {
     private final String targetField;
     private final Map<XPathExpressionProvider, String> xpath;
     private final boolean storeXml;
+    private final boolean omitEmptyTagAsFieldEnabled;
 
-    public XmlProcessor(DocumentBuilderProvider documentBuilderProvider, String field, String targetField, Map<XPathExpressionProvider, String> xpath, boolean storeXml) {
+    public XmlProcessor(DocumentBuilderProvider documentBuilderProvider, String field, String targetField, Map<XPathExpressionProvider, String> xpath, boolean storeXml, boolean omitEmptyTagAsFieldEnabled) {
         this.documentBuilderProvider = requireNonNull(documentBuilderProvider);
         this.field = requireNonNull(field);
         this.targetField = targetField;
         this.xpath = xpath;
         this.storeXml = storeXml;
+        this.omitEmptyTagAsFieldEnabled = omitEmptyTagAsFieldEnabled;
     }
 
     @Override
@@ -125,7 +127,7 @@ public class XmlProcessor implements Processor {
             }
 
             xmlNodes.compute(key, (k, oldVal) -> {
-                if (node.getChildNodes().item(0) == null) { return oldVal; }
+                if (node.getChildNodes().item(0) == null && omitEmptyTagAsFieldEnabled) { return oldVal; }
                 if (oldVal == null) return value;
                 if (oldVal instanceof List) {
                     ((List) oldVal).add(value);
@@ -165,7 +167,8 @@ public class XmlProcessor implements Processor {
                     xmlConfig.getField(),
                     xmlConfig.getTargetField(),
                     xpath,
-                    xmlConfig.isStoreXml());
+                    xmlConfig.isStoreXml(),
+                    xmlConfig.isOmitEmptyTagAsFieldEnabled());
         }
     }
 
@@ -174,6 +177,7 @@ public class XmlProcessor implements Processor {
         private String targetField;
         private Map<String, String> xpath;
         private boolean storeXml = true;
+        private boolean omitEmptyTagAsFieldEnabled = true;
 
         public Configuration() { }
 
@@ -192,5 +196,8 @@ public class XmlProcessor implements Processor {
         public boolean isStoreXml() {
             return storeXml;
         }
+
+        public boolean isOmitEmptyTagAsFieldEnabled() { return omitEmptyTagAsFieldEnabled; }
+
     }
 }

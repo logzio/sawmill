@@ -59,6 +59,32 @@ public class XmlProcessorTest {
     }
 
     @Test
+    public void testValidXmlWhenOmittingEmptyTagIsNotEnabled() {
+        String field = "xml";
+
+        Doc doc = createDoc(field, VALID_XML);
+
+        Map<String, Object> config = createConfig("field", field,
+                "omitEmptyTagAsFieldEnabled", false,
+                "xpath", ImmutableMap.of("/country/languages/language[@type='official']/text()", "lang",
+                "/country/cities/city[2]/name/text()", "bestCity",
+                "/country/otherField", "nonExistsField",
+                "/country/TestEmptyField/text()", ""));
+
+        XmlProcessor xmlProcessor = createProcessor(XmlProcessor.class, config);
+
+        ProcessResult processResult = xmlProcessor.process(doc);
+
+        assertThat(processResult.isSucceeded()).isTrue();
+        assertThat((List) doc.getField("lang")).isEqualTo(Arrays.asList("Hebrew", "Arabic"));
+        assertThat((String) doc.getField("bestCity")).isEqualTo("Tel Aviv");
+        assertThat(doc.hasField("nonExistsField")).isFalse();
+        assertThat((Object) doc.getField("country.TestEmptyField").toString()).isEqualTo("{}");
+
+    }
+
+
+    @Test
     public void testXPath() {
         String field = "xml";
 
