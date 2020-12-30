@@ -106,6 +106,7 @@ public class XmlProcessor implements Processor {
                 xmlNodes.forEach(doc::addField);
             }
         }
+
         return ProcessResult.success();
     }
 
@@ -128,6 +129,7 @@ public class XmlProcessor implements Processor {
 
             xmlNodes.compute(key, (k, oldVal) -> {
                 if (node.getChildNodes().item(0) == null && omitEmptyTagAsFieldEnabled) { return oldVal; }
+                if (node.getChildNodes().item(0) == null && !omitEmptyTagAsFieldEnabled) { return "null"; }
                 if (oldVal == null) return value;
                 if (oldVal instanceof List) {
                     ((List) oldVal).add(value);
