@@ -1,6 +1,5 @@
 package io.logz.sawmill;
 
-import static com.google.common.base.Preconditions.checkState;
 import org.apache.commons.collections4.MapUtils;
 
 import java.util.ArrayList;
@@ -8,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public class Doc {
 
@@ -34,8 +35,8 @@ public class Doc {
         Optional<Object> field = getByPath(source, path);
         try {
             checkState(field.isPresent(), "Couldn't resolve field in path [%s]", path);
-        } catch (IllegalStateException e) {
-            return (T) e.getClass();
+        } catch (Exception e) {
+            return (T) e.getMessage();
         }
         return (T) field.get();
     }

@@ -47,7 +47,7 @@ public class XmlProcessorTest {
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat((String) doc.getField("country.id")).isEqualTo("1");
         assertThat((String) doc.getField("country.name")).isEqualTo("Israel");
-        assertThat((Object) doc.getField("country.TestEmptyField")).isEqualTo(IllegalStateException.class);
+        assertThat((Object) doc.getField("country.TestEmptyField")).isEqualTo("Couldn't resolve field in path [country.TestEmptyField]");
         assertThat((List) doc.getField("country.cities.city"))
                 .isEqualTo(Arrays.asList(ImmutableMap.of("name", "Jerusalem"),
                         ImmutableMap.of("name", "Tel Aviv")));
@@ -65,7 +65,7 @@ public class XmlProcessorTest {
         Doc doc = createDoc(field, VALID_XML);
 
         Map<String, Object> config = createConfig("field", field,
-                "omitEmptyTagAsFieldEnabled", false,
+                "allowNullValue", false,
                 "xpath", ImmutableMap.of("/country/languages/language[@type='official']/text()", "lang",
                 "/country/cities/city[2]/name/text()", "bestCity",
                 "/country/otherField", "nonExistsField",

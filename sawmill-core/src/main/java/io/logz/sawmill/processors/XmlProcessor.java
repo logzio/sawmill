@@ -40,15 +40,15 @@ public class XmlProcessor implements Processor {
     private final String targetField;
     private final Map<XPathExpressionProvider, String> xpath;
     private final boolean storeXml;
-    private final boolean omitEmptyTagAsFieldEnabled;
+    private final boolean allowNullValue;
 
-    public XmlProcessor(DocumentBuilderProvider documentBuilderProvider, String field, String targetField, Map<XPathExpressionProvider, String> xpath, boolean storeXml, boolean omitEmptyTagAsFieldEnabled) {
+    public XmlProcessor(DocumentBuilderProvider documentBuilderProvider, String field, String targetField, Map<XPathExpressionProvider, String> xpath, boolean storeXml, boolean allowNullValue) {
         this.documentBuilderProvider = requireNonNull(documentBuilderProvider);
         this.field = requireNonNull(field);
         this.targetField = targetField;
         this.xpath = xpath;
         this.storeXml = storeXml;
-        this.omitEmptyTagAsFieldEnabled = omitEmptyTagAsFieldEnabled;
+        this.allowNullValue = allowNullValue;
     }
 
     @Override
@@ -128,8 +128,8 @@ public class XmlProcessor implements Processor {
             }
 
             xmlNodes.compute(key, (k, oldVal) -> {
-                if (node.getChildNodes().item(0) == null && omitEmptyTagAsFieldEnabled) { return oldVal; }
-                if (node.getChildNodes().item(0) == null && !omitEmptyTagAsFieldEnabled) { return "null"; }
+                if (node.getChildNodes().item(0) == null && allowNullValue) { return oldVal; }
+                if (node.getChildNodes().item(0) == null && !allowNullValue) { return "null"; }
                 if (oldVal == null) return value;
                 if (oldVal instanceof List) {
                     ((List) oldVal).add(value);
@@ -170,7 +170,7 @@ public class XmlProcessor implements Processor {
                     xmlConfig.getTargetField(),
                     xpath,
                     xmlConfig.isStoreXml(),
-                    xmlConfig.isOmitEmptyTagAsFieldEnabled());
+                    xmlConfig.isAllowNullValue());
         }
     }
 
@@ -179,7 +179,7 @@ public class XmlProcessor implements Processor {
         private String targetField;
         private Map<String, String> xpath;
         private boolean storeXml = true;
-        private boolean omitEmptyTagAsFieldEnabled = true;
+        private boolean allowNullValue = true;
 
         public Configuration() { }
 
@@ -199,7 +199,7 @@ public class XmlProcessor implements Processor {
             return storeXml;
         }
 
-        public boolean isOmitEmptyTagAsFieldEnabled() { return omitEmptyTagAsFieldEnabled; }
+        public boolean isAllowNullValue() { return allowNullValue; }
 
     }
 }
