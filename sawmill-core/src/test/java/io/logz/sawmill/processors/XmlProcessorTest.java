@@ -79,7 +79,7 @@ public class XmlProcessorTest {
         assertThat((List) doc.getField("lang")).isEqualTo(Arrays.asList("Hebrew", "Arabic"));
         assertThat((String) doc.getField("bestCity")).isEqualTo("Tel Aviv");
         assertThat(doc.hasField("nonExistsField")).isFalse();
-        assertThat((Object) doc.getField("country.TestEmptyField").toString()).isEqualTo("{}");
+        assertThat((Object) doc.getField("country.TestEmptyField")).isEqualTo("null");
 
     }
 
