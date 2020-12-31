@@ -113,6 +113,7 @@ public class XmlProcessor implements Processor {
     private Map<String, Object> extractNodes(Node parent) {
         Map<String, Object> xmlNodes = new HashMap<>();
         NodeList nodes = parent.getChildNodes();
+
         for (int i = 0; i < nodes.getLength(); i++) {
             Node node = nodes.item(i);
 
@@ -128,8 +129,10 @@ public class XmlProcessor implements Processor {
             }
 
             xmlNodes.compute(key, (k, oldVal) -> {
-                if (node.getChildNodes().item(0) == null && allowNullValue) { return oldVal; }
-                if (node.getChildNodes().item(0) == null && !allowNullValue) { return "null"; }
+                if (node.getChildNodes().item(0) == null && !allowNullValue) { return oldVal; }
+                if (node.getChildNodes().item(0) == null && allowNullValue) {
+                    return "null";
+                }
                 if (oldVal == null) return value;
                 if (oldVal instanceof List) {
                     ((List) oldVal).add(value);
@@ -137,6 +140,12 @@ public class XmlProcessor implements Processor {
                 }
                 return new ArrayList<>(Arrays.asList(oldVal, value));
             });
+
+            //putting actual null in map
+            if (node.getChildNodes().item(0) == null && allowNullValue) {
+                xmlNodes.replace(key, "null", null);
+            }
+
         }
 
         return xmlNodes;
@@ -179,7 +188,7 @@ public class XmlProcessor implements Processor {
         private String targetField;
         private Map<String, String> xpath;
         private boolean storeXml = true;
-        private boolean allowNullValue = true;
+        private boolean allowNullValue = false;
 
         public Configuration() { }
 
