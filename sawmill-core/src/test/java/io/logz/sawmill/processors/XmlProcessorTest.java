@@ -47,6 +47,7 @@ public class XmlProcessorTest {
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat((String) doc.getField("country.id")).isEqualTo("1");
         assertThat((String) doc.getField("country.name")).isEqualTo("Israel");
+        assertThat(doc.hasField("country.TestEmptyField")).isFalse();
         assertThatThrownBy(() -> doc.getField("country.TestEmptyField")).isInstanceOf(IllegalStateException.class);
         assertThat((List) doc.getField("country.cities.city"))
                 .isEqualTo(Arrays.asList(ImmutableMap.of("name", "Jerusalem"),
@@ -57,33 +58,6 @@ public class XmlProcessorTest {
         assertThat((String) doc.getField("country.currency")).isEqualTo("New Shekel");
         assertThat((List) doc.getField("country.languages.language")).isEqualTo(Arrays.asList("Hebrew", "Arabic", "English"));
     }
-
-    @Test
-    public void testValidXmlWhenOmittingEmptyTagIsNotEnabled() {
-        String field = "xml";
-
-        Doc doc = createDoc(field, VALID_XML);
-
-        Map<String, Object> config = createConfig("field", field,
-                "allowNullValue", true,
-                "xpath", ImmutableMap.of("/country/languages/language[@type='official']/text()", "lang",
-                "/country/cities/city[2]/name/text()", "bestCity",
-                "/country/otherField", "nonExistsField",
-                "/country/TestEmptyField/text()", ""));
-
-        XmlProcessor xmlProcessor = createProcessor(XmlProcessor.class, config);
-
-        ProcessResult processResult = xmlProcessor.process(doc);
-
-        assertThat(processResult.isSucceeded()).isTrue();
-        assertThat((List) doc.getField("lang")).isEqualTo(Arrays.asList("Hebrew", "Arabic"));
-        assertThat((String) doc.getField("bestCity")).isEqualTo("Tel Aviv");
-        assertThat(doc.hasField("nonExistsField")).isFalse();
-        assertThat((String) doc.getField("country.continent")).isEqualTo("Asia");
-        assertThat((Object) doc.getField("country.TestEmptyField")).isNull();
-
-    }
-
 
     @Test
     public void testXPath() {

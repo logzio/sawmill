@@ -40,15 +40,13 @@ public class XmlProcessor implements Processor {
     private final String targetField;
     private final Map<XPathExpressionProvider, String> xpath;
     private final boolean storeXml;
-    private final boolean allowNullValue;
 
-    public XmlProcessor(DocumentBuilderProvider documentBuilderProvider, String field, String targetField, Map<XPathExpressionProvider, String> xpath, boolean storeXml, boolean allowNullValue) {
+    public XmlProcessor(DocumentBuilderProvider documentBuilderProvider, String field, String targetField, Map<XPathExpressionProvider, String> xpath, boolean storeXml) {
         this.documentBuilderProvider = requireNonNull(documentBuilderProvider);
         this.field = requireNonNull(field);
         this.targetField = targetField;
         this.xpath = xpath;
         this.storeXml = storeXml;
-        this.allowNullValue = allowNullValue;
     }
 
     @Override
@@ -129,10 +127,7 @@ public class XmlProcessor implements Processor {
             }
 
             xmlNodes.compute(key, (k, oldVal) -> {
-                if (node.getChildNodes().item(0) == null && !allowNullValue) { return oldVal; }
-                if (node.getChildNodes().item(0) == null && allowNullValue) {
-                    return "null";
-                }
+                if (node.getChildNodes().item(0) == null) { return oldVal; }
                 if (oldVal == null) return value;
                 if (oldVal instanceof List) {
                     ((List) oldVal).add(value);
@@ -140,11 +135,6 @@ public class XmlProcessor implements Processor {
                 }
                 return new ArrayList<>(Arrays.asList(oldVal, value));
             });
-
-            //putting actual null in map
-            if (node.getChildNodes().item(0) == null && allowNullValue) {
-                xmlNodes.replace(key, "null", null);
-            }
 
         }
 
@@ -178,8 +168,7 @@ public class XmlProcessor implements Processor {
                     xmlConfig.getField(),
                     xmlConfig.getTargetField(),
                     xpath,
-                    xmlConfig.isStoreXml(),
-                    xmlConfig.isAllowNullValue());
+                    xmlConfig.isStoreXml());
         }
     }
 
@@ -188,7 +177,6 @@ public class XmlProcessor implements Processor {
         private String targetField;
         private Map<String, String> xpath;
         private boolean storeXml = true;
-        private boolean allowNullValue = false;
 
         public Configuration() { }
 
@@ -207,8 +195,6 @@ public class XmlProcessor implements Processor {
         public boolean isStoreXml() {
             return storeXml;
         }
-
-        public boolean isAllowNullValue() { return allowNullValue; }
 
     }
 }
