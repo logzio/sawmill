@@ -1,6 +1,8 @@
 package io.logz.sawmill.processors;
 
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.GeoIpConfiguration;
+import io.logz.sawmill.Pipeline;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.exceptions.SawmillException;
 import org.junit.Test;
