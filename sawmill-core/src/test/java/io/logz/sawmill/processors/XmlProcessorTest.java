@@ -47,6 +47,8 @@ public class XmlProcessorTest {
         assertThat(processResult.isSucceeded()).isTrue();
         assertThat((String) doc.getField("country.id")).isEqualTo("1");
         assertThat((String) doc.getField("country.name")).isEqualTo("Israel");
+        assertThat(doc.hasField("country.TestEmptyField")).isFalse();
+        assertThatThrownBy(() -> doc.getField("country.TestEmptyField")).isInstanceOf(IllegalStateException.class);
         assertThat((List) doc.getField("country.cities.city"))
                 .isEqualTo(Arrays.asList(ImmutableMap.of("name", "Jerusalem"),
                         ImmutableMap.of("name", "Tel Aviv")));

@@ -104,26 +104,30 @@ public class XmlProcessor implements Processor {
                 xmlNodes.forEach(doc::addField);
             }
         }
+
         return ProcessResult.success();
     }
 
     private Map<String, Object> extractNodes(Node parent) {
         Map<String, Object> xmlNodes = new HashMap<>();
         NodeList nodes = parent.getChildNodes();
+
         for (int i = 0; i < nodes.getLength(); i++) {
             Node node = nodes.item(i);
 
             String key = node.getNodeName();
             Object value;
 
-            if (node.getChildNodes().getLength() == 1 &&
-                    node.getChildNodes().item(0).getNodeValue() != null) {
+            if (node.getChildNodes().getLength() == 1
+                    && node.getChildNodes().item(0) != null
+                    && node.getChildNodes().item(0).getNodeValue() != null ) {
                 value = node.getChildNodes().item(0).getNodeValue();
             } else {
                 value = extractNodes(node);
             }
 
             xmlNodes.compute(key, (k, oldVal) -> {
+                if (node.getChildNodes().item(0) == null) { return oldVal; }
                 if (oldVal == null) return value;
                 if (oldVal instanceof List) {
                     ((List) oldVal).add(value);
@@ -131,6 +135,7 @@ public class XmlProcessor implements Processor {
                 }
                 return new ArrayList<>(Arrays.asList(oldVal, value));
             });
+
         }
 
         return xmlNodes;
@@ -190,5 +195,6 @@ public class XmlProcessor implements Processor {
         public boolean isStoreXml() {
             return storeXml;
         }
+
     }
 }
