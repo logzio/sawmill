@@ -19,7 +19,7 @@ public class FactoryUtils {
 
     public static final TemplateService templateService = new TemplateService();
     public static final ProcessorFactoryRegistry defaultProcessorFactoryRegistry = new ProcessorFactoryRegistry(
-            new ProcessorFactoriesLoader(templateService, new GeoIpConfiguration("GeoIP2-City-Test.mmdb"))
+            new ProcessorFactoriesLoader(templateService, new GeoIpConfiguration("GeoLite2-City.mmdb.gz"))
     );
     public static final ConditionFactoryRegistry defaultConditionFactoryRegistry = new ConditionFactoryRegistry(
             new ConditionalFactoriesLoader(templateService)

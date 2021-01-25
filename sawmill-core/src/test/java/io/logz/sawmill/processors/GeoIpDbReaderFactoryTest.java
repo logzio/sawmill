@@ -13,12 +13,12 @@ public class GeoIpDbReaderFactoryTest {
 
     @Test
     public void shouldCreateDbReaderFromMmdb() throws Exception {
-        assertNotNull(GeoIpDbReaderFactory.createDatabaseReader("GeoIP2-City-Test.mmdb"));
+        assertNotNull(GeoIpDbReaderFactory.createDatabaseReader("GeoLite2-City.mmdb"));
     }
 
     @Test
     public void shouldCreateDbReaderFromTarGz() throws Exception {
-        assertNotNull(GeoIpDbReaderFactory.createDatabaseReader("GeoIP2-City-Test.tar.gz"));
+        assertNotNull(GeoIpDbReaderFactory.createDatabaseReader("GeoLite2-City.mmdb.gz"));
     }
 
     @Test

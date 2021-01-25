@@ -85,7 +85,7 @@ public class SawmillBenchmark {
         pipelineExecutorMetrics = new PipelineExecutionMetricsMBean();
         watchdog = new PipelineExecutionTimeWatchdog(warningThresholdTimeMs, expiredThresholdTimeMs, pipelineExecutorMetrics, context -> { });
         pipelineExecutor = new PipelineExecutor(watchdog, pipelineExecutorMetrics);
-        Pipeline.Factory pipelineFactory = new Pipeline.Factory(new GeoIpConfiguration("GeoIP2-City-Test.mmdb"));
+        Pipeline.Factory pipelineFactory = new Pipeline.Factory(new GeoIpConfiguration("GeoLite2-City.mmdb"));
         pipeline = pipelineFactory.create(pipelineConfig);
     }
 

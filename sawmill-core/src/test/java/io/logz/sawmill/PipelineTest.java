@@ -31,7 +31,7 @@ public class PipelineTest {
         processorFactoryRegistry = new ProcessorFactoryRegistry(
                 new ProcessorFactoriesLoader(
                         new TemplateService(),
-                        new GeoIpConfiguration("GeoIP2-City-Test.mmdb")
+                        new GeoIpConfiguration("GeoLite2-City.mmdb")
                 )
         );
         processorFactoryRegistry.register("test", new TestProcessor.Factory());
