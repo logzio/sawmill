@@ -2,7 +2,6 @@ package io.logz.sawmill.processors;
 
 import com.google.common.io.Resources;
 import com.maxmind.db.CHMCache;
-import com.maxmind.db.Reader;
 import com.maxmind.geoip2.DatabaseReader;
 import io.logz.sawmill.exceptions.SawmillException;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -15,6 +14,7 @@ import java.util.zip.GZIPInputStream;
 class GeoIpDbReaderFactory {
 
     private static final String TAR_GZ_SUFFIX = ".tar.gz";
+    private static final String MMDB_GZ_SUFFIX = ".mmdb.gz";
 
     static DatabaseReader createDatabaseReader(String location) {
         try (InputStream mmdbStream = Resources.getResource(location).openStream()) {
@@ -23,8 +23,11 @@ class GeoIpDbReaderFactory {
                 try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new GZIPInputStream(mmdbStream))) {
                     return initReader(seekToDbFile(tarArchiveInputStream));
                 }
+            } else if (location.endsWith(MMDB_GZ_SUFFIX)) {
+                return initReader(new GZIPInputStream(mmdbStream));
+            } else {
+                return initReader(mmdbStream);
             }
-            return initReader(mmdbStream);
         } catch (Exception e) {
             throw new SawmillException(String.format("Failed to load geoip database from '%s'", location), e);
         }

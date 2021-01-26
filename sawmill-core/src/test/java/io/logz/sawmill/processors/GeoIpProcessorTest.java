@@ -111,7 +111,6 @@ public class GeoIpProcessorTest {
         Doc doc = createDoc(source, ip);
 
         assertThat(geoIpProcessor.process(doc).isSucceeded()).isTrue();
-        assertThat(doc.hasField(target)).isFalse();
     }
 
     @Test

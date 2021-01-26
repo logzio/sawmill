@@ -175,12 +175,12 @@ public class GeoIpProcessor implements Processor {
                 return response.getContinent().getCode();
             }
         },
-        REGION_NAME {
-            @Override
-            public String getValue(CityResponse response) {
-                return response.getLeastSpecificSubdivision().getIsoCode();
-            }
-        },
+//        REGION_NAME {
+//            @Override
+//            public String getValue(CityResponse response) {
+//                return response.getLeastSpecificSubdivision().getIsoCode();
+//            }
+//        },
         REAL_REGION_NAME {
             @Override
             public String getValue(CityResponse response) {
@@ -205,18 +205,18 @@ public class GeoIpProcessor implements Processor {
                 return response.getLocation().getLongitude();
             }
         },
-        TIMEZONE {
-            @Override
-            public Object getValue(CityResponse response) {
-                return response.getLocation().getTimeZone();
-            }
-        },
-        POSTAL_CODE {
-            @Override
-            public Object getValue(CityResponse response) {
-                return response.getPostal().getCode();
-            }
-        },
+//        TIMEZONE {
+//            @Override
+//            public Object getValue(CityResponse response) {
+//                return response.getLocation().getTimeZone();
+//            }
+//        },
+//        POSTAL_CODE {
+//            @Override
+//            public Object getValue(CityResponse response) {
+//                return response.getPostal().getCode();
+//            }
+//        },
         LOCATION {
             @Override
             public Object getValue(CityResponse response) {
@@ -227,13 +227,13 @@ public class GeoIpProcessor implements Processor {
                 }
                 return Arrays.asList(longitude, latitude);
             }
-        },
-        DMA_CODE {
-            @Override
-            public Object getValue(CityResponse response) {
-                return response.getLocation().getMetroCode();
-            }
         };
+//        DMA_CODE {
+//            @Override
+//            public Object getValue(CityResponse response) {
+//                return response.getLocation().getMetroCode();
+//            }
+//        };
 
         public static List<Property> ALL_PROPERTIES = new ArrayList<>(EnumSet.allOf(Property.class));
 
