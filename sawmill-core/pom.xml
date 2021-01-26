@@ -35,7 +35,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>download-mmdb</id>
+                        <id>download-maxmind-mmdb</id>
                         <phase>process-classes</phase>
                         <goals>
                             <goal>run</goal>
@@ -44,6 +44,21 @@
                             <target if="maxMindGeoIpCityUrl">
                                 <!--GeoIp processor DB file (download from maxmind)-->
                                 <get src="${maxMindGeoIpCityUrl}"
+                                     dest="${project.build.outputDirectory}/GeoLite2-City.tar.gz"
+                                     usetimestamp="true"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>download-dbip-mmdb</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target if="dbipGeoIpCityUrl">
+                                <!--GeoIp processor DB file (download from dbip)-->
+                                <get src="${dbipGeoIpCityUrl}"
                                      dest="${project.build.outputDirectory}/GeoLite2-City.mmdb.gz"
                                      usetimestamp="true"/>
                             </target>
