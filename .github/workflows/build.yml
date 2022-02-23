@@ -3,6 +3,12 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-20.04
+    env:
+      CODESIGNING: ${{ secrets.CODESIGNING }}
+      OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+      OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+      GPG_KEY: ${{ secrets.GPG_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
     steps:
       - name: Check Out Source Code
         uses: actions/checkout@v2
@@ -28,7 +34,7 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run: |
           echo 'Run deploy preparation ' ${GITHUB_REF##*/}
-          openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k ${CODESIGNING}
+          openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k $CODESIGNING
           gpg --fast-import release/codesigning.asc
           rm release/codesigning.asc
           ./mvnw versions:set -DnewVersion=${GITHUB_REF#refs/tags/}
