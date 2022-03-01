@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -39,14 +40,16 @@ public class ListIntersectProcessorTest {
     }
 
     @Test
-    public void testEmptyIntersectionDoesNotAddField() throws InterruptedException {
+    public void testEmptyIntersectionAddsEmptyList() throws InterruptedException {
         Processor processor = createProcessor(ListIntersectProcessor.class, LIST_INTERSECT_CONFIG);
         List<Integer> listA = Arrays.asList(1, 2, 3);
         List<Integer> listB = Arrays.asList(4, 5, 6);
         Doc doc = createDoc(SOURCE_FIELD_A, listA, SOURCE_FIELD_B, listB);
         processor.process(doc);
 
-        assertThat(doc.hasField(TARGET_FIELD)).isEqualTo(false);
+        assertThat(doc.hasField(TARGET_FIELD)).isEqualTo(true);
+        Collection<Integer> createdField = doc.getField(TARGET_FIELD);
+        assertThat(createdField).hasSameElementsAs(Collections.emptyList());
     }
 
     @Test
@@ -59,6 +62,7 @@ public class ListIntersectProcessorTest {
         assertThatThrownBy(() -> processor.process(doc))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining(SOURCE_FIELD_A);
+        assertThat(doc.hasField(TARGET_FIELD)).isEqualTo(false);
     }
 
     @Test
@@ -69,5 +73,6 @@ public class ListIntersectProcessorTest {
 
         assertThatThrownBy(() -> processor.process(doc))
                 .isInstanceOf(ClassCastException.class);
+        assertThat(doc.hasField(TARGET_FIELD)).isEqualTo(false);
     }
 }

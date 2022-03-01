@@ -34,9 +34,8 @@ public class ListIntersectProcessor implements Processor {
         Iterable<Object> listB = doc.getField(sourceFieldB);
 
         Set<Object> intersection = new HashSet<>(intersection(listA, listB));
-        if (isNotEmpty(intersection)) {
-            doc.addField(targetField, intersection);
-        }
+        doc.addField(targetField, intersection);
+
         return ProcessResult.success();
     }
 
