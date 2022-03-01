@@ -50,7 +50,7 @@ public class ListIntersectProcessorTest {
     }
 
     @Test
-    public void testMissingSourceFieldsFailProcessing() {
+    public void testMissingSourceFieldsFailsProcessing() {
         String badFieldName = "some-other-field";
         Processor processor = createProcessor(ListIntersectProcessor.class, LIST_INTERSECT_CONFIG);
         List<Integer> list = Arrays.asList(1, 2, 3);
@@ -59,5 +59,15 @@ public class ListIntersectProcessorTest {
         assertThatThrownBy(() -> processor.process(doc))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining(SOURCE_FIELD_A);
+    }
+
+    @Test
+    public void testSourceFieldIsNotIterableFailsProcessing() {
+        Processor processor = createProcessor(ListIntersectProcessor.class, LIST_INTERSECT_CONFIG);
+        String notIterable = "not-iterable-at-all";
+        Doc doc = createDoc(SOURCE_FIELD_A, notIterable, SOURCE_FIELD_B, notIterable);
+
+        assertThatThrownBy(() -> processor.process(doc))
+                .isInstanceOf(ClassCastException.class);
     }
 }
