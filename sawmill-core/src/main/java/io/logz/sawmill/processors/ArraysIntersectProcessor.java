@@ -13,16 +13,15 @@ import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.collections4.CollectionUtils.intersection;
-import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
-@ProcessorProvider(type = "listIntersect", factory = ListIntersectProcessor.Factory.class)
-public class ListIntersectProcessor implements Processor {
+@ProcessorProvider(type = "arraysIntersect", factory = ArraysIntersectProcessor.Factory.class)
+public class ArraysIntersectProcessor implements Processor {
 
     private final String sourceFieldA;
     private final String sourceFieldB;
     private final String targetField;
 
-    public ListIntersectProcessor(String sourceFieldA, String sourceFieldB, String targetField) {
+    public ArraysIntersectProcessor(String sourceFieldA, String sourceFieldB, String targetField) {
         this.sourceFieldA = sourceFieldA;
         this.sourceFieldB = sourceFieldB;
         this.targetField = targetField;
@@ -30,10 +29,10 @@ public class ListIntersectProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
-        Iterable<Object> listA = doc.getField(sourceFieldA);
-        Iterable<Object> listB = doc.getField(sourceFieldB);
+        Iterable<Object> arrayA = doc.getField(sourceFieldA);
+        Iterable<Object> arrayB = doc.getField(sourceFieldB);
 
-        Set<Object> intersection = new HashSet<>(intersection(listA, listB));
+        Set<Object> intersection = new HashSet<>(intersection(arrayA, arrayB));
         doc.addField(targetField, intersection);
 
         return ProcessResult.success();
@@ -46,13 +45,13 @@ public class ListIntersectProcessor implements Processor {
 
         @Override
         public Processor create(Map<String, Object> config) {
-            ListIntersectProcessor.Configuration listIntersectConfig = JsonUtils.fromJsonMap(ListIntersectProcessor.Configuration.class, config);
+            ArraysIntersectProcessor.Configuration arraysIntersectionConfig = JsonUtils.fromJsonMap(ArraysIntersectProcessor.Configuration.class, config);
 
-            requireNonNull(listIntersectConfig.getSourceFieldA(), "sourceFieldA cannot be null");
-            requireNonNull(listIntersectConfig.getSourceFieldB(), "sourceFieldB cannot be null");
-            requireNonNull(listIntersectConfig.getTargetField(), "targetField cannot be null");
+            requireNonNull(arraysIntersectionConfig.getSourceFieldA(), "sourceFieldA cannot be null");
+            requireNonNull(arraysIntersectionConfig.getSourceFieldB(), "sourceFieldB cannot be null");
+            requireNonNull(arraysIntersectionConfig.getTargetField(), "targetField cannot be null");
 
-            return new ListIntersectProcessor(listIntersectConfig.getSourceFieldA(), listIntersectConfig.getSourceFieldB(), listIntersectConfig.targetField);
+            return new ArraysIntersectProcessor(arraysIntersectionConfig.getSourceFieldA(), arraysIntersectionConfig.getSourceFieldB(), arraysIntersectionConfig.targetField);
         }
 
     }

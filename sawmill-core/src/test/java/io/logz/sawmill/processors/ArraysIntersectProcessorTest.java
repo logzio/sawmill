@@ -16,7 +16,7 @@ import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class ListIntersectProcessorTest {
+public class ArraysIntersectProcessorTest {
     private static final String SOURCE_FIELD_A = "source-a-field";
     private static final String SOURCE_FIELD_B = "source-b-field";
     private static final String TARGET_FIELD = "target-field";
@@ -28,10 +28,10 @@ public class ListIntersectProcessorTest {
 
     @Test
     public void testSimpleIntersection() throws InterruptedException {
-        Processor processor = createProcessor(ListIntersectProcessor.class, LIST_INTERSECT_CONFIG);
-        List<Integer> listA = Arrays.asList(1, 2, 3, 3, 4, 5);
-        List<Integer> listB = Arrays.asList(2, 3, 3, 1);
-        Doc doc = createDoc(SOURCE_FIELD_A, listA, SOURCE_FIELD_B, listB);
+        Processor processor = createProcessor(ArraysIntersectProcessor.class, LIST_INTERSECT_CONFIG);
+        List<Integer> arrayA = Arrays.asList(1, 2, 3, 3, 4, 5);
+        List<Integer> arrayB = Arrays.asList(2, 3, 3, 1);
+        Doc doc = createDoc(SOURCE_FIELD_A, arrayA, SOURCE_FIELD_B, arrayB);
         processor.process(doc);
 
         assertThat(doc.hasField(TARGET_FIELD)).isEqualTo(true);
@@ -41,10 +41,10 @@ public class ListIntersectProcessorTest {
 
     @Test
     public void testEmptyIntersectionAddsEmptyList() throws InterruptedException {
-        Processor processor = createProcessor(ListIntersectProcessor.class, LIST_INTERSECT_CONFIG);
-        List<Integer> listA = Arrays.asList(1, 2, 3);
-        List<Integer> listB = Arrays.asList(4, 5, 6);
-        Doc doc = createDoc(SOURCE_FIELD_A, listA, SOURCE_FIELD_B, listB);
+        Processor processor = createProcessor(ArraysIntersectProcessor.class, LIST_INTERSECT_CONFIG);
+        List<Integer> arrayA = Arrays.asList(1, 2, 3);
+        List<Integer> arrayB = Arrays.asList(4, 5, 6);
+        Doc doc = createDoc(SOURCE_FIELD_A, arrayA, SOURCE_FIELD_B, arrayB);
         processor.process(doc);
 
         assertThat(doc.hasField(TARGET_FIELD)).isEqualTo(true);
@@ -55,9 +55,9 @@ public class ListIntersectProcessorTest {
     @Test
     public void testMissingSourceFieldsFailsProcessing() {
         String badFieldName = "some-other-field";
-        Processor processor = createProcessor(ListIntersectProcessor.class, LIST_INTERSECT_CONFIG);
-        List<Integer> list = Arrays.asList(1, 2, 3);
-        Doc doc = createDoc(badFieldName, list, SOURCE_FIELD_B, list);
+        Processor processor = createProcessor(ArraysIntersectProcessor.class, LIST_INTERSECT_CONFIG);
+        List<Integer> array = Arrays.asList(1, 2, 3);
+        Doc doc = createDoc(badFieldName, array, SOURCE_FIELD_B, array);
 
         assertThatThrownBy(() -> processor.process(doc))
                 .isInstanceOf(IllegalStateException.class)
@@ -67,12 +67,11 @@ public class ListIntersectProcessorTest {
 
     @Test
     public void testSourceFieldIsNotIterableFailsProcessing() {
-        Processor processor = createProcessor(ListIntersectProcessor.class, LIST_INTERSECT_CONFIG);
+        Processor processor = createProcessor(ArraysIntersectProcessor.class, LIST_INTERSECT_CONFIG);
         String notIterable = "not-iterable-at-all";
         Doc doc = createDoc(SOURCE_FIELD_A, notIterable, SOURCE_FIELD_B, notIterable);
 
-        assertThatThrownBy(() -> processor.process(doc))
-                .isInstanceOf(ClassCastException.class);
+        assertThatThrownBy(() -> processor.process(doc)).isInstanceOf(ClassCastException.class);
         assertThat(doc.hasField(TARGET_FIELD)).isEqualTo(false);
     }
 }
