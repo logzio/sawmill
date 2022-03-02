@@ -4,7 +4,6 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     env:
-      CODESIGNING: ${{ secrets.CODESIGNING }}
       OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
       OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
       GPG_KEY: ${{ secrets.GPG_KEY }}
@@ -32,6 +31,8 @@ jobs:
 
       - name: Prepare deploy
         if: github.ref == 'refs/heads/master'
+        env:
+          CODESIGNING: ${{ secrets.CODESIGNING }}
         run: |
           echo 'Run deploy preparation ' ${GITHUB_REF##*/}
           openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k "$CODESIGNING"
