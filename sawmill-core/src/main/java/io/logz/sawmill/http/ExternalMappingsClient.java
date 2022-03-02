@@ -9,7 +9,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -26,8 +25,8 @@ public class ExternalMappingsClient {
         this.mappingSourceUrl = new URL(mappingSourceUrl);
     }
 
-    public Map<String, List<String>> getMappings() {
-        Map<String, List<String>> mappings = new HashMap<>();
+    public Map<String, Iterable<String>> getMappings() {
+        Map<String, Iterable<String>> mappings = new HashMap<>();
 
         try {
             HttpURLConnection conn = (HttpURLConnection) mappingSourceUrl.openConnection();
@@ -41,7 +40,7 @@ public class ExternalMappingsClient {
             try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
                 String inputLine;
                 while ((inputLine = in.readLine()) != null) {
-                    Pair<String, List<String>> entry = toKeyValuePair(inputLine);
+                    Pair<String, Iterable<String>> entry = toKeyValuePair(inputLine);
                     mappings.put(entry.getLeft(), entry.getRight());
                 }
             }
@@ -54,12 +53,12 @@ public class ExternalMappingsClient {
         return mappings;
     }
 
-    private Pair<String, List<String>> toKeyValuePair(String inputLine) {
+    private Pair<String, Iterable<String>> toKeyValuePair(String inputLine) {
         String[] keyVal = inputLine.split("=");
         String[] split = keyVal[1].trim().split(",");
 
         String key = keyVal[0].trim();
-        List<String> values = Arrays.stream(split)
+        Iterable<String> values = Arrays.stream(split)
                 .map(String::trim)
                 .collect(Collectors.toList());
 

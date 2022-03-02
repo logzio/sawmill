@@ -12,46 +12,48 @@ import io.logz.sawmill.http.ExternalMappingsClient;
 import io.logz.sawmill.utilities.JsonUtils;
 import java.net.MalformedURLException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "externalMapping", factory = ExternalMappingSourceProcessor.Factory.class)
 public class ExternalMappingSourceProcessor implements Processor {
 
-    private final String keyFieldName;
-    private final String targetFieldName;
+    public static final int MINIMUM_REFRESH_PERIOD_IN_SECONDS = 15;
+    public static final int DISABLE_MAPPING_REFRESH = -1;
+
+    private final Logger logger = LoggerFactory.getLogger(ExternalMappingSourceProcessor.class);
+
+    private final String sourceField;
+    private final String targetField;
     private final ExternalMappingsClient externalMappingsClient;
     private final long mappingRefreshPeriodInSeconds;
+    private ScheduledExecutorService scheduledRefreshMappingsExecutor;
 
     @SuppressWarnings("Guava")
     private final Supplier<Void> lazyInitSupplier;
 
-    private Map<String, List<String>> keyValueMappingsCache;
+    private Map<String, Iterable<String>> keyValueMappingsCache;
 
-    public ExternalMappingSourceProcessor(String keyFieldName, String targetFieldName, String mappingSourceUrl, long mappingRefreshPeriodInSeconds) {
-        this.keyFieldName = requireNonNull(keyFieldName);
-        this.targetFieldName = requireNonNull(targetFieldName);
-
-        try {
-            this.externalMappingsClient = new ExternalMappingsClient(requireNonNull(mappingSourceUrl));
-        } catch (MalformedURLException e) {
-            throw new ProcessorConfigurationException("Cannot create ExternalMappingSourceProcessor due to the malformed url: " + mappingSourceUrl, e);
-        }
-
+    public ExternalMappingSourceProcessor(String sourceField, String targetField, String mappingSourceUrl, long mappingRefreshPeriodInSeconds) throws MalformedURLException {
+        this.sourceField = requireNonNull(sourceField);
+        this.targetField = requireNonNull(targetField);
+        this.externalMappingsClient = new ExternalMappingsClient(requireNonNull(mappingSourceUrl));
         this.mappingRefreshPeriodInSeconds = mappingRefreshPeriodInSeconds;
-
+        
         lazyInitSupplier = Suppliers.memoize(this::lazyInit);
     }
 
 
     private Void lazyInit() {
         refreshExternalMapping();
-        if (mappingRefreshPeriodInSeconds > 0) {
+        if (mappingRefreshPeriodInSeconds != DISABLE_MAPPING_REFRESH) {
             startScheduledExecutor();
         }
         /* return value is not used */
@@ -60,43 +62,57 @@ public class ExternalMappingSourceProcessor implements Processor {
 
     private void refreshExternalMapping() {
         keyValueMappingsCache = externalMappingsClient.getMappings();
+        if (keyValueMappingsCache.isEmpty()) {
+            logger.error("Cannot load external mapping for field: {}", sourceField);
+        }
     }
 
     private void startScheduledExecutor() {
-        ScheduledExecutorService scheduledRulesUpdaterExecutor = Executors.newScheduledThreadPool(1,
+        scheduledRefreshMappingsExecutor = Executors.newScheduledThreadPool(1,
                 new ThreadFactoryBuilder().setNameFormat("refresh-mapping-executor").setDaemon(true).build());
-        scheduledRulesUpdaterExecutor.scheduleAtFixedRate(this::refreshExternalMapping, mappingRefreshPeriodInSeconds,
+        scheduledRefreshMappingsExecutor.scheduleAtFixedRate(this::refreshExternalMapping, mappingRefreshPeriodInSeconds,
                 mappingRefreshPeriodInSeconds, TimeUnit.SECONDS);
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownScheduledExecutor, "shutdown-hook-thread"));
+    }
+
+    private void shutdownScheduledExecutor() {
+        scheduledRefreshMappingsExecutor.shutdown();
     }
 
     @Override
     public ProcessResult process(Doc doc) throws InterruptedException {
         lazyInitSupplier.get();
 
-        if (!doc.hasField(keyFieldName)) {
-            return ProcessResult.success();
+        if (!doc.hasField(sourceField)) {
+            return ProcessResult.failure(String.format("field [%s] is missing", sourceField));
         }
 
-        String key = doc.getField(keyFieldName);
-        List<String> values = keyValueMappingsCache.get(key);
+        if (keyValueMappingsCache.isEmpty()) {
+            doc.appendList("tags", "_externalSourceMappingFailure");
+            return ProcessResult.failure(String.format("field [%s] mapping is missing, external mapping source is empty", sourceField));
+        }
 
-        doc.addField(targetFieldName, values != null ? values : Collections.EMPTY_LIST);
+        String sourceField = doc.getField(this.sourceField);
+        Iterable<String> values = keyValueMappingsCache.get(sourceField);
+
+        doc.addField(targetField, values != null ? values : Collections.EMPTY_LIST);
 
         return ProcessResult.success();
     }
 
     public static class Configuration implements Processor.Configuration {
-        private String keyFieldName;
-        private String targetFieldName;
+        private String sourceField;
+        private String targetField;
         private String mappingSourceUrl;
-        private long mappingRefreshPeriodInSeconds = -1;
+        private long mappingRefreshPeriodInSeconds = 60;
 
-        public String getKeyFieldName() {
-            return keyFieldName;
+
+        public String getSourceField() {
+            return sourceField;
         }
 
-        public String getTargetFieldName() {
-            return targetFieldName;
+        public String getTargetField() {
+            return targetField;
         }
 
         public String getMappingSourceUrl() {
@@ -107,16 +123,18 @@ public class ExternalMappingSourceProcessor implements Processor {
             return mappingRefreshPeriodInSeconds;
         }
 
-        public void validate() throws ProcessorConfigurationException {
-            if (StringUtils.isEmpty(keyFieldName)) {
-                throw new ProcessorConfigurationException("failed to create ExternalMappingSourceProcessor, keyFieldName shouldn't be empty");
-            }
-            if (StringUtils.isEmpty(targetFieldName)) {
-                throw new ProcessorConfigurationException("failed to create ExternalMappingSourceProcessor, targetFieldName shouldn't be empty");
-            }
-            if (StringUtils.isEmpty(mappingSourceUrl)) {
-                throw new ProcessorConfigurationException("failed to create ExternalMappingSourceProcessor, mappingSourceUrl shouldn't be empty");
-            }
+        public void validate() throws IllegalStateException {
+            boolean mappingRefreshPeriodIsGreaterThanMinimum = mappingRefreshPeriodInSeconds > MINIMUM_REFRESH_PERIOD_IN_SECONDS || mappingRefreshPeriodInSeconds == -1;
+
+            checkState(StringUtils.isNotEmpty(sourceField),
+                    "failed to create ExternalMappingSourceProcessor, sourceField shouldn't be empty");
+            checkState(StringUtils.isNotEmpty(targetField),
+                    "failed to create ExternalMappingSourceProcessor, targetField shouldn't be empty");
+            checkState(StringUtils.isNotEmpty(mappingSourceUrl),
+                    "failed to create ExternalMappingSourceProcessor, mappingSourceUrl shouldn't be empty");
+            checkState(mappingRefreshPeriodIsGreaterThanMinimum,
+                    "failed to create ExternalMappingSourceProcessor, mappingRefreshPeriodInSeconds " +
+                            "should be greater or equals to " + MINIMUM_REFRESH_PERIOD_IN_SECONDS);
         }
     }
 
@@ -127,8 +145,13 @@ public class ExternalMappingSourceProcessor implements Processor {
             ExternalMappingSourceProcessor.Configuration processorConfig = JsonUtils.fromJsonMap(ExternalMappingSourceProcessor.Configuration.class, config);
             processorConfig.validate();
 
-            return new ExternalMappingSourceProcessor(processorConfig.getKeyFieldName(), processorConfig.getTargetFieldName(),
-                    processorConfig.getMappingSourceUrl(), processorConfig.getMappingRefreshPeriodInSeconds());
+            try {
+                return new ExternalMappingSourceProcessor(processorConfig.getSourceField(), processorConfig.getTargetField(),
+                        processorConfig.getMappingSourceUrl(), processorConfig.getMappingRefreshPeriodInSeconds());
+            } catch (MalformedURLException e) {
+                throw new ProcessorConfigurationException("Cannot create ExternalMappingSourceProcessor due to the malformed url: "
+                        + processorConfig.getMappingSourceUrl(), e);
+            }
         }
     }
 

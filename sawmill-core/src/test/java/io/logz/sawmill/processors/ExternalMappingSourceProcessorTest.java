@@ -1,6 +1,7 @@
 package io.logz.sawmill.processors;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -15,10 +16,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ExternalMappingSourceProcessorTest {
 
-    public static final String KEY_FIELD_NAME = "author";
+    public static final String SOURCE_FIELD_NAME = "author";
     public static final String TARGET_FIELD_NAME = "books";
 
     private static WireMockServer wireMockServer;
@@ -27,12 +29,27 @@ public class ExternalMappingSourceProcessorTest {
     @BeforeClass
     public static void setUp() {
         wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort());
-        wireMockServer.stubFor(WireMock.get("/mappings").willReturn(
-                ResponseDefinitionBuilder.like(ResponseDefinitionBuilder.responseDefinition().withBody(
-                        "Charles Dickens = Oliver Twist, A Christmas Carol, The Chimes\n" +
-                        "Jack London = White Fang, Martin Eden, Hearts of Three\n" +
-                        "Ernest Hemingway = For Whom the Bell Tolls, A Farewell to Arms, The Old Man and the Sea\n"
-                ).withStatus(200).build())));
+        MappingBuilder bookMappings = WireMock.get("/books").willReturn(
+                ResponseDefinitionBuilder.like(
+                        ResponseDefinitionBuilder.responseDefinition()
+                                .withBody(
+                                        "Charles Dickens = Oliver Twist, A Christmas Carol, The Chimes\n" +
+                                                "Jack London = White Fang, Martin Eden, Hearts of Three\n" +
+                                                "Ernest Hemingway = For Whom the Bell Tolls, A Farewell to Arms, The Old Man and the Sea\n")
+                                .withStatus(200)
+                                .build()
+                )
+        );
+        MappingBuilder emptyMappings = WireMock.get("/empty").willReturn(
+                ResponseDefinitionBuilder.like(
+                        ResponseDefinitionBuilder.responseDefinition()
+                                .withBody("")
+                                .withStatus(200)
+                                .build()
+                )
+        );
+        wireMockServer.stubFor(bookMappings);
+        wireMockServer.stubFor(emptyMappings);
         wireMockServer.start();
         port = wireMockServer.port();
     }
@@ -44,16 +61,16 @@ public class ExternalMappingSourceProcessorTest {
 
     @Test
     public void testExternalMappingSourceProcessor() throws InterruptedException {
-        ExternalMappingSourceProcessor processor = createProcessor();
+        ExternalMappingSourceProcessor processor = createProcessor("/books");
 
-        Doc firstDoc = createDoc(KEY_FIELD_NAME, "Charles Dickens");
+        Doc firstDoc = createDoc(SOURCE_FIELD_NAME, "Charles Dickens");
         processor.process(firstDoc);
 
         assertThat(firstDoc.hasField(TARGET_FIELD_NAME)).isTrue();
         List<String> targetField1 = firstDoc.getField(TARGET_FIELD_NAME);
         assertThat(targetField1).containsAll(Arrays.asList("Oliver Twist", "A Christmas Carol", "The Chimes"));
 
-        Doc secondDoc = createDoc(KEY_FIELD_NAME, "Ernest Hemingway");
+        Doc secondDoc = createDoc(SOURCE_FIELD_NAME, "Ernest Hemingway");
         processor.process(secondDoc);
 
         assertThat(secondDoc.hasField(TARGET_FIELD_NAME)).isTrue();
@@ -63,9 +80,9 @@ public class ExternalMappingSourceProcessorTest {
 
     @Test
     public void testExternalMappingSourceProcessorMissingMapping() throws InterruptedException {
-        ExternalMappingSourceProcessor processor = createProcessor();
+        ExternalMappingSourceProcessor processor = createProcessor("/books");
 
-        Doc doc = createDoc(KEY_FIELD_NAME, "Mark Twain");
+        Doc doc = createDoc(SOURCE_FIELD_NAME, "Unknown Author");
         processor.process(doc);
 
         assertThat(doc.hasField(TARGET_FIELD_NAME)).isTrue();
@@ -73,11 +90,65 @@ public class ExternalMappingSourceProcessorTest {
         assertThat(targetField).isEmpty();
     }
 
-    private ExternalMappingSourceProcessor createProcessor() {
+    @Test
+    public void testMappingIsEmpty() throws InterruptedException {
+        ExternalMappingSourceProcessor processor = createProcessor("/empty");
+
+        Doc doc = createDoc(SOURCE_FIELD_NAME, "test");
+        processor.process(doc);
+
+        assertThat(doc.hasField(TARGET_FIELD_NAME)).isFalse();
+        assertThat(doc.hasField("tags")).isTrue();
+        List<String> tags = doc.getField("tags");
+        assertThat(tags).contains("_externalSourceMappingFailure");
+    }
+
+    @Test
+    public void testMissingConfigurationsFailsCreatingProcessor() {
+        Map<String, Object> firstConfig = ImmutableMap.of(
+                "targetField", TARGET_FIELD_NAME,
+                "mappingSourceUrl", "http://localhost:" + port + "/books"
+        );
+
+        assertThatThrownBy(() -> FactoryUtils.createProcessor(ExternalMappingSourceProcessor.class, firstConfig))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sourceField");
+
+        Map<String, Object> secondConfig = ImmutableMap.of(
+                "sourceField", SOURCE_FIELD_NAME,
+                "mappingSourceUrl", "http://localhost:" + port + "/books"
+        );
+
+        assertThatThrownBy(() -> FactoryUtils.createProcessor(ExternalMappingSourceProcessor.class, secondConfig))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("targetField");
+
+        Map<String, Object> thirdConfig = ImmutableMap.of(
+                "sourceField", SOURCE_FIELD_NAME,
+                "targetField", TARGET_FIELD_NAME
+        );
+
+        assertThatThrownBy(() -> FactoryUtils.createProcessor(ExternalMappingSourceProcessor.class, thirdConfig))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mappingSourceUrl");
+
+        Map<String, Object> fourthConfig = ImmutableMap.of(
+                "sourceField", SOURCE_FIELD_NAME,
+                "targetField", TARGET_FIELD_NAME,
+                "mappingSourceUrl", "http://localhost:" + port + "/books",
+                "mappingRefreshPeriodInSeconds", 1
+        );
+
+        assertThatThrownBy(() -> FactoryUtils.createProcessor(ExternalMappingSourceProcessor.class, fourthConfig))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mappingRefreshPeriodInSeconds");
+    }
+
+    private ExternalMappingSourceProcessor createProcessor(String mappingPath) {
         Map<String, Object> config = ImmutableMap.of(
-                "keyFieldName", KEY_FIELD_NAME,
-                "targetFieldName", TARGET_FIELD_NAME,
-                "mappingSourceUrl", "http://localhost:" + port + "/mappings"
+                "sourceField", SOURCE_FIELD_NAME,
+                "targetField", TARGET_FIELD_NAME,
+                "mappingSourceUrl", "http://localhost:" + port + mappingPath
         );
 
         return FactoryUtils.createProcessor(ExternalMappingSourceProcessor.class, config);
