@@ -122,8 +122,8 @@ public class ExternalMappingSourceProcessor implements Processor {
         private String mappingSourceUrl;
         private long mappingRefreshPeriodInSeconds = 60;
 
-        private int externalMappingReadTimeout = 5000;
         private int externalMappingConnectTimeout = 5000;
+        private int externalMappingReadTimeout = 5000;
 
 
         public String getSourceField() {
@@ -162,10 +162,8 @@ public class ExternalMappingSourceProcessor implements Processor {
             checkState(mappingRefreshPeriodIsGreaterThanMinimum,
                 "failed to create ExternalMappingSourceProcessor, mappingRefreshPeriodInSeconds " +
                     "should be greater or equals to " + MINIMUM_REFRESH_PERIOD_IN_SECONDS);
-            checkState(externalMappingReadTimeout > 0 && externalMappingReadTimeout <= mappingRefreshPeriodInSeconds, 
-                "externalMappingReadTimeout should be greater than 0 and less then or equals to mappingRefreshPeriodInSeconds");
-            checkState(externalMappingConnectTimeout > 0 && externalMappingConnectTimeout <= mappingRefreshPeriodInSeconds, 
-                "externalMappingConnectTimeout should be greater than 0 and less then or equals to mappingRefreshPeriodInSeconds");
+            checkState(externalMappingConnectTimeout > 0, "externalMappingConnectTimeout should be greater than 0");
+            checkState(externalMappingReadTimeout > 0, "externalMappingReadTimeout should be greater than 0");
         }
     }
 
