@@ -35,6 +35,10 @@ jobs:
           CODESIGNING: ${{ secrets.CODESIGNING }}
         run: |
           echo 'Run deploy preparation ' ${GITHUB_REF##*/}
+          echo 'env $CODESIGNING'
+          echo 'env "$CODESIGNING"'
+          echo 'env ' "$CODESIGNING"
+          echo 'env ${{ secrets.CODESIGNING }}'
           openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k $CODESIGNING
           gpg --fast-import release/codesigning.asc
           rm release/codesigning.asc
