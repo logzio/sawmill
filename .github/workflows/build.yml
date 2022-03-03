@@ -31,11 +31,9 @@ jobs:
 
       - name: Prepare deploy
         shell: bash
-        env:
-          CODESIGNING: ${{ secrets.CODESIGNING }}
         run: |
           echo 'Run deploy preparation ' ${GITHUB_REF##*/}
-          openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k $CODESIGNING
+          openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k ${{ secrets.CODESIGNING }}
           gpg --fast-import release/codesigning.asc
           rm release/codesigning.asc
           echo 'finished prepare'
