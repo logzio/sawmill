@@ -1,6 +1,6 @@
 package io.logz.sawmill.processors;
 
-import com.google.common.base.Supplier;
+import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.logz.sawmill.Doc;
@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +30,7 @@ public class ExternalMappingSourceProcessor implements Processor {
     public static final int MINIMUM_REFRESH_PERIOD_IN_SECONDS = 15;
     public static final int DISABLE_MAPPING_REFRESH = -1;
 
-    private final Logger logger = LoggerFactory.getLogger(ExternalMappingSourceProcessor.class);
+    private final static Logger logger = LoggerFactory.getLogger(ExternalMappingSourceProcessor.class);
 
     private final String sourceField;
     private final String targetField;
@@ -38,7 +39,6 @@ public class ExternalMappingSourceProcessor implements Processor {
 
     private static ScheduledExecutorService scheduledRefreshMappingsExecutor;
 
-    @SuppressWarnings("Guava")
     private final Supplier<Void> lazyInitSupplier;
 
     private volatile Map<String, Iterable<String>> keyValueMappingsCache;
@@ -56,8 +56,8 @@ public class ExternalMappingSourceProcessor implements Processor {
     private Void lazyInit() {
         refreshExternalMapping();
         if (mappingRefreshPeriodInSeconds != DISABLE_MAPPING_REFRESH) {
-            initThreadPool();
-            startScheduledExecutor();
+            initScheduledExecutor();
+            scheduleMappingRefreshTask();
         }
         /* return value is not used */
         return null;
@@ -75,24 +75,24 @@ public class ExternalMappingSourceProcessor implements Processor {
         }
 
         if (keyValueMappingsCache.isEmpty()) {
-            logger.error("Cannot load external mapping for field: {}, received an empty map", sourceField);
+            logger.error("Cannot load external mapping for field: {}, mapping is empty", sourceField);
         }
     }
 
-    private void initThreadPool() {
+    private void initScheduledExecutor() {
         if (scheduledRefreshMappingsExecutor != null) return;
         scheduledRefreshMappingsExecutor = Executors.newScheduledThreadPool(1,
             new ThreadFactoryBuilder().setNameFormat("refresh-mapping-executor").setDaemon(true).build());
-    }
-
-    private void startScheduledExecutor() {
-        scheduledRefreshMappingsExecutor.scheduleAtFixedRate(this::refreshExternalMapping, mappingRefreshPeriodInSeconds,
-            mappingRefreshPeriodInSeconds, TimeUnit.SECONDS);
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownScheduledExecutor, "shutdown-hook-thread"));
     }
 
+    private void scheduleMappingRefreshTask() {
+        scheduledRefreshMappingsExecutor.scheduleAtFixedRate(this::refreshExternalMapping, mappingRefreshPeriodInSeconds,
+            mappingRefreshPeriodInSeconds, TimeUnit.SECONDS);
+    }
+
     private void shutdownScheduledExecutor() {
-        scheduledRefreshMappingsExecutor.shutdown();
+        scheduledRefreshMappingsExecutor.shutdownNow();
     }
 
     @Override
@@ -104,12 +104,12 @@ public class ExternalMappingSourceProcessor implements Processor {
         }
 
         if (keyValueMappingsCache.isEmpty()) {
-            doc.appendList("tags", "_externalSourceMappingFailure");
+            doc.appendList("tags", "_externalMappingProcessorFailure");
             return ProcessResult.failure(String.format("field [%s] mapping is missing, external mapping source is empty", sourceField));
         }
 
         String sourceField = doc.getField(this.sourceField);
-        Iterable<String> values = keyValueMappingsCache.get(sourceField);
+        Iterable<String> values = keyValueMappingsCache.get(StringEscapeUtils.escapeJava(sourceField));
 
         doc.addField(targetField, values != null ? values : Collections.EMPTY_LIST);
 
@@ -123,7 +123,7 @@ public class ExternalMappingSourceProcessor implements Processor {
         private long mappingRefreshPeriodInSeconds = 60;
 
         private int externalMappingConnectTimeout = 5000;
-        private int externalMappingReadTimeout = 5000;
+        private int externalMappingReadTimeout = 10000;
 
 
         public String getSourceField() {

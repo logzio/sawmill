@@ -26,6 +26,7 @@ public class ExternalMappingSourceProcessorTest {
     public static final String EMPTY_MAPPING = "/empty";
     public static final String ILLEGAL_FORMAT_MAPPING = "/illegalFormatMapping";
     public static final String NOT_FOUND_MAPPING = "/404";
+    public static final String EMPTY_VALUE_MAPPING = "/emptyValue";
 
     private static WireMockServer wireMockServer;
     private static Integer port;
@@ -46,10 +47,11 @@ public class ExternalMappingSourceProcessorTest {
                     .withBody(
                         "Charles Dickens = Oliver Twist, A Christmas Carol, The Chimes\n" +
                             "Jack London = White Fang, Martin Eden, Hearts of Three\n" +
-                            "Ernest Hemingway = For Whom the Bell Tolls, A Farewell to Arms, The Old Man and the Sea\n"
+                            "\"Ernest Hemingway\" = For Whom the Bell Tolls, A Farewell to Arms, The Old Man and the Sea\n"
                     )
             )
         );
+        wireMockServer.stubFor(get(EMPTY_VALUE_MAPPING).willReturn(aResponse().withBody("a = ").withStatus(200)));
         wireMockServer.stubFor(get(EMPTY_MAPPING).willReturn(aResponse().withBody("").withStatus(200)));
         wireMockServer.stubFor(get(ILLEGAL_FORMAT_MAPPING).willReturn(aResponse().withStatus(200).withBody("a, b, c")));
         wireMockServer.stubFor(get(NOT_FOUND_MAPPING).willReturn(aResponse().withStatus(404).withBody("Not Found")));
@@ -71,7 +73,7 @@ public class ExternalMappingSourceProcessorTest {
         List<String> targetField1 = firstDoc.getField(TARGET_FIELD_NAME);
         assertThat(targetField1).containsAll(Arrays.asList("Oliver Twist", "A Christmas Carol", "The Chimes"));
 
-        Doc secondDoc = createDoc(SOURCE_FIELD_NAME, "Ernest Hemingway");
+        Doc secondDoc = createDoc(SOURCE_FIELD_NAME, "\"Ernest Hemingway\"");
         processor.process(secondDoc);
 
         assertThat(secondDoc.hasField(TARGET_FIELD_NAME)).isTrue();
@@ -92,12 +94,23 @@ public class ExternalMappingSourceProcessorTest {
     }
 
     @Test
-    public void testMappingIsEmpty() throws InterruptedException {
+    public void testEmptyMapping() throws InterruptedException {
         ExternalMappingSourceProcessor processor = createProcessor(EMPTY_MAPPING);
         Doc doc = createDoc(SOURCE_FIELD_NAME, "test");
         processor.process(doc);
 
         assertContainsExternalMappingProcessorFailureTag(doc);
+    }
+
+    @Test
+    public void testEmptyValue() throws InterruptedException {
+        ExternalMappingSourceProcessor processor = createProcessor(EMPTY_VALUE_MAPPING);
+        Doc doc = createDoc(SOURCE_FIELD_NAME, "a");
+        processor.process(doc);
+
+        assertThat(doc.hasField(TARGET_FIELD_NAME)).isTrue();
+        List<String> targetField = doc.getField(TARGET_FIELD_NAME);
+        assertThat(targetField).contains("");
     }
 
     @Test
@@ -163,7 +176,7 @@ public class ExternalMappingSourceProcessorTest {
         assertThat(doc.hasField(TARGET_FIELD_NAME)).isFalse();
         assertThat(doc.hasField("tags")).isTrue();
         List<String> tags = doc.getField("tags");
-        assertThat(tags).contains("_externalSourceMappingFailure");
+        assertThat(tags).contains("_externalMappingProcessorFailure");
     }
 
     private ExternalMappingSourceProcessor createProcessor(String mappingPath) {
