@@ -61,10 +61,6 @@ public class IpCompareCondition implements Condition  {
 			e.printStackTrace();
 		}
         
-        //System.out.println(ipToTest+" "+ipTest+" test");
-        //System.out.println(ipLo+" "+ipLow+" low");
-        //System.out.println(ipHi+" "+ipHigh+" high");
-        //System.out.println(ipToTest >= ipLo && ipToTest <= ipHi);
         return ipToTest >= ipLo && ipToTest <= ipHi;
     }
     
