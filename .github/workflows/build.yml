@@ -30,7 +30,6 @@ jobs:
           ./mvnw test
 
       - name: Prepare deploy
-        if: github.ref == 'refs/heads/master'
         shell: bash
         env:
           CODESIGNING: ${{ secrets.CODESIGNING }}
