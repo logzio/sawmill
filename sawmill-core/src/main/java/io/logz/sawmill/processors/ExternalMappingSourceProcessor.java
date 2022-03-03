@@ -104,7 +104,7 @@ public class ExternalMappingSourceProcessor implements Processor {
         }
 
         if (keyValueMappingsCache.isEmpty()) {
-            doc.appendList("tags", "_externalSourceMappingFailure");
+            doc.appendList("tags", "_externalMappingProcessorFailure");
             return ProcessResult.failure(String.format("field [%s] mapping is missing, external mapping source is empty", sourceField));
         }
 

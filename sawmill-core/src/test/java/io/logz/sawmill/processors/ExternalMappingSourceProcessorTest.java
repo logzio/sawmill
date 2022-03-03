@@ -176,7 +176,7 @@ public class ExternalMappingSourceProcessorTest {
         assertThat(doc.hasField(TARGET_FIELD_NAME)).isFalse();
         assertThat(doc.hasField("tags")).isTrue();
         List<String> tags = doc.getField("tags");
-        assertThat(tags).contains("_externalSourceMappingFailure");
+        assertThat(tags).contains("_externalMappingProcessorFailure");
     }
 
     private ExternalMappingSourceProcessor createProcessor(String mappingPath) {
