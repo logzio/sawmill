@@ -1,15 +1,15 @@
 package io.logz.sawmill.processors;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.utils.FactoryUtils;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -26,75 +26,69 @@ public class ExternalMappingSourceProcessorTest {
     public static final String EMPTY_MAPPING = "/empty";
     public static final String ILLEGAL_FORMAT_MAPPING = "/illegalFormatMapping";
     public static final String NOT_FOUND_MAPPING = "/404";
+    public static final String EMPTY_KEY_MAPPING = "/emptyKey";
     public static final String EMPTY_VALUE_MAPPING = "/emptyValue";
 
-    private static WireMockServer wireMockServer;
     private static Integer port;
+
+    @ClassRule
+    public static WireMockClassRule wireMockRule = new WireMockClassRule(WireMockConfiguration.wireMockConfig().dynamicPort());
+
+    @Rule
+    public WireMockClassRule instanceRule = wireMockRule;
 
     @BeforeClass
     public static void setUp() {
-        wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort());
-        createStubs();
-        wireMockServer.start();
-        port = wireMockServer.port();
-    }
-
-    private static void createStubs() {
-        wireMockServer.stubFor(get(BOOKS_MAPPING)
-            .willReturn(
-                aResponse()
-                    .withStatus(200)
-                    .withBody(
-                        "Charles Dickens = Oliver Twist, A Christmas Carol, The Chimes\n" +
-                            "Jack London = White Fang, Martin Eden, Hearts of Three\n" +
-                            "\"Ernest Hemingway\" = For Whom the Bell Tolls, A Farewell to Arms, The Old Man and the Sea\n"
-                    )
-            )
-        );
-        wireMockServer.stubFor(get(EMPTY_VALUE_MAPPING).willReturn(aResponse().withBody("a = ").withStatus(200)));
-        wireMockServer.stubFor(get(EMPTY_MAPPING).willReturn(aResponse().withBody("").withStatus(200)));
-        wireMockServer.stubFor(get(ILLEGAL_FORMAT_MAPPING).willReturn(aResponse().withStatus(200).withBody("a, b, c")));
-        wireMockServer.stubFor(get(NOT_FOUND_MAPPING).willReturn(aResponse().withStatus(404).withBody("Not Found")));
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        wireMockServer.stop();
+        port = wireMockRule.port();
     }
 
     @Test
     public void testExternalMappingSourceProcessor() throws InterruptedException {
+        setUpBooksMappingStub();
         ExternalMappingSourceProcessor processor = createProcessor(BOOKS_MAPPING);
 
+        /* first author */
         Doc firstDoc = createDoc(SOURCE_FIELD_NAME, "Charles Dickens");
         processor.process(firstDoc);
 
         assertThat(firstDoc.hasField(TARGET_FIELD_NAME)).isTrue();
-        List<String> targetField1 = firstDoc.getField(TARGET_FIELD_NAME);
+        Iterable<String> targetField1 = firstDoc.getField(TARGET_FIELD_NAME);
         assertThat(targetField1).containsAll(Arrays.asList("Oliver Twist", "A Christmas Carol", "The Chimes"));
 
+        /* second author - key contains special characters */
         Doc secondDoc = createDoc(SOURCE_FIELD_NAME, "\"Ernest Hemingway\"");
         processor.process(secondDoc);
 
         assertThat(secondDoc.hasField(TARGET_FIELD_NAME)).isTrue();
-        List<String> targetField2 = secondDoc.getField(TARGET_FIELD_NAME);
+        Iterable<String> targetField2 = secondDoc.getField(TARGET_FIELD_NAME);
         assertThat(targetField2).containsAll(Arrays.asList("For Whom the Bell Tolls", "A Farewell to Arms", "The Old Man and the Sea"));
+
+        /* third author - the same key occurring multiple times in the mapping */
+        Doc thirdDoc = createDoc(SOURCE_FIELD_NAME, "Jack London");
+        processor.process(thirdDoc);
+
+        assertThat(thirdDoc.hasField(TARGET_FIELD_NAME)).isTrue();
+        Iterable<String> targetField3 = thirdDoc.getField(TARGET_FIELD_NAME);
+        assertThat(targetField3).containsAll(Arrays.asList("White Fang", "Martin Eden", "The Sea Wolf"));
     }
 
     @Test
     public void testExternalMappingSourceProcessorMissingMapping() throws InterruptedException {
+        setUpBooksMappingStub();
         ExternalMappingSourceProcessor processor = createProcessor(BOOKS_MAPPING);
 
         Doc doc = createDoc(SOURCE_FIELD_NAME, "Unknown Author");
         processor.process(doc);
 
         assertThat(doc.hasField(TARGET_FIELD_NAME)).isTrue();
-        List<String> targetField = doc.getField(TARGET_FIELD_NAME);
+        Iterable<String> targetField = doc.getField(TARGET_FIELD_NAME);
         assertThat(targetField).isEmpty();
     }
 
     @Test
     public void testEmptyMapping() throws InterruptedException {
+        wireMockRule.stubFor(get(EMPTY_MAPPING).willReturn(aResponse().withBody("").withStatus(200)));
+
         ExternalMappingSourceProcessor processor = createProcessor(EMPTY_MAPPING);
         Doc doc = createDoc(SOURCE_FIELD_NAME, "test");
         processor.process(doc);
@@ -103,18 +97,34 @@ public class ExternalMappingSourceProcessorTest {
     }
 
     @Test
+    public void testEmptyKey() throws InterruptedException {
+        wireMockRule.stubFor(get(EMPTY_KEY_MAPPING).willReturn(aResponse().withBody(" = b").withStatus(200)));
+
+        ExternalMappingSourceProcessor processor = createProcessor(EMPTY_KEY_MAPPING);
+        Doc doc = createDoc(SOURCE_FIELD_NAME, "");
+        processor.process(doc);
+
+        assertContainsExternalMappingProcessorFailureTag(doc);
+    }
+
+    @Test
     public void testEmptyValue() throws InterruptedException {
+        wireMockRule.stubFor(get(EMPTY_VALUE_MAPPING).willReturn(aResponse().withBody("a = ").withStatus(200)));
+
         ExternalMappingSourceProcessor processor = createProcessor(EMPTY_VALUE_MAPPING);
         Doc doc = createDoc(SOURCE_FIELD_NAME, "a");
         processor.process(doc);
 
         assertThat(doc.hasField(TARGET_FIELD_NAME)).isTrue();
-        List<String> targetField = doc.getField(TARGET_FIELD_NAME);
+        Iterable<String> targetField = doc.getField(TARGET_FIELD_NAME);
+        assertThat(targetField).hasSize(1);
         assertThat(targetField).contains("");
     }
 
     @Test
     public void testNotFoundMapping() throws InterruptedException {
+        wireMockRule.stubFor(get(NOT_FOUND_MAPPING).willReturn(aResponse().withStatus(404).withBody("Not Found")));
+
         ExternalMappingSourceProcessor processor = createProcessor(NOT_FOUND_MAPPING);
         Doc doc = createDoc(SOURCE_FIELD_NAME, "test");
         processor.process(doc);
@@ -124,6 +134,8 @@ public class ExternalMappingSourceProcessorTest {
 
     @Test
     public void testIllegalFormat() throws InterruptedException {
+        wireMockRule.stubFor(get(ILLEGAL_FORMAT_MAPPING).willReturn(aResponse().withStatus(200).withBody("a, b, c")));
+
         ExternalMappingSourceProcessor processor = createProcessor(ILLEGAL_FORMAT_MAPPING);
         Doc doc = createDoc(SOURCE_FIELD_NAME, "test");
         processor.process(doc);
@@ -164,18 +176,29 @@ public class ExternalMappingSourceProcessorTest {
             "sourceField", SOURCE_FIELD_NAME,
             "targetField", TARGET_FIELD_NAME,
             "mappingSourceUrl", "http://localhost:" + port + BOOKS_MAPPING,
-            "mappingRefreshPeriodInSeconds", 1
+            "mappingRefreshPeriodInMillis", 1
         );
 
         assertThatThrownBy(() -> FactoryUtils.createProcessor(ExternalMappingSourceProcessor.class, fourthConfig))
             .isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("mappingRefreshPeriodInSeconds");
+            .hasMessageContaining("mappingRefreshPeriodInMillis");
+    }
+
+    private void setUpBooksMappingStub() {
+        wireMockRule.stubFor(get(BOOKS_MAPPING)
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "text/plain; charset=utf-8")
+                    .withBodyFile("books_mapping.properties")
+            )
+        );
     }
 
     private void assertContainsExternalMappingProcessorFailureTag(Doc doc) {
         assertThat(doc.hasField(TARGET_FIELD_NAME)).isFalse();
         assertThat(doc.hasField("tags")).isTrue();
-        List<String> tags = doc.getField("tags");
+        Iterable<String> tags = doc.getField("tags");
         assertThat(tags).contains("_externalMappingProcessorFailure");
     }
 
