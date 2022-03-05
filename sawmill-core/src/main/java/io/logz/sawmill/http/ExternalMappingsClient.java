@@ -1,5 +1,6 @@
 package io.logz.sawmill.http;
 
+import com.google.common.collect.Iterables;
 import io.logz.sawmill.exceptions.HttpRequestExecutionException;
 import io.logz.sawmill.processors.ExternalMappingSourceProcessor;
 import java.io.BufferedReader;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -50,7 +52,7 @@ public class ExternalMappingsClient {
                 while ((inputLine = in.readLine()) != null) {
                     inputLine = StringEscapeUtils.escapeJava(inputLine);
                     Pair<String, Iterable<String>> entry = toKeyValuePair(inputLine);
-                    mappings.put(entry.getLeft(), entry.getRight());
+                    mappings.merge(entry.getLeft(), entry.getRight(), Iterables::concat);
                 }
             }
 
@@ -69,6 +71,8 @@ public class ExternalMappingsClient {
         String[] arraySplit = keyValSplit[1].trim().split(",");
 
         String key = keyValSplit[0].trim();
+        checkState(StringUtils.isNotEmpty(key), "Invalid mapping key value. Key should not be empty");
+
         Iterable<String> values = Arrays.stream(arraySplit)
             .map(String::trim)
             .collect(Collectors.toList());
