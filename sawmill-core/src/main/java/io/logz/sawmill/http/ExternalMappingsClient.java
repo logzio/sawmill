@@ -24,13 +24,14 @@ import static java.util.Objects.requireNonNull;
 
 public class ExternalMappingsClient {
 
-    private final Logger logger = LoggerFactory.getLogger(ExternalMappingsClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(ExternalMappingsClient.class);
+
     private final URL mappingSourceUrl;
     private final int connectTimeout;
     private final int readTimeout;
 
     public ExternalMappingsClient(ExternalMappingSourceProcessor.Configuration configuration) throws MalformedURLException {
-        this.mappingSourceUrl = new URL(requireNonNull(configuration.getMappingSourceUrl()));
+        this.mappingSourceUrl = new URL(configuration.getMappingSourceUrl());
         this.connectTimeout = configuration.getExternalMappingConnectTimeout();
         this.readTimeout = configuration.getExternalMappingReadTimeout();
     }
