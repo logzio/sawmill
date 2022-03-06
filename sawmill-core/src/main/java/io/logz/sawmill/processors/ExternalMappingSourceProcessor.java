@@ -1,7 +1,6 @@
 package io.logz.sawmill.processors;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.logz.sawmill.Doc;
@@ -18,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
