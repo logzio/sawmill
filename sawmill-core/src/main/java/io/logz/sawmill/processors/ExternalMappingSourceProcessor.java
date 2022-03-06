@@ -64,7 +64,8 @@ public class ExternalMappingSourceProcessor implements Processor {
         return null;
     }
 
-    private void refreshExternalMapping() {
+    @VisibleForTesting
+    protected void refreshExternalMapping() {
         try {
             keyValueMappingsCache = externalMappingsClient.loadMappings();
         } catch (Exception e) {
@@ -131,14 +132,11 @@ public class ExternalMappingSourceProcessor implements Processor {
 
         @VisibleForTesting
         Configuration(
-            String sourceField, String targetField, String mappingSourceUrl, long mappingRefreshPeriodInMillis,
-            int externalMappingConnectTimeout, int externalMappingReadTimeout) {
+            String sourceField, String targetField, String mappingSourceUrl, long mappingRefreshPeriodInMillis) {
             this.sourceField = sourceField;
             this.targetField = targetField;
             this.mappingSourceUrl = mappingSourceUrl;
             this.mappingRefreshPeriodInMillis = mappingRefreshPeriodInMillis;
-            this.externalMappingConnectTimeout = externalMappingConnectTimeout;
-            this.externalMappingReadTimeout = externalMappingReadTimeout;
         }
 
         public String getSourceField() {
