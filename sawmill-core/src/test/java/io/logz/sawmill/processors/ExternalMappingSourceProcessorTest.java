@@ -7,6 +7,7 @@ import io.logz.sawmill.Doc;
 import io.logz.sawmill.utils.FactoryUtils;
 import java.util.Arrays;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -25,6 +26,7 @@ public class ExternalMappingSourceProcessorTest {
     public static final String BOOKS_MAPPING = "/books";
     public static final String EMPTY_MAPPING = "/empty";
     public static final String ILLEGAL_FORMAT_MAPPING = "/illegalFormatMapping";
+    public static final String LARGE_FILE_MAPPING = "/largeFile";
     public static final String NOT_FOUND_MAPPING = "/404";
     public static final String EMPTY_KEY_MAPPING = "/emptyKey";
     public static final String EMPTY_VALUE_MAPPING = "/emptyValue";
@@ -144,6 +146,36 @@ public class ExternalMappingSourceProcessorTest {
     }
 
     @Test
+    public void testMappingFileExceedsMaximumSize() throws InterruptedException {
+        wireMockRule.stubFor(get(LARGE_FILE_MAPPING).willReturn(
+                aResponse().withStatus(200)
+                    .withBody("a=b" + StringUtils.repeat(",c", (int) ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_BYTES))
+            )
+        );
+
+        ExternalMappingSourceProcessor processor = createProcessor(LARGE_FILE_MAPPING);
+        Doc doc = createDoc(SOURCE_FIELD_NAME, "a");
+        processor.process(doc);
+
+        assertContainsExternalMappingProcessorFailureTag(doc);
+    }
+
+    @Test
+    public void testMappingFileExceedsMaximumLength() throws InterruptedException {
+        wireMockRule.stubFor(get(LARGE_FILE_MAPPING).willReturn(
+                aResponse().withStatus(200)
+                    .withBody(StringUtils.repeat("a=b\n", (int) ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_LINES + 1))
+            )
+        );
+
+        ExternalMappingSourceProcessor processor = createProcessor(LARGE_FILE_MAPPING);
+        Doc doc = createDoc(SOURCE_FIELD_NAME, "a");
+        processor.process(doc);
+
+        assertContainsExternalMappingProcessorFailureTag(doc);
+    }
+
+    @Test
     public void testMissingConfigurationsFailsCreatingProcessor() {
         Map<String, Object> firstConfig = ImmutableMap.of(
             "targetField", TARGET_FIELD_NAME,
@@ -199,7 +231,7 @@ public class ExternalMappingSourceProcessorTest {
         assertThat(doc.hasField(TARGET_FIELD_NAME)).isFalse();
         assertThat(doc.hasField("tags")).isTrue();
         Iterable<String> tags = doc.getField("tags");
-        assertThat(tags).contains("_externalMappingProcessorFailure");
+        assertThat(tags).contains(ExternalMappingSourceProcessor.Constants.PROCESSOR_FAILURE_TAG);
     }
 
     private ExternalMappingSourceProcessor createProcessor(String mappingPath) {
