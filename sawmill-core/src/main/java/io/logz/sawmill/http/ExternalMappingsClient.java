@@ -65,6 +65,8 @@ public class ExternalMappingsClient {
             int linesCount = 0;
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
+                if (inputLine.isEmpty()) continue;
+
                 if (++linesCount > ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_LINES) {
                     throw new ProcessorInitializationException(
                         String.format("Cannot load external mappings, the mapping length exceeds the limit of %d lines",
