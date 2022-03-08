@@ -206,7 +206,7 @@ public class ExternalMappingSourceProcessor implements Processor {
         public static final int MINIMUM_REFRESH_PERIOD_IN_MILLIS = 15_000;
         public static final int DISABLE_MAPPING_REFRESH = -1;
 
-        public static final long EXTERNAL_MAPPING_MAX_BYTES = 50_000_000;
+        public static final long EXTERNAL_MAPPING_MAX_BYTES = 50 * 1024 * 1024;
         public static final long EXTERNAL_MAPPING_MAX_LINES = 50_000;
 
         public static final String PROCESSOR_FAILURE_TAG = "_externalMappingProcessorFailure";
