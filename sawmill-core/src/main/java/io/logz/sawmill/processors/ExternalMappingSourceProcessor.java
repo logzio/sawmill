@@ -28,9 +28,6 @@ import static java.util.Objects.requireNonNull;
 @ProcessorProvider(type = "externalMapping", factory = ExternalMappingSourceProcessor.Factory.class)
 public class ExternalMappingSourceProcessor implements Processor {
 
-    public static final int MINIMUM_REFRESH_PERIOD_IN_MILLIS = 15_000;
-    public static final int DISABLE_MAPPING_REFRESH = -1;
-
     private final static Logger logger = LoggerFactory.getLogger(ExternalMappingSourceProcessor.class);
 
     private final String sourceField;
@@ -43,6 +40,7 @@ public class ExternalMappingSourceProcessor implements Processor {
     private final Supplier<Void> lazyInitSupplier;
 
     private volatile Map<String, Iterable<String>> keyValueMappingsCache;
+    private volatile boolean refreshErrorOccurred = false;
 
     public ExternalMappingSourceProcessor(Configuration configuration) throws MalformedURLException {
         this.sourceField = requireNonNull(configuration.getSourceField());
@@ -56,7 +54,7 @@ public class ExternalMappingSourceProcessor implements Processor {
 
     private Void lazyInit() {
         refreshExternalMapping();
-        if (mappingRefreshPeriodInMillis != DISABLE_MAPPING_REFRESH) {
+        if (mappingRefreshPeriodInMillis != Constants.DISABLE_MAPPING_REFRESH) {
             initScheduledExecutor();
             scheduleMappingRefreshTask();
         }
@@ -68,8 +66,10 @@ public class ExternalMappingSourceProcessor implements Processor {
     protected void refreshExternalMapping() {
         try {
             keyValueMappingsCache = externalMappingsClient.loadMappings();
+            refreshErrorOccurred = false;
         } catch (Exception e) {
             logger.error("Cannot load external mapping for field {} due to an unexpected error", sourceField, e);
+            refreshErrorOccurred = true;
         }
 
         if (keyValueMappingsCache == null) {
@@ -105,8 +105,11 @@ public class ExternalMappingSourceProcessor implements Processor {
             return ProcessResult.failure(String.format("field [%s] is missing", sourceField));
         }
 
+        if (keyValueMappingsCache.isEmpty() || refreshErrorOccurred) {
+            doc.appendList("tags", Constants.PROCESSOR_FAILURE_TAG);
+        }
+
         if (keyValueMappingsCache.isEmpty()) {
-            doc.appendList("tags", "_externalMappingProcessorFailure");
             return ProcessResult.failure(String.format("field [%s] mapping is missing, external mapping source is empty", sourceField));
         }
 
@@ -165,7 +168,7 @@ public class ExternalMappingSourceProcessor implements Processor {
 
         public void validate() throws IllegalStateException {
             boolean mappingRefreshPeriodIsGreaterThanMinimum =
-                mappingRefreshPeriodInMillis > MINIMUM_REFRESH_PERIOD_IN_MILLIS || mappingRefreshPeriodInMillis == -1;
+                mappingRefreshPeriodInMillis > Constants.MINIMUM_REFRESH_PERIOD_IN_MILLIS || mappingRefreshPeriodInMillis == -1;
 
             checkState(StringUtils.isNotEmpty(sourceField),
                 "failed to create ExternalMappingSourceProcessor, sourceField shouldn't be empty");
@@ -175,7 +178,7 @@ public class ExternalMappingSourceProcessor implements Processor {
                 "failed to create ExternalMappingSourceProcessor, mappingSourceUrl shouldn't be empty");
             checkState(mappingRefreshPeriodIsGreaterThanMinimum,
                 "failed to create ExternalMappingSourceProcessor, mappingRefreshPeriodInMillis " +
-                    "should be greater or equals to " + MINIMUM_REFRESH_PERIOD_IN_MILLIS);
+                    "should be greater or equals to " + Constants.MINIMUM_REFRESH_PERIOD_IN_MILLIS);
             checkState(externalMappingConnectTimeout > 0, "externalMappingConnectTimeout should be greater than 0");
             checkState(externalMappingReadTimeout > 0, "externalMappingReadTimeout should be greater than 0");
         }
@@ -195,6 +198,18 @@ public class ExternalMappingSourceProcessor implements Processor {
                     + processorConfig.getMappingSourceUrl(), e);
             }
         }
+    }
+
+    public static final class Constants {
+        private Constants() {}
+
+        public static final int MINIMUM_REFRESH_PERIOD_IN_MILLIS = 15_000;
+        public static final int DISABLE_MAPPING_REFRESH = -1;
+
+        public static final long EXTERNAL_MAPPING_MAX_BYTES = 50_000_000;
+        public static final long EXTERNAL_MAPPING_MAX_LINES = 50_000;
+
+        public static final String PROCESSOR_FAILURE_TAG = "_externalMappingProcessorFailure";
     }
 
 }
