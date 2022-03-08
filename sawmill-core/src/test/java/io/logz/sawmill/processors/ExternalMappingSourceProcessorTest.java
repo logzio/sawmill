@@ -163,6 +163,7 @@ public class ExternalMappingSourceProcessorTest {
     public void testMappingFileExceedsMaximumLength() throws InterruptedException {
         wireMockRule.stubFor(get(LARGE_FILE_MAPPING).willReturn(
             aResponse().withStatus(200)
+                .withHeader(HttpHeaders.CONTENT_LENGTH, "5000000")
                 .withBody(StringUtils.repeat("a=b\n", (int) ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_LINES + 1))
             )
         );
