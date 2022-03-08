@@ -1,7 +1,6 @@
 package io.logz.sawmill.http;
 
 import com.google.common.collect.Iterables;
-import com.google.common.net.HttpHeaders;
 import io.logz.sawmill.exceptions.HttpRequestExecutionException;
 import io.logz.sawmill.exceptions.ProcessorInitializationException;
 import io.logz.sawmill.processors.ExternalMappingSourceProcessor;
@@ -49,10 +48,6 @@ public class ExternalMappingsClient {
                 throw new HttpRequestExecutionException("Couldn't load external mappings. Message: " + conn.getResponseMessage());
             }
 
-            if (hasContentLengthHeader(conn)) {
-                validateContentLength(conn);
-            }
-
             loadMappingsFromHttpConnection(conn, mappings);
         } catch (IOException e) {
             logger.error("Failed to get external mappings", e);
@@ -63,12 +58,12 @@ public class ExternalMappingsClient {
     }
 
     private void loadMappingsFromHttpConnection(HttpURLConnection connection, Map<String, Iterable<String>> mappings) throws IOException {
-        MappingSizeTracker mappingSizeTracker = new MappingSizeTracker(!hasContentLengthHeader(connection));
+        MappingSizeTracker mappingSizeTracker = new MappingSizeTracker();
 
         try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
-                if (inputLine.isEmpty()) continue;
+                if (inputLine.trim().isEmpty()) continue;
 
                 mappingSizeTracker.increaseTotalInputSize(inputLine);
                 validateMappingSize(mappingSizeTracker);
@@ -78,20 +73,6 @@ public class ExternalMappingsClient {
                 mappings.merge(entry.getLeft(), entry.getRight(), Iterables::concat);
             }
         }
-    }
-
-    private void validateContentLength(HttpURLConnection conn) {
-        long externalMappingSize = Long.parseLong(conn.getHeaderField(HttpHeaders.CONTENT_LENGTH));
-        if (externalMappingSize > ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_BYTES) {
-            throw new ProcessorInitializationException(
-                String.format("Cannot load external mappings, the size of the mapping %d exceeds the limit of %d bytes",
-                    externalMappingSize, ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_BYTES)
-            );
-        }
-    }
-
-    private boolean hasContentLengthHeader(HttpURLConnection conn) {
-        return conn.getHeaderField(HttpHeaders.CONTENT_LENGTH) != null;
     }
 
     private void validateMappingSize(MappingSizeTracker mappingSizeTracker) {
@@ -130,17 +111,9 @@ public class ExternalMappingsClient {
         private long linesCount = 0;
         private long bytesCount = 0;
 
-        private final boolean trackBytesCount;
-
-        public MappingSizeTracker(boolean trackBytesCount) {
-            this.trackBytesCount = trackBytesCount;
-        }
-
         public void increaseTotalInputSize(String inputLine) {
             linesCount++;
-            if (trackBytesCount) {
-                bytesCount += inputLine.getBytes().length;
-            }
+            bytesCount += inputLine.getBytes().length;
         }
 
         public boolean isMaxLinesCountExceeded() {
@@ -148,7 +121,7 @@ public class ExternalMappingsClient {
         }
 
         public boolean isMaxSizeExceeded() {
-            return trackBytesCount && bytesCount > ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_BYTES;
+            return bytesCount > ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_BYTES;
         }
     }
 }

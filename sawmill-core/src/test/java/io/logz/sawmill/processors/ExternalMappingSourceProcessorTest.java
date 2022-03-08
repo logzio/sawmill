@@ -3,7 +3,6 @@ package io.logz.sawmill.processors;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.net.HttpHeaders;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.utils.FactoryUtils;
 import java.util.Arrays;
@@ -149,11 +148,13 @@ public class ExternalMappingSourceProcessorTest {
     @Test
     public void testMappingFileExceedsMaximumSize() throws InterruptedException {
         wireMockRule.stubFor(get(LARGE_FILE_MAPPING).willReturn(
-            aResponse().withStatus(200).withHeader(HttpHeaders.CONTENT_LENGTH, "60000000").withBody("a = b, c"))
+                aResponse().withStatus(200)
+                    .withBody("a=b" + StringUtils.repeat(",c", (int) ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_BYTES))
+            )
         );
 
         ExternalMappingSourceProcessor processor = createProcessor(LARGE_FILE_MAPPING);
-        Doc doc = createDoc(SOURCE_FIELD_NAME, "test");
+        Doc doc = createDoc(SOURCE_FIELD_NAME, "a");
         processor.process(doc);
 
         assertContainsExternalMappingProcessorFailureTag(doc);
@@ -162,9 +163,8 @@ public class ExternalMappingSourceProcessorTest {
     @Test
     public void testMappingFileExceedsMaximumLength() throws InterruptedException {
         wireMockRule.stubFor(get(LARGE_FILE_MAPPING).willReturn(
-            aResponse().withStatus(200)
-                .withHeader(HttpHeaders.CONTENT_LENGTH, "5000000")
-                .withBody(StringUtils.repeat("a=b\n", (int) ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_LINES + 1))
+                aResponse().withStatus(200)
+                    .withBody(StringUtils.repeat("a=b\n", (int) ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_LINES + 1))
             )
         );
 
