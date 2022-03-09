@@ -30,6 +30,7 @@ jobs:
           ./mvnw test
 
       - name: Prepare deploy
+        if: github.ref == 'refs/heads/master'
         shell: bash
         env:
           CODESIGNING: ${{ secrets.CODESIGNING }}
@@ -38,9 +39,6 @@ jobs:
           openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k $CODESIGNING
           gpg --batch --fast-import release/codesigning.asc
           rm release/codesigning.asc
-          echo ${{ github.event.release.tag_name }}
-          echo ${GITHUB_REF#refs/tags/}
-          echo ${GITHUB_REF}
           ./mvnw versions:set -DnewVersion=${GITHUB_REF#refs/tags/}
 
       - name: Deploy
