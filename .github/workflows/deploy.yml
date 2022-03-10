@@ -23,7 +23,6 @@ jobs:
           cache: 'maven'
 
       - name: Prepare deploy
-        if: github.ref == 'refs/heads/master'
         shell: bash
         env:
           CODESIGNING: ${{ secrets.CODESIGNING }}
@@ -35,7 +34,6 @@ jobs:
           ./mvnw versions:set -DnewVersion=${GITHUB_REF#refs/tags/}
 
       - name: Deploy
-        if: github.ref == 'refs/heads/master'
         run: |
           echo 'Deploy'
           ./mvnw deploy --settings release/settings.xml
