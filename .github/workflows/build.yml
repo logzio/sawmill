@@ -3,11 +3,6 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-20.04
-    env:
-      OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-      OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-      GPG_KEY: ${{ secrets.GPG_KEY }}
-      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
     steps:
       - name: Check Out Source Code
         uses: actions/checkout@v2
@@ -28,22 +23,3 @@ jobs:
         run: |
           echo 'Start tests on ' ${GITHUB_REF##*/}
           ./mvnw test
-
-      - name: Prepare deploy
-        if: github.ref == 'refs/heads/master'
-        shell: bash
-        env:
-          CODESIGNING: ${{ secrets.CODESIGNING }}
-        run: |
-          echo 'Run deploy preparation ' ${GITHUB_REF##*/}
-          openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k $CODESIGNING
-          gpg --batch --fast-import release/codesigning.asc
-          rm release/codesigning.asc
-          ./mvnw versions:set -DnewVersion=${GITHUB_REF#refs/tags/}
-
-      - name: Deploy
-        if: github.ref == 'refs/heads/master'
-        run: |
-          echo 'Deploy'
-          ./mvnw deploy --settings release/settings.xml
-          echo 'Deploy finished successfully'
