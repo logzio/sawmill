@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.HttpHeaders;
 import static com.google.common.base.Preconditions.checkState;
 
 public class ExternalMappingsClient {
@@ -114,7 +115,7 @@ public class ExternalMappingsClient {
     private void setIfModifiedSinceHeader(HttpURLConnection conn, Long lastModified) {
         String lastModifiedValue = DateTimeFormatter.RFC_1123_DATE_TIME.format(
             ZonedDateTime.ofInstant(Instant.ofEpochMilli(lastModified), ZoneOffset.UTC));
-        conn.setRequestProperty("If-Modified-Since", lastModifiedValue);
+        conn.setRequestProperty(HttpHeaders.IF_MODIFIED_SINCE, lastModifiedValue);
     }
 
     private static class MappingSizeTracker {

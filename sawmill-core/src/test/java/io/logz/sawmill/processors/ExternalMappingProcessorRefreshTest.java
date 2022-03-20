@@ -10,6 +10,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import org.apache.http.HttpHeaders;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -140,8 +141,8 @@ public class ExternalMappingProcessorRefreshTest {
             .willReturn(
                 aResponse()
                     .withStatus(200)
-                    .withHeader("Content-Type", "text/plain; charset=utf-8")
-                    .withHeader("Last-Modified",
+                    .withHeader(HttpHeaders.CONTENT_TYPE, "text/plain; charset=utf-8")
+                    .withHeader(HttpHeaders.LAST_MODIFIED,
                         DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.ofInstant(Instant.now(), ZoneOffset.UTC))
                     )
                     .withBodyFile("books_mapping.properties")
@@ -154,8 +155,8 @@ public class ExternalMappingProcessorRefreshTest {
             .willReturn(
                 aResponse()
                     .withStatus(200)
-                    .withHeader("Content-Type", "text/plain; charset=utf-8")
-                    .withHeader("Last-Modified",
+                    .withHeader(HttpHeaders.CONTENT_TYPE, "text/plain; charset=utf-8")
+                    .withHeader(HttpHeaders.LAST_MODIFIED,
                         DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.ofInstant(Instant.now(), ZoneOffset.UTC))
                     )
                     .withBodyFile("updated_books_mapping.properties")
@@ -169,7 +170,7 @@ public class ExternalMappingProcessorRefreshTest {
             .willReturn(
                 aResponse()
                     .withStatus(200)
-                    .withHeader("Content-Type", "text/plain; charset=utf-8")
+                    .withHeader(HttpHeaders.CONTENT_TYPE, "text/plain; charset=utf-8")
                     .withBodyFile("books_mapping.properties")
             )
             .willSetStateTo(BOOKS_MAPPING_NOT_FOUND_STATE)
@@ -191,7 +192,7 @@ public class ExternalMappingProcessorRefreshTest {
             .willReturn(
                 aResponse()
                     .withStatus(200)
-                    .withHeader("Content-Type", "text/plain; charset=utf-8")
+                    .withHeader(HttpHeaders.CONTENT_TYPE, "text/plain; charset=utf-8")
                     .withBodyFile("books_mapping.properties")
             )
             .willSetStateTo(BOOKS_MAPPING_NOT_MODIFIED_STATE)
@@ -203,7 +204,7 @@ public class ExternalMappingProcessorRefreshTest {
                 aResponse()
                     .withStatus(304)
                     .withBody("Not Modified")
-                    .withHeader("Last-Modified",
+                    .withHeader(HttpHeaders.LAST_MODIFIED,
                         DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.ofInstant(Instant.now(), ZoneOffset.UTC))
                     )
             )
