@@ -10,6 +10,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,13 +22,9 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import static com.google.common.base.Preconditions.checkState;
 
 public class ExternalMappingsClient {
-
-    private static final Logger logger = LoggerFactory.getLogger(ExternalMappingsClient.class);
 
     private final URL mappingSourceUrl;
     private final int connectTimeout;
@@ -36,28 +36,30 @@ public class ExternalMappingsClient {
         this.readTimeout = configuration.getExternalMappingReadTimeout();
     }
 
-    public Map<String, Iterable<String>> loadMappings() {
-        Map<String, Iterable<String>> mappings = new HashMap<>();
+    public ExternalMappingResponse loadMappings(Long lastModified) throws IOException {
+        HttpURLConnection conn = (HttpURLConnection) mappingSourceUrl.openConnection();
 
-        try {
-            HttpURLConnection conn = (HttpURLConnection) mappingSourceUrl.openConnection();
-            conn.setConnectTimeout(connectTimeout);
-            conn.setReadTimeout(readTimeout);
+        setIfModifiedSinceHeader(conn, lastModified);
+        conn.setConnectTimeout(connectTimeout);
+        conn.setReadTimeout(readTimeout);
 
-            if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                throw new HttpRequestExecutionException("Couldn't load external mappings. Message: " + conn.getResponseMessage());
-            }
-
-            loadMappingsFromHttpConnection(conn, mappings);
-        } catch (IOException e) {
-            logger.error("Failed to get external mappings", e);
-            throw new HttpRequestExecutionException(e.getMessage(), e);
+        if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+            return new ExternalMappingResponse(false, conn.getLastModified(), null);
         }
 
-        return mappings;
+        if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+            throw new HttpRequestExecutionException(
+                String.format("Couldn't load external mappings. Response status: %d Message: %s",
+                    conn.getResponseCode(), conn.getResponseMessage())
+            );
+        }
+
+        Map<String, Iterable<String>> mappings = loadMappingsFromHttpConnection(conn);
+        return new ExternalMappingResponse(true, conn.getLastModified(), mappings);
     }
 
-    private void loadMappingsFromHttpConnection(HttpURLConnection connection, Map<String, Iterable<String>> mappings) throws IOException {
+    private Map<String, Iterable<String>> loadMappingsFromHttpConnection(HttpURLConnection connection) throws IOException {
+        Map<String, Iterable<String>> mappings = new HashMap<>();
         MappingSizeTracker mappingSizeTracker = new MappingSizeTracker();
 
         try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
@@ -73,6 +75,8 @@ public class ExternalMappingsClient {
                 mappings.merge(entry.getLeft(), entry.getRight(), Iterables::concat);
             }
         }
+
+        return mappings;
     }
 
     private void validateMappingSize(MappingSizeTracker mappingSizeTracker) {
@@ -105,6 +109,12 @@ public class ExternalMappingsClient {
             .collect(Collectors.toList());
 
         return new ImmutablePair<>(key, values);
+    }
+
+    private void setIfModifiedSinceHeader(HttpURLConnection conn, Long lastModified) {
+        String lastModifiedValue = DateTimeFormatter.RFC_1123_DATE_TIME.format(
+            ZonedDateTime.ofInstant(Instant.ofEpochMilli(lastModified), ZoneOffset.UTC));
+        conn.setRequestProperty("If-Modified-Since", lastModifiedValue);
     }
 
     private static class MappingSizeTracker {
