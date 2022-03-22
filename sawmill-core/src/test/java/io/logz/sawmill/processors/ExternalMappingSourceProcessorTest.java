@@ -8,6 +8,7 @@ import io.logz.sawmill.utils.FactoryUtils;
 import java.util.Arrays;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpHeaders;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -221,7 +222,7 @@ public class ExternalMappingSourceProcessorTest {
             .willReturn(
                 aResponse()
                     .withStatus(200)
-                    .withHeader("Content-Type", "text/plain; charset=utf-8")
+                    .withHeader(HttpHeaders.CONTENT_TYPE, "text/plain; charset=utf-8")
                     .withBodyFile("books_mapping.properties")
             )
         );
