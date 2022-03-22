@@ -45,7 +45,7 @@ public class ExternalMappingsClient {
         conn.setReadTimeout(readTimeout);
 
         if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
-            return new ExternalMappingResponse(false, conn.getLastModified(), null);
+            return new ExternalMappingResponse(conn.getLastModified(), null);
         }
 
         if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -56,7 +56,7 @@ public class ExternalMappingsClient {
         }
 
         Map<String, Iterable<String>> mappings = loadMappingsFromHttpConnection(conn);
-        return new ExternalMappingResponse(true, conn.getLastModified(), mappings);
+        return new ExternalMappingResponse(conn.getLastModified(), mappings);
     }
 
     private Map<String, Iterable<String>> loadMappingsFromHttpConnection(HttpURLConnection connection) throws IOException {

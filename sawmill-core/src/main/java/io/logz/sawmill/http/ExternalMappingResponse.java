@@ -3,18 +3,16 @@ package io.logz.sawmill.http;
 import java.util.Map;
 
 public class ExternalMappingResponse {
-    private final Boolean modified;
     private final Long lastModified;
     private final Map<String, Iterable<String>> mappings;
 
-    public ExternalMappingResponse(Boolean modified, Long lastModified, Map<String, Iterable<String>> mappings) {
-        this.modified = modified;
+    public ExternalMappingResponse(Long lastModified, Map<String, Iterable<String>> mappings) {
         this.lastModified = lastModified;
         this.mappings = mappings;
     }
 
-    public Boolean isModified() {
-        return modified;
+    public boolean isModified() {
+        return mappings != null;
     }
 
     public Long getLastModified() {
