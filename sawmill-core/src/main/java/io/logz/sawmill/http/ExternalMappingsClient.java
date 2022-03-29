@@ -2,6 +2,7 @@ package io.logz.sawmill.http;
 
 import com.google.common.collect.Iterables;
 import io.logz.sawmill.exceptions.HttpRequestExecutionException;
+import io.logz.sawmill.exceptions.ProcessorInitializationException;
 import io.logz.sawmill.processors.ExternalMappingSourceProcessor;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,6 +10,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,13 +22,10 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.http.HttpHeaders;
 import static com.google.common.base.Preconditions.checkState;
 
 public class ExternalMappingsClient {
-
-    private static final Logger logger = LoggerFactory.getLogger(ExternalMappingsClient.class);
 
     private final URL mappingSourceUrl;
     private final int connectTimeout;
@@ -35,33 +37,63 @@ public class ExternalMappingsClient {
         this.readTimeout = configuration.getExternalMappingReadTimeout();
     }
 
-    public Map<String, Iterable<String>> loadMappings() {
+    public ExternalMappingResponse loadMappings(Long lastModified) throws IOException {
+        HttpURLConnection conn = (HttpURLConnection) mappingSourceUrl.openConnection();
+
+        setIfModifiedSinceHeader(conn, lastModified);
+        conn.setConnectTimeout(connectTimeout);
+        conn.setReadTimeout(readTimeout);
+
+        if (conn.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+            return new ExternalMappingResponse(conn.getLastModified(), null);
+        }
+
+        if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+            throw new HttpRequestExecutionException(
+                String.format("Couldn't load external mappings. Response status: %d Message: %s",
+                    conn.getResponseCode(), conn.getResponseMessage())
+            );
+        }
+
+        Map<String, Iterable<String>> mappings = loadMappingsFromHttpConnection(conn);
+        return new ExternalMappingResponse(conn.getLastModified(), mappings);
+    }
+
+    private Map<String, Iterable<String>> loadMappingsFromHttpConnection(HttpURLConnection connection) throws IOException {
         Map<String, Iterable<String>> mappings = new HashMap<>();
+        MappingSizeTracker mappingSizeTracker = new MappingSizeTracker();
 
-        try {
-            HttpURLConnection conn = (HttpURLConnection) mappingSourceUrl.openConnection();
-            conn.setConnectTimeout(connectTimeout);
-            conn.setReadTimeout(readTimeout);
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                if (inputLine.trim().isEmpty()) continue;
 
-            if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                throw new HttpRequestExecutionException("Couldn't load external mappings. Message: " + conn.getResponseMessage());
+                mappingSizeTracker.increaseTotalInputSize(inputLine);
+                validateMappingSize(mappingSizeTracker);
+
+                inputLine = StringEscapeUtils.escapeJava(inputLine);
+                Pair<String, Iterable<String>> entry = toKeyValuePair(inputLine);
+                mappings.merge(entry.getLeft(), entry.getRight(), Iterables::concat);
             }
-
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
-                String inputLine;
-                while ((inputLine = in.readLine()) != null) {
-                    inputLine = StringEscapeUtils.escapeJava(inputLine);
-                    Pair<String, Iterable<String>> entry = toKeyValuePair(inputLine);
-                    mappings.merge(entry.getLeft(), entry.getRight(), Iterables::concat);
-                }
-            }
-
-        } catch (IOException e) {
-            logger.error("Failed to get external mappings", e);
-            throw new HttpRequestExecutionException(e.getMessage(), e);
         }
 
         return mappings;
+    }
+
+    private void validateMappingSize(MappingSizeTracker mappingSizeTracker) {
+        if (mappingSizeTracker.isMaxSizeExceeded()) {
+            throw new ProcessorInitializationException(
+                String.format("Cannot load external mappings, the mapping size exceeds the limit of %d bytes",
+                    ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_BYTES)
+            );
+        }
+
+        if (mappingSizeTracker.isMaxLinesCountExceeded()) {
+            throw new ProcessorInitializationException(
+                String.format("Cannot load external mappings, the mapping length exceeds the limit of %d lines",
+                    ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_LINES)
+            );
+        }
     }
 
     private Pair<String, Iterable<String>> toKeyValuePair(String inputLine) {
@@ -78,5 +110,29 @@ public class ExternalMappingsClient {
             .collect(Collectors.toList());
 
         return new ImmutablePair<>(key, values);
+    }
+
+    private void setIfModifiedSinceHeader(HttpURLConnection conn, Long lastModified) {
+        String lastModifiedValue = DateTimeFormatter.RFC_1123_DATE_TIME.format(
+            ZonedDateTime.ofInstant(Instant.ofEpochMilli(lastModified), ZoneOffset.UTC));
+        conn.setRequestProperty(HttpHeaders.IF_MODIFIED_SINCE, lastModifiedValue);
+    }
+
+    private static class MappingSizeTracker {
+        private long linesCount = 0;
+        private long bytesCount = 0;
+
+        public void increaseTotalInputSize(String inputLine) {
+            linesCount++;
+            bytesCount += inputLine.getBytes().length;
+        }
+
+        public boolean isMaxLinesCountExceeded() {
+            return linesCount > ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_LINES;
+        }
+
+        public boolean isMaxSizeExceeded() {
+            return bytesCount > ExternalMappingSourceProcessor.Constants.EXTERNAL_MAPPING_MAX_BYTES;
+        }
     }
 }
