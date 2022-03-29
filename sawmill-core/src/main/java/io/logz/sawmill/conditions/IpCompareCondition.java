@@ -39,6 +39,9 @@ public class IpCompareCondition implements Condition  {
     @Override
     public boolean evaluate(Doc doc) {
         
+	if (!doc.hasField(ipTest, String.class)) return false;
+        String value = (doc.getField(this.ipTest));
+
         long ipLo = 0;
 		try {
 			ipLo = ipToLong(InetAddress.getByName(ipLow));
@@ -55,7 +58,7 @@ public class IpCompareCondition implements Condition  {
 		}
         long ipToTest = 0;
 		try {
-			ipToTest = ipToLong(InetAddress.getByName(ipTest));
+			ipToTest = ipToLong(InetAddress.getByName(value));
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
