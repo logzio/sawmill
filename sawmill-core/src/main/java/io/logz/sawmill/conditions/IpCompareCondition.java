@@ -6,9 +6,9 @@ import io.logz.sawmill.annotations.ConditionProvider;
 import io.logz.sawmill.parser.ConditionParser;
 import io.logz.sawmill.utilities.JsonUtils;
 
-
-import java.net.*;
-import java.util.*;
+import java.net.InetAddress; 
+import java.net.UnknownHostException; 
+import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
