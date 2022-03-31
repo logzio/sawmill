@@ -28,7 +28,7 @@ public class DocumentBuilderProviderTest {
         assertXmlWithDefinedDocType(XML_WITH_WEB_DOCTYPE);
     }
 
-    private void assertXmlWithDefinedDocType(String xml) {
+    private void assertXmlWithForbiddenDocTypeThrowsException(String xml) {
         InputStream xmlFile = DocumentBuilderProviderTest.class.getResourceAsStream(xml);
         assertThatThrownBy(() -> new DocumentBuilderProvider().provide().parse(xmlFile))
                 .hasMessageStartingWith("DOCTYPE is disallowed");
