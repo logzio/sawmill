@@ -17,10 +17,10 @@ public class IpCompareCondition implements Condition  {
 	
 	private String ipHigh;
 	private String ipLow;
-	private String ipTest;
+	private String field;
 	
-	public IpCompareCondition(String ipTest, String ipLow, String ipHigh) {
-		this.ipTest = requireNonNull(ipTest);
+	public IpCompareCondition(String field, String ipLow, String ipHigh) {
+		this.field = requireNonNull(field);
 		this.ipHigh = requireNonNull(ipHigh);
 		this.ipLow = requireNonNull(ipLow);
 		
@@ -39,8 +39,8 @@ public class IpCompareCondition implements Condition  {
     @Override
     public boolean evaluate(Doc doc) {
         
-	if (!doc.hasField(ipTest, String.class)) return false;
-        String value = (doc.getField(this.ipTest));
+	if (!doc.hasField(field, String.class)) return false;
+        String value = (doc.getField(this.field));
 
         long ipLo = 0;
 		try {
@@ -75,7 +75,7 @@ public class IpCompareCondition implements Condition  {
         public IpCompareCondition create(Map<String, Object> config, ConditionParser conditionParser) {
         	IpCompareCondition.Configuration configuration = JsonUtils.fromJsonMap(IpCompareCondition.Configuration.class, config);
             return new IpCompareCondition(
-            		configuration.getIpTest(),
+            		configuration.getField(),
                     configuration.getIpLow(),
                     configuration.getIpHigh());
         }
@@ -87,12 +87,12 @@ public class IpCompareCondition implements Condition  {
 
     	private String ipHigh;
     	private String ipLow;
-    	private String ipTest;
+    	private String field;
 
         public Configuration() {}
         
-        public Configuration(String ipTest, String ipLow, String ipHigh) {
-    		this.ipTest = ipTest;
+        public Configuration(String field, String ipLow, String ipHigh) {
+    		this.field = field;
     		this.ipHigh = ipHigh;
     		this.ipLow = ipLow;
         }
@@ -105,8 +105,8 @@ public class IpCompareCondition implements Condition  {
             return ipLow;
         }
 
-        public String getIpTest() {
-            return ipTest;
+        public String getField() {
+            return field;
         }
 
     }
