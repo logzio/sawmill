@@ -8,7 +8,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class DocumentBuilderProviderTest {
 
-    private static final String XML_FILE = "/test_xml_injection.xml";
+    private static final String XML_WITH_FILE_DOCTYPE = "/test_xml_file_injection.xml";
+    private static final String XML_WITH_WEB_DOCTYPE = "/test_xml_web_injection.xml";
 
     @Test
     public void testDocumentBuilderProviderReturnsNonNullEntity() {
@@ -18,8 +19,17 @@ public class DocumentBuilderProviderTest {
     }
 
     @Test
-    public void testParseXml() {
-        InputStream xmlFile = DocumentBuilderProviderTest.class.getResourceAsStream(XML_FILE);
+    public void testParseXmlWithBlockedFileDoctype() {
+        assertXmlWithDefinedDocType(XML_WITH_FILE_DOCTYPE);
+    }
+
+    @Test
+    public void testParseXmlWithBlockedWebDoctype() {
+        assertXmlWithDefinedDocType(XML_WITH_WEB_DOCTYPE);
+    }
+
+    private void assertXmlWithDefinedDocType(String xml) {
+        InputStream xmlFile = DocumentBuilderProviderTest.class.getResourceAsStream(xml);
         assertThatThrownBy(() -> new DocumentBuilderProvider().provide().parse(xmlFile))
                 .hasMessageStartingWith("DOCTYPE is disallowed");
     }
