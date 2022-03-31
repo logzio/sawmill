@@ -20,12 +20,12 @@ public class DocumentBuilderProviderTest {
 
     @Test
     public void testParseXmlWithBlockedFileDoctype() {
-        assertXmlWithDefinedDocType(XML_WITH_FILE_DOCTYPE);
+        assertXmlWithForbiddenDocTypeThrowsException(XML_WITH_FILE_DOCTYPE);
     }
 
     @Test
     public void testParseXmlWithBlockedWebDoctype() {
-        assertXmlWithDefinedDocType(XML_WITH_WEB_DOCTYPE);
+        assertXmlWithForbiddenDocTypeThrowsException(XML_WITH_WEB_DOCTYPE);
     }
 
     private void assertXmlWithForbiddenDocTypeThrowsException(String xml) {
