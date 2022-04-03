@@ -29,6 +29,10 @@ public class ArraysIntersectProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
+        if (!doc.hasField(sourceFieldA) || !doc.hasField(sourceFieldB)) {
+            return ProcessResult.failure("One or both input fields are missing");
+        }
+
         Iterable<Object> arrayA = doc.getField(sourceFieldA);
         Iterable<Object> arrayB = doc.getField(sourceFieldB);
 

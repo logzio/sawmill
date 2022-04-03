@@ -2,6 +2,7 @@ package io.logz.sawmill.processors;
 
 import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
+import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import org.junit.Test;
 
@@ -53,16 +54,17 @@ public class ArraysIntersectProcessorTest {
     }
 
     @Test
-    public void testMissingSourceFieldsFailsProcessing() {
+    public void testMissingSourceFieldsFailsProcessing() throws InterruptedException {
         String badFieldName = "some-other-field";
         Processor processor = createProcessor(ArraysIntersectProcessor.class, LIST_INTERSECT_CONFIG);
         List<Integer> array = Arrays.asList(1, 2, 3);
         Doc doc = createDoc(badFieldName, array, SOURCE_FIELD_B, array);
 
-        assertThatThrownBy(() -> processor.process(doc))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining(SOURCE_FIELD_A);
-        assertThat(doc.hasField(TARGET_FIELD)).isEqualTo(false);
+
+        ProcessResult processResult = processor.process(doc);
+        assertThat(processResult.isSucceeded()).isFalse();
+        assertThat(processResult.getError()).isPresent();
+        assertThat(processResult.getError().get().getMessage()).contains("One or both input fields are missing");
     }
 
     @Test
