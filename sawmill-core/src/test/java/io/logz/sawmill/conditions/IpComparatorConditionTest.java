@@ -30,7 +30,7 @@ public class IpComparatorConditionTest {
 
         Map<String, Object> config = createConfig("field", field,
                 "ipHigh", ipHigh, "ipLow", ipLow );
-        IpCompare ipComparatorCondition = new IpCompare.Factory().create(config, conditionParser);
+        IpCompareCondition ipComparatorCondition = new IpCompareCondition.Factory().create(config, conditionParser);
 
         Doc doc = createDoc("field1", "192.150.3.0");
         assertThat(ipComparatorCondition.evaluate(doc)).isTrue();
