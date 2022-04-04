@@ -42,7 +42,7 @@ public class IpComparatorConditionTest {
         assertThat(ipComparatorCondition.evaluate(doc)).isFalse();
     }
 
-    public void testIncorrectIpHightInput() {
+    public void testIncorrectIpHighInput() {
         String field = "field1";
         String ipHigh = "badInput";
         String ipLow = "192.100.3.0";
@@ -60,6 +60,68 @@ public class IpComparatorConditionTest {
 
         doc = createDoc("field1", "192.50.3.0");
         assertThat(ipComparatorCondition.evaluate(doc)).isFalse();
+    }
+
+    public void testIncorrectIpLowInput() {
+        String field = "field1";
+        String ipHigh = "192.100.3.0";
+        String ipLow = "badinput";
+
+
+        Map<String, Object> config = createConfig("field", field,
+                "ipHigh", ipHigh, "ipLow", ipLow );
+        IpCompareCondition ipComparatorCondition = new IpCompareCondition.Factory().create(config, conditionParser);
+
+        Doc doc = createDoc("field1", "192.150.3.0");
+        assertThat(ipComparatorCondition.evaluate(doc)).isFalse();
+
+    }
+	    public void testIncorrectIpHighOrLowInput() {
+        String field = "field1";
+        String ipHigh = "badInput";
+        String ipLow = "badInput2";
+
+        Map<String, Object> config = createConfig("field", field,
+                "ipHigh", ipHigh, "ipLow", ipLow );
+        IpCompareCondition ipComparatorCondition = new IpCompareCondition.Factory().create(config, conditionParser);
+        assertThatThrownBy(() -> ipComparatorCondition.evaluate(createDoc("field1", "192.50.3.0")))
+        .isInstanceOf(UnknownHostException.class)
+        .hasMessageContaining("nodename nor servname provided");
+    }
+    
+    public void testIncorrectFieldInput() {
+        String field = "field1";
+        String ipHigh = "192.200.3.0";
+        String ipLow = "192.100.3.0";
+
+        Map<String, Object> config = createConfig("field", field,
+                "ipHigh", ipHigh, "ipLow", ipLow );
+        IpCompareCondition ipComparatorCondition = new IpCompareCondition.Factory().create(config, conditionParser);
+        assertThatThrownBy(() -> ipComparatorCondition.evaluate(createDoc("field1", "badinput")))
+        .isInstanceOf(UnknownHostException.class)
+        .hasMessageContaining("nodename nor servname provided");
+    }
+    
+    public void testBadConfig() {
+    	 String field = "field1";
+         String ipHigh = "192.200.3.0";
+         String ipLow = "192.100.3.0";
+         
+    	 Map<String, Object> config = createConfig("field", field,"ipHigh", ipHigh);
+         IpCompareCondition ipComparatorCondition = new IpCompareCondition.Factory().create(config, conditionParser);
+         assertThatThrownBy(() -> ipComparatorCondition.evaluate(createDoc("field1", "192.50.3.0")))
+         .isInstanceOf(NullPointerException.class);
+         
+         config = createConfig("field", field,"ipLow", ipLow);
+         IpCompareCondition ipComparatorCondition2 = new IpCompareCondition.Factory().create(config, conditionParser);
+         assertThatThrownBy(() -> ipComparatorCondition2.evaluate(createDoc("field1", "192.50.3.0")))
+         .isInstanceOf(NullPointerException.class);
+         
+         config = createConfig("ipLow", ipLow);
+         IpCompareCondition ipComparatorCondition3 = new IpCompareCondition.Factory().create(config, conditionParser);
+         assertThatThrownBy(() -> ipComparatorCondition3.evaluate(createDoc("fieldWrong", "192.50.3.0")))
+         .isInstanceOf(NullPointerException.class);
+    	
     }
 
 }
