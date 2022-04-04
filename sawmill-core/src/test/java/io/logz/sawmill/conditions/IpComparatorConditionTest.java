@@ -42,41 +42,8 @@ public class IpComparatorConditionTest {
         assertThat(ipComparatorCondition.evaluate(doc)).isFalse();
     }
 
-    public void testIncorrectIpHighInput() {
-        String field = "field1";
-        String ipHigh = "badInput";
-        String ipLow = "192.100.3.0";
 
-
-        Map<String, Object> config = createConfig("field", field,
-                "ipHigh", ipHigh, "ipLow", ipLow );
-        IpCompareCondition ipComparatorCondition = new IpCompareCondition.Factory().create(config, conditionParser);
-
-        Doc doc = createDoc("field1", "192.150.3.0");
-        assertThat(ipComparatorCondition.evaluate(doc)).isTrue();
-
-        doc = createDoc("field1", "192.300.3.0");
-        assertThat(ipComparatorCondition.evaluate(doc)).isFalse();
-
-        doc = createDoc("field1", "192.50.3.0");
-        assertThat(ipComparatorCondition.evaluate(doc)).isFalse();
-    }
-
-    public void testIncorrectIpLowInput() {
-        String field = "field1";
-        String ipHigh = "192.100.3.0";
-        String ipLow = "badinput";
-
-
-        Map<String, Object> config = createConfig("field", field,
-                "ipHigh", ipHigh, "ipLow", ipLow );
-        IpCompareCondition ipComparatorCondition = new IpCompareCondition.Factory().create(config, conditionParser);
-
-        Doc doc = createDoc("field1", "192.150.3.0");
-        assertThat(ipComparatorCondition.evaluate(doc)).isFalse();
-
-    }
-	    public void testIncorrectIpHighOrLowInput() {
+    public void testIncorrectIpHighOrLowInput() {
         String field = "field1";
         String ipHigh = "badInput";
         String ipLow = "badInput2";
