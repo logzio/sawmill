@@ -72,6 +72,7 @@ public class ExternalMappingSourceProcessor implements Processor {
             ExternalMappingResponse externalMappingResponse = externalMappingsClient.loadMappings(lastModifiedTime.get());
             if (!externalMappingResponse.isModified()) {
                 logger.debug("External mapping didn't change since {}. Skipping refresh.", lastModifiedTime.get());
+                refreshErrorOccurred = false;
                 return;
             }
 
