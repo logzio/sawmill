@@ -6,11 +6,14 @@ import io.logz.sawmill.utils.FactoryUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.net.UnknownHostException;
 import java.util.Map;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createConfig;
+import static io.logz.sawmill.utils.FactoryUtils.createCondition;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class IpComparatorConditionTest {
 	
@@ -69,26 +72,11 @@ public class IpComparatorConditionTest {
         .hasMessageContaining("nodename nor servname provided");
     }
     
-    public void testBadConfig() {
-    	 String field = "field1";
-         String ipHigh = "192.200.3.0";
-         String ipLow = "192.100.3.0";
-         
-    	 Map<String, Object> config = createConfig("field", field,"ipHigh", ipHigh);
-         IpCompareCondition ipComparatorCondition = new IpCompareCondition.Factory().create(config, conditionParser);
-         assertThatThrownBy(() -> ipComparatorCondition.evaluate(createDoc("field1", "192.50.3.0")))
-         .isInstanceOf(NullPointerException.class);
-         
-         config = createConfig("field", field,"ipLow", ipLow);
-         IpCompareCondition ipComparatorCondition2 = new IpCompareCondition.Factory().create(config, conditionParser);
-         assertThatThrownBy(() -> ipComparatorCondition2.evaluate(createDoc("field1", "192.50.3.0")))
-         .isInstanceOf(NullPointerException.class);
-         
-         config = createConfig("ipLow", ipLow);
-         IpCompareCondition ipComparatorCondition3 = new IpCompareCondition.Factory().create(config, conditionParser);
-         assertThatThrownBy(() -> ipComparatorCondition3.evaluate(createDoc("fieldWrong", "192.50.3.0")))
-         .isInstanceOf(NullPointerException.class);
-    	
+    @Test
+    public void testBadConfigs() {
+        assertThatThrownBy(() -> createCondition(IpCompareCondition.class)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createCondition(IpCompareCondition.class, "ipHigh", "192.200.3.0")).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> createCondition(IpCompareCondition.class, "ipLow", "192.100.3.0")).isInstanceOf(NullPointerException.class);
     }
 
 }
