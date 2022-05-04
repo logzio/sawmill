@@ -46,22 +46,19 @@ public class IpCompareCondition implements Condition  {
 		try {
 			ipLo = ipToLong(InetAddress.getByName(ipLow));
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(String.format("Invalid ip address [%s]", ipLow), e);
 		}
         long ipHi = 0;
 		try {
 			ipHi = ipToLong(InetAddress.getByName(ipHigh));
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(String.format("Invalid ip address [%s]", ipHigh), e);
 		}
         long ipToTest = 0;
 		try {
 			ipToTest = ipToLong(InetAddress.getByName(value));
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException(String.format("Invalid ip address [%s]", value), e);
 		}
         
         return ipToTest >= ipLo && ipToTest <= ipHi;
