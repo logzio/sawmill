@@ -15,9 +15,9 @@ import static java.util.Objects.requireNonNull;
 @ConditionProvider(type = "ipRange", factory = IpCompareCondition.Factory.class)
 public class IpCompareCondition implements Condition  {
 	
-	private String ipHigh;
-	private String ipLow;
-	private String field;
+	private final String ipHigh;
+	private final String ipLow;
+	private final String field;
 	
 	public IpCompareCondition(String field, String ipLow, String ipHigh) {
 		this.field = requireNonNull(field);
