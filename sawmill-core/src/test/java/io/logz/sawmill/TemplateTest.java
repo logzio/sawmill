@@ -88,6 +88,13 @@ public class TemplateTest {
     }
 
     @Test
+    public void testInvalidAccessWithMustachePartials() {
+        assertThatThrownBy(() -> new TemplateService().createTemplate("This is my host file content:\n {{>/etc/hosts}}"))
+                .isInstanceOf(MustacheException.class)
+                .hasMessageContaining("Disallowed: resource requested");
+    }
+
+    @Test
     public void testDateTemplate() {
         String dateFormat = "dd.MM.yyyy";
         Template template = new TemplateService().createTemplate("Today is {{#dateTemplate}}" + dateFormat + "{{/dateTemplate}}");
@@ -103,8 +110,8 @@ public class TemplateTest {
         Template template = new TemplateService().createTemplate("Today is {{#dateTemplate}}" + dateFormat + "{{/dateTemplate}}");
         Doc doc = createDoc("field1", "value1");
 
-        assertThatThrownBy(() -> template.render(doc)).isInstanceOf(MustacheException.class);
-        assertThatThrownBy(() -> template.render(doc)).hasCauseExactlyInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> template.render(doc)).isInstanceOf(MustacheException.class)
+                                                      .hasCauseExactlyInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
