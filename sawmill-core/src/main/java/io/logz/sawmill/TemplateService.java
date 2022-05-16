@@ -4,6 +4,8 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 import io.logz.sawmill.exceptions.SawmillException;
 
+import io.logz.sawmill.mustache.factories.UnescapedMustacheFactory;
+import io.logz.sawmill.mustache.factories.UnescapedWithJsonStringMustacheFactory;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;

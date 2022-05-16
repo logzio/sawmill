@@ -1,9 +1,9 @@
-package io.logz.sawmill;
+package io.logz.sawmill.mustache.factories;
 
-import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.MustacheException;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
-
+import com.google.common.collect.ImmutableSet;
+import io.logz.sawmill.utilities.JsonUtils;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
@@ -11,9 +11,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class UnescapedMustacheFactory extends DefaultMustacheFactory {
-    public UnescapedMustacheFactory() {
-        super();
+public class UnescapedWithJsonStringMustacheFactory extends SafeMustacheCustomVisitorFactory {
+    public UnescapedWithJsonStringMustacheFactory() {
+        super(ImmutableSet.of(), ".");
 
         this.setObjectHandler(new ListTransformObjectHandler());
     }
@@ -28,6 +28,15 @@ public class UnescapedMustacheFactory extends DefaultMustacheFactory {
     }
 
     public class ListTransformObjectHandler extends ReflectionObjectHandler {
+        @Override
+        public String stringify(Object object) {
+            if (object instanceof Map) {
+                return JsonUtils.toJsonString(object);
+            }
+
+            return super.stringify(object);
+        }
+
         @Override
         public Object coerce(final Object object) {
             if (object != null && object instanceof List) {
