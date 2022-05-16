@@ -1,5 +1,6 @@
 package io.logz.sawmill;
 
+import com.github.mustachejava.MustacheException;
 import com.google.common.collect.ImmutableMap;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -102,7 +103,8 @@ public class TemplateTest {
         Template template = new TemplateService().createTemplate("Today is {{#dateTemplate}}" + dateFormat + "{{/dateTemplate}}");
         Doc doc = createDoc("field1", "value1");
 
-        assertThatThrownBy(() -> template.render(doc)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> template.render(doc)).isInstanceOf(MustacheException.class);
+        assertThatThrownBy(() -> template.render(doc)).hasCauseExactlyInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
