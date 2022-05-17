@@ -5,12 +5,12 @@ import com.github.mustachejava.MustacheException;
 import com.github.mustachejava.MustacheVisitor;
 import com.github.mustachejava.SafeMustacheFactory;
 import com.github.mustachejava.TemplateContext;
-import java.util.Set;
+import java.util.Collections;
 
 public class SafeMustacheCustomVisitorFactory extends SafeMustacheFactory {
 
-    public SafeMustacheCustomVisitorFactory(Set<String> allowedResourceNames, String resourceRoot) {
-        super(allowedResourceNames, resourceRoot);
+    public SafeMustacheCustomVisitorFactory() {
+        super(Collections.emptySet(), "."); // disallow any resource reference
     }
 
     public MustacheVisitor createMustacheVisitor() {

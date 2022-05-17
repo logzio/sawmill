@@ -2,7 +2,6 @@ package io.logz.sawmill.mustache.factories;
 
 import com.github.mustachejava.MustacheException;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
-import com.google.common.collect.ImmutableSet;
 import io.logz.sawmill.utilities.JsonUtils;
 import java.io.IOException;
 import java.io.Writer;
@@ -13,8 +12,6 @@ import java.util.stream.IntStream;
 
 public class UnescapedWithJsonStringMustacheFactory extends SafeMustacheCustomVisitorFactory {
     public UnescapedWithJsonStringMustacheFactory() {
-        super(ImmutableSet.of(), ".");  // disallow any resource reference
-
         this.setObjectHandler(new ListTransformObjectHandler());
     }
 
