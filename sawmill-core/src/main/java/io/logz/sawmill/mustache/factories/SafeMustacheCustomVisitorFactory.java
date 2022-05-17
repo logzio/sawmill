@@ -13,6 +13,7 @@ public class SafeMustacheCustomVisitorFactory extends SafeMustacheFactory {
         super(Collections.emptySet(), "."); // disallow any resource reference
     }
 
+    @Override
     public MustacheVisitor createMustacheVisitor() {
         return new DefaultMustacheVisitor(this) {
             public void pragma(TemplateContext tc, String pragma, String args) {
