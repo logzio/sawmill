@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 
 public class UnescapedMustacheFactory extends SafeMustacheCustomVisitorFactory {
     public UnescapedMustacheFactory() {
-        super(ImmutableSet.of(), ".");
+        super(ImmutableSet.of(), ".");  // disallow any resource reference
 
         this.setObjectHandler(new ListTransformObjectHandler());
     }

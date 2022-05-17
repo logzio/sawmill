@@ -13,7 +13,7 @@ import java.util.stream.IntStream;
 
 public class UnescapedWithJsonStringMustacheFactory extends SafeMustacheCustomVisitorFactory {
     public UnescapedWithJsonStringMustacheFactory() {
-        super(ImmutableSet.of(), ".");
+        super(ImmutableSet.of(), ".");  // disallow any resource reference
 
         this.setObjectHandler(new ListTransformObjectHandler());
     }
