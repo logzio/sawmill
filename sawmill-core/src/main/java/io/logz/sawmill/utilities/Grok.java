@@ -93,6 +93,10 @@ public final class Grok {
     }
 
     public List<Match> matches(String text) throws InterruptedException {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new InterruptedException();
+        }
+
         List<Match> matches = new ArrayList<>();
         byte[] textAsBytes = text.getBytes(StandardCharsets.UTF_8);
         Matcher matcher = compiledExpression.matcher(textAsBytes);
