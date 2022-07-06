@@ -93,7 +93,7 @@ public final class Grok {
     }
 
     public List<Match> matches(String text) throws InterruptedException {
-        if (Thread.currentThread().isInterrupted()) {
+        if (Thread.interrupted()) {
             throw new InterruptedException();
         }
 
