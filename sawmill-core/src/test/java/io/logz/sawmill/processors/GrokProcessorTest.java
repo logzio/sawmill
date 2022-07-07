@@ -1,8 +1,10 @@
 package io.logz.sawmill.processors;
 
+import com.google.common.collect.ImmutableMap;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.exceptions.ProcessorConfigurationException;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -10,10 +12,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessorFactory;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -307,5 +314,28 @@ public class GrokProcessorTest {
     @Test
     public void testBadConfigs() {
         assertThatThrownBy(() -> createProcessor(GrokProcessor.class, "patterns", Arrays.asList("pattern"))).isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    public void testInterruptStopsProcessor() {
+        String field = "message";
+        List<String> patterns = IntStream.range(1, 10000).mapToObj(i -> "%{COMBINEDAPACHELOG}").collect(Collectors.toList());
+        Doc doc = createDoc(field, RandomStringUtils.randomAlphanumeric(100000));
+
+        Map<String,Object> config = ImmutableMap.of(
+                "field", field,
+                "patterns", patterns
+        );
+        GrokProcessor grokProcessor = factory.create(config);
+
+        interruptCurrentThreadIn(100);
+        assertThatThrownBy(() -> grokProcessor.process(doc))
+                .isInstanceOf(InterruptedException.class);
+    }
+
+    private void interruptCurrentThreadIn(long millis) {
+        Thread currentThread = Thread.currentThread();
+        ScheduledExecutorService interrupter = Executors.newScheduledThreadPool(1);
+        interrupter.schedule(currentThread::interrupt, millis, MILLISECONDS);
     }
 }

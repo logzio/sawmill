@@ -93,10 +93,14 @@ public final class Grok {
     }
 
     public List<Match> matches(String text) throws InterruptedException {
+        if (Thread.interrupted()) {
+            throw new InterruptedException();
+        }
+
         List<Match> matches = new ArrayList<>();
         byte[] textAsBytes = text.getBytes(StandardCharsets.UTF_8);
         Matcher matcher = compiledExpression.matcher(textAsBytes);
-        int result = matcher.search(0, textAsBytes.length, Option.MULTILINE);
+        int result = matcher.searchInterruptible(0, textAsBytes.length, Option.MULTILINE);
         boolean matchNotFound = result == -1;
         if (matchNotFound) {
             return null;

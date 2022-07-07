@@ -172,7 +172,7 @@ public class KeyValueProcessor implements Processor {
         byte[] messageAsBytes = message.getBytes();
         Matcher matcher = pattern.matcher(messageAsBytes);
 
-        int result = matcher.search(0, messageAsBytes.length, Option.MULTILINE);
+        int result = matcher.searchInterruptible(0, messageAsBytes.length, Option.MULTILINE);
 
         while (result != -1 && matchesCounter < MAX_MATCHES) {
             Region region = matcher.getEagerRegion();
@@ -199,7 +199,7 @@ public class KeyValueProcessor implements Processor {
                 }
             }
             int endOfFullMatch = region.end[0];
-            result = matcher.search(endOfFullMatch, messageAsBytes.length, Option.MULTILINE);
+            result = matcher.searchInterruptible(endOfFullMatch, messageAsBytes.length, Option.MULTILINE);
 
             matchesCounter++;
 
