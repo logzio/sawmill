@@ -21,14 +21,14 @@ Get Sawmill Java via Maven:
 <dependency>
     <groupId>io.logz.sawmill</groupId>
     <artifactId>sawmill-core</artifactId>
-    <version>2.0.13</version>
+    <version>2.0.21</version>
 </dependency>
 ```
 
 or Gradle:
 
 ```gradle
-compile 'io.logz.sawmill:sawmill-core:2.0.13'
+compile 'io.logz.sawmill:sawmill-core:2.0.21'
 ```
 
 ## Documentation
