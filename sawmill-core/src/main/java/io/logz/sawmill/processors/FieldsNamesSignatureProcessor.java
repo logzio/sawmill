@@ -16,7 +16,6 @@ import java.util.stream.IntStream;
 @ProcessorProvider(type = "fieldsNamesSignature", factory = FieldsNamesSignatureProcessor.Factory.class)
 public class FieldsNamesSignatureProcessor implements Processor {
 
-    //RateLimitedLogger
     private final boolean includeTypeFieldInSignature;
     private final String SIGNATURE_FIELD_NAME = "logzio_fields_signature";
     public FieldsNamesSignatureProcessor(boolean includeTypeFieldInSignature) {
@@ -25,18 +24,18 @@ public class FieldsNamesSignatureProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) throws InterruptedException {
+        Set<String> fields;
         try {
-            Set<String> fields = extractFieldsNames(doc);
-            addSignatureField(doc, createSignature(fields, doc.getField("type")));
-            return ProcessResult.success();
+            fields = extractFieldsNames(doc);
         } catch (Exception e) {
-            //use RateLimitedLogger if possible
+            return ProcessResult.failure(String.format("failed to add field %s to doc", SIGNATURE_FIELD_NAME));
         }
-        return ProcessResult.failure(String.format("failed to add field %s to doc", SIGNATURE_FIELD_NAME));
+        addSignatureField(doc, fields);
+        return ProcessResult.success();
     }
 
-    private void addSignatureField(Doc doc, int signature) {
-        doc.addField(SIGNATURE_FIELD_NAME, signature);
+    private void addSignatureField(Doc doc, Set<String> fields) {
+        doc.addField(SIGNATURE_FIELD_NAME, createSignature(fields, doc.getField("type")));
     }
 
     private int createSignature(Set<String> fields, String type) {
@@ -45,27 +44,40 @@ public class FieldsNamesSignatureProcessor implements Processor {
                 : JsonUtils.toJsonString(fields).hashCode();
     }
 
-    private Set<String> extractFieldsNames(Doc doc) {
+    private Set<String> extractFieldsNames(Doc doc) throws InterruptedException {
         Set<String> fields = new HashSet<>();
         JSONObject logObject = new JSONObject(doc.getSource());
         extractFields(logObject, null, fields);
         return fields;
     }
 
-    private void extractFields(Object obj, String key, Set<String> fields) {
+    private void extractFields(Object obj, String key, Set<String> fields) throws InterruptedException {
+        if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
         if (obj instanceof JSONObject) {
             JSONObject jsonObject = (JSONObject) obj;
 
             jsonObject.keySet().forEach(childKey ->
-                extractFields(jsonObject.get(childKey),
-                        key != null ? key + '.' + childKey : childKey,
-                        fields));
+            {
+                try {
+                    extractFields(jsonObject.get(childKey),
+                            key != null ? key + '.' + childKey : childKey,
+                            fields);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         } else if (obj instanceof JSONArray) {
             JSONArray jsonArray = (JSONArray) obj;
             fields.add(key);
             IntStream.range(0, jsonArray.length())
                     .mapToObj(jsonArray::get)
-                    .forEach(jsonObject -> extractFields(jsonObject, key, fields));
+                    .forEach(jsonObject -> {
+                        try {
+                            extractFields(jsonObject, key, fields);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
         } else {
             fields.add(key);
         }
@@ -83,11 +95,11 @@ public class FieldsNamesSignatureProcessor implements Processor {
     }
 
     public static class Configuration implements Processor.Configuration {
-        private final boolean includeTypeFieldInSignature;
+        private boolean includeTypeFieldInSignature;
         public Configuration(boolean includeTypeFieldInSignature) {
             this.includeTypeFieldInSignature = includeTypeFieldInSignature;
         }
-
+        public Configuration() {}
         public boolean getIncludeTypeFieldInSignature() { return includeTypeFieldInSignature; }
     }
 }
