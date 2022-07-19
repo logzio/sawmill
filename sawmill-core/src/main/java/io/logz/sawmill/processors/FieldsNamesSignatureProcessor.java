@@ -5,19 +5,17 @@ import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.Processor;
 import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.utilities.JsonUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 @ProcessorProvider(type = "fieldsNamesSignature", factory = FieldsNamesSignatureProcessor.Factory.class)
 public class FieldsNamesSignatureProcessor implements Processor {
 
     private final boolean includeTypeFieldInSignature;
-    private final String SIGNATURE_FIELD_NAME = "logzio_fields_signature";
+    private final String FIELDS_NAMES_SIGNATURE = "logzio_fields_signature";
     public FieldsNamesSignatureProcessor(boolean includeTypeFieldInSignature) {
         this.includeTypeFieldInSignature = includeTypeFieldInSignature;
     }
@@ -28,59 +26,52 @@ public class FieldsNamesSignatureProcessor implements Processor {
         try {
             fields = extractFieldsNames(doc);
         } catch (Exception e) {
-            return ProcessResult.failure(String.format("failed to add field %s to doc", SIGNATURE_FIELD_NAME));
+            return ProcessResult.failure(String.format("failed to add field %s to doc", FIELDS_NAMES_SIGNATURE));
         }
         addSignatureField(doc, fields);
         return ProcessResult.success();
     }
 
     private void addSignatureField(Doc doc, Set<String> fields) {
-        doc.addField(SIGNATURE_FIELD_NAME, createSignature(fields, doc.getField("type")));
+        doc.addField(FIELDS_NAMES_SIGNATURE, createSignature(fields, doc));
     }
 
-    private int createSignature(Set<String> fields, String type) {
-        return includeTypeFieldInSignature ?
-                (type + JsonUtils.toJsonString(fields)).hashCode()
-                : JsonUtils.toJsonString(fields).hashCode();
+    private int createSignature(Set<String> fields, Doc doc) {
+        if(includeTypeFieldInSignature) {
+            String type = doc.hasField("type") ? doc.getField("type") : "";
+            return (type + JsonUtils.toJsonString(fields)).hashCode();
+        }
+        return JsonUtils.toJsonString(fields).hashCode();
     }
 
     private Set<String> extractFieldsNames(Doc doc) throws InterruptedException {
+        Map<String, Object> source = doc.getSource();
         Set<String> fields = new HashSet<>();
-        JSONObject logObject = new JSONObject(doc.getSource());
-        extractFields(logObject, null, fields);
+        extractFieldsNames(source, null, fields);
         return fields;
     }
 
-    private void extractFields(Object obj, String key, Set<String> fields) throws InterruptedException {
+    public void extractFieldsNames(Object object, String key, Set<String> fields) throws InterruptedException {
         if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
-        if (obj instanceof JSONObject) {
-            JSONObject jsonObject = (JSONObject) obj;
-
-            jsonObject.keySet().forEach(childKey ->
-            {
-                try {
-                    extractFields(jsonObject.get(childKey),
-                            key != null ? key + '.' + childKey : childKey,
-                            fields);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } else if (obj instanceof JSONArray) {
-            JSONArray jsonArray = (JSONArray) obj;
-            fields.add(key);
-            IntStream.range(0, jsonArray.length())
-                    .mapToObj(jsonArray::get)
-                    .forEach(jsonObject -> {
-                        try {
-                            extractFields(jsonObject, key, fields);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+        if(object instanceof Map) {
+            Map<String, Object> map = (Map) object;
+            for(Map.Entry<String, Object> entry : map.entrySet()) {
+                extractFieldsNames(entry.getValue(),
+                        key != null ? key + '.' + entry.getKey() : entry.getKey(),
+                        fields);
+            }
+        } else if(isListOfMaps(object)) {
+            List<Map<String, Object>> listOfMaps = (List<Map<String, Object>>) object;
+            for(Map<String, Object> map : listOfMaps) {
+                extractFieldsNames(map, key, fields);
+            }
         } else {
             fields.add(key);
         }
+    }
+
+    private boolean isListOfMaps(Object object) {
+        return object instanceof List && !((List) object).isEmpty() && ((List) object).get(0) instanceof Map;
     }
 
     public static class Factory implements Processor.Factory {
