@@ -26,7 +26,8 @@ public class FieldsNamesSignatureProcessor implements Processor {
         try {
             fields = extractFieldsNames(doc);
         } catch (Exception e) {
-            return ProcessResult.failure(String.format("failed to add field %s to doc", FIELDS_NAMES_SIGNATURE));
+            return ProcessResult.failure("failed to add field "
+                    + FIELDS_NAMES_SIGNATURE + ", errorMessage:[" + e.getMessage() + "]");
         }
         addSignatureField(doc, fields);
         return ProcessResult.success();
@@ -39,7 +40,7 @@ public class FieldsNamesSignatureProcessor implements Processor {
     private int createSignature(Set<String> fields, Doc doc) {
         if(includeTypeFieldInSignature) {
             String type = doc.hasField("type") ? doc.getField("type") : "";
-            return (type + JsonUtils.toJsonString(fields)).hashCode();
+            return new StringBuilder(type).append(JsonUtils.toJsonString(fields)).toString().hashCode();
         }
         return JsonUtils.toJsonString(fields).hashCode();
     }
@@ -57,7 +58,8 @@ public class FieldsNamesSignatureProcessor implements Processor {
             Map<String, Object> map = (Map) object;
             for(Map.Entry<String, Object> entry : map.entrySet()) {
                 extractFieldsNames(entry.getValue(),
-                        key != null ? key + '.' + entry.getKey() : entry.getKey(),
+                        key != null ?
+                                new StringBuilder(key).append('.').append(entry.getKey()).toString() : entry.getKey(),
                         fields);
             }
         } else if(isListOfMaps(object)) {
