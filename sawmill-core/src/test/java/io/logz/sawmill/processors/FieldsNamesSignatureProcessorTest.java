@@ -112,7 +112,7 @@ public class FieldsNamesSignatureProcessorTest {
     }
 
     @Test
-    public void testFieldsNamesSignatureWithoutTypeField() throws InterruptedException {
+    public void testFieldsNamesSignatureWithoutTypeFieldValueInSignature() throws InterruptedException {
         FieldsNamesSignatureProcessor fieldsNamesSignatureProcessor =
                 createProcessor(FieldsNamesSignatureProcessor.class);
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
