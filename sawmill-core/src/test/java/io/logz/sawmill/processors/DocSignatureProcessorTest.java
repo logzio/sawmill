@@ -85,7 +85,7 @@ public class DocSignatureProcessorTest {
 
     private final String DOC_SIGNATURE_FIELD = "logzio_doc_signature";
     private final Set<String> includeValueFields = Stream.of("logger", "line").collect(Collectors.toSet());
-    private final Set<String> missingFields = Stream.of("noSuchField").collect(Collectors.toSet());
+    private final Set<String> missingFields = Stream.of("missingField").collect(Collectors.toSet());
 
     @Test
     public void testFieldsNamesSignature() throws InterruptedException {
@@ -149,13 +149,13 @@ public class DocSignatureProcessorTest {
 
     @Test
     public void testFieldsNamesEmptySignature() throws InterruptedException {
-        //should test for each SignatureMode ?
         DocSignatureProcessor fieldsNamesSignatureProcessor =
                 createProcessor(DocSignatureProcessor.class);
         Map<String, Object> map = new HashMap<>();
         map.put("key", "value");
         Doc doc = new Doc(map);
         doc.removeField("key");
+
         ProcessResult result = fieldsNamesSignatureProcessor.process(doc);
         assertThat(result.isSucceeded()).isFalse();
         assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isFalse();
