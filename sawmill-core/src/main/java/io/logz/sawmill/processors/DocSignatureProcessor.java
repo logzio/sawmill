@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 @ProcessorProvider(type = "docSignature", factory = DocSignatureProcessor.Factory.class)
 public class DocSignatureProcessor implements Processor {
-
     private final SignatureMode signatureMode;
     private final Set<String> includeValueFields;
     private final String DOC_SIGNATURE_FIELD = "logzio_doc_signature";
@@ -40,7 +39,6 @@ public class DocSignatureProcessor implements Processor {
 
         addSignatureField(doc, signature);
         return ProcessResult.success();
-
     }
 
     private String createSignature(Doc doc) throws InterruptedException {
@@ -111,19 +109,12 @@ public class DocSignatureProcessor implements Processor {
         public DocSignatureProcessor create(Map<String,Object> config) {
             DocSignatureProcessor.Configuration fieldsNamesSignatureConfig =
                     JsonUtils.fromJsonMap(DocSignatureProcessor.Configuration.class, config);
-            return new DocSignatureProcessor(fieldsNamesSignatureConfig.signatureMode,
+            return new DocSignatureProcessor(fieldsNamesSignatureConfig.getSignatureMode(),
                     fieldsNamesSignatureConfig.getIncludeValueFields());
         }
     }
 
-    public enum SignatureMode {
-        FIELDS_NAMES,
-        FIELDS_VALUES,
-        HYBRID
-    }
-
     public static class Configuration implements Processor.Configuration {
-
         private SignatureMode signatureMode = SignatureMode.FIELDS_NAMES;
         private Set<String> includeValueFields = new HashSet<>();
         public Configuration(Set<String> includeValueFields, SignatureMode signatureMode) {
@@ -131,8 +122,14 @@ public class DocSignatureProcessor implements Processor {
             this.includeValueFields = includeValueFields;
         }
         public Configuration() {}
+
         public SignatureMode getSignatureMode() { return signatureMode; }
         public Set<String> getIncludeValueFields() { return includeValueFields; }
     }
 
+    public enum SignatureMode {
+        FIELDS_NAMES,
+        FIELDS_VALUES,
+        HYBRID
+    }
 }
