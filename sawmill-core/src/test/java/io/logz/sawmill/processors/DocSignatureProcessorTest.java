@@ -4,10 +4,12 @@ import com.google.common.collect.Sets;
 import io.logz.sawmill.Doc;
 import io.logz.sawmill.ProcessResult;
 import io.logz.sawmill.utilities.JsonUtils;
+import org.apache.commons.collections4.ListUtils;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -84,8 +86,8 @@ public class DocSignatureProcessorTest {
             .collect(Collectors.toSet());
 
     private final String DOC_SIGNATURE_FIELD = "logzio_doc_signature";
-    private final Set<String> includeValueFields = Stream.of("logger", "line").collect(Collectors.toSet());
-    private final Set<String> missingFields = Stream.of("missingField").collect(Collectors.toSet());
+    private final List<String> includeValueFields = Stream.of("logger", "line").collect(Collectors.toList());
+    private final List<String> missingFields = Stream.of("missingField").collect(Collectors.toList());
 
     @Test
     public void testFieldsNamesSignature() throws InterruptedException {
@@ -142,7 +144,7 @@ public class DocSignatureProcessorTest {
         assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
 
         int signature = doc.getField(DOC_SIGNATURE_FIELD);
-        Set<String> values = getFieldsValues(doc, includeValueFields);
+        List<String> values = getFieldsValues(doc, includeValueFields);
         String expectedSignature = JsonUtils.toJsonString(values) + JsonUtils.toJsonString(fieldsNames);
         assertThat(signature).isEqualTo(expectedSignature.hashCode());
     }
@@ -181,7 +183,7 @@ public class DocSignatureProcessorTest {
     public void testFieldsValuesSignatureMissingFields() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
         config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_VALUES);
-        config.put("includeValueFields", Sets.union(includeValueFields, missingFields));
+        config.put("includeValueFields", ListUtils.union(includeValueFields, missingFields));
 
         DocSignatureProcessor fieldsNamesSignatureProcessor =
                 createProcessor(DocSignatureProcessor.class, config);
@@ -194,7 +196,7 @@ public class DocSignatureProcessorTest {
 
         int signature = doc.getField(DOC_SIGNATURE_FIELD);
         String expectedSignature = JsonUtils.toJsonString(
-                getFieldsValues(doc, Sets.union(includeValueFields, missingFields)));
+                getFieldsValues(doc, ListUtils.union(includeValueFields, missingFields)));
         assertThat(signature).isEqualTo(expectedSignature.hashCode());
     }
 
@@ -231,11 +233,11 @@ public class DocSignatureProcessorTest {
         assertThat(firstSignature).isNotEqualTo(secondSignature);
     }
 
-    private Set<String> getFieldsValues(Doc doc, Set<String> includeValueFields) {
+    private List<String> getFieldsValues(Doc doc, List<String> includeValueFields) {
         return includeValueFields.stream()
                 .filter(doc::hasField)
                 .map(doc::getField)
                 .map(Object::toString)
-                .collect(Collectors.toSet());
+                .collect(Collectors.toList());
     }
 }
