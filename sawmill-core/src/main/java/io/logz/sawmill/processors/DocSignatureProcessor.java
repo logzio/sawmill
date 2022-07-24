@@ -7,7 +7,6 @@ import io.logz.sawmill.annotations.ProcessorProvider;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +16,9 @@ import java.util.stream.Collectors;
 @ProcessorProvider(type = "docSignature", factory = DocSignatureProcessor.Factory.class)
 public class DocSignatureProcessor implements Processor {
     private final SignatureMode signatureMode;
-    private final List<String> includeValueFields;
+    private final Set<String> includeValueFields;
     private final String DOC_SIGNATURE_FIELD = "logzio_doc_signature";
-    public DocSignatureProcessor(SignatureMode signatureMode, List<String> includeValueFields) {
+    public DocSignatureProcessor(SignatureMode signatureMode, Set<String> includeValueFields) {
         this.signatureMode = signatureMode;
         this.includeValueFields = includeValueFields;
     }
@@ -64,7 +63,8 @@ public class DocSignatureProcessor implements Processor {
     }
 
     private String getFieldsValuesString(Doc doc) {
-        List<String> values = includeValueFields.stream()
+        List<String> values = includeValueFields.stream().collect(Collectors.toList())
+                .stream()
                 .filter(doc::hasField)
                 .map(doc::getField)
                 .map(Object::toString)
@@ -117,15 +117,15 @@ public class DocSignatureProcessor implements Processor {
 
     public static class Configuration implements Processor.Configuration {
         private SignatureMode signatureMode = SignatureMode.FIELDS_NAMES;
-        private List<String> includeValueFields = new ArrayList<>();
-        public Configuration(SignatureMode signatureMode, List<String> includeValueFields) {
+        private Set<String> includeValueFields = new HashSet<>();
+        public Configuration(SignatureMode signatureMode, Set<String> includeValueFields) {
             this.signatureMode = signatureMode;
             this.includeValueFields = includeValueFields;
         }
         public Configuration() {}
 
         public SignatureMode getSignatureMode() { return signatureMode; }
-        public List<String> getIncludeValueFields() { return includeValueFields; }
+        public Set<String> getIncludeValueFields() { return includeValueFields; }
     }
 
     public enum SignatureMode {

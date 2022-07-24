@@ -7,6 +7,9 @@ import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.junit.Test;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -86,8 +89,8 @@ public class DocSignatureProcessorTest {
             .collect(Collectors.toSet());
 
     private final String DOC_SIGNATURE_FIELD = "logzio_doc_signature";
-    private final List<String> includeValueFields = Stream.of("logger", "line").collect(Collectors.toList());
-    private final List<String> missingFields = Stream.of("missingField").collect(Collectors.toList());
+    private final Set<String> includeValueFields = Stream.of("logger", "line").collect(Collectors.toSet());
+    private final Set<String> missingFields = Stream.of("missingField").collect(Collectors.toSet());
 
     @Test
     public void testFieldsNamesSignature() throws InterruptedException {
@@ -183,7 +186,7 @@ public class DocSignatureProcessorTest {
     public void testFieldsValuesSignatureMissingFields() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
         config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_VALUES);
-        config.put("includeValueFields", ListUtils.union(includeValueFields, missingFields));
+        config.put("includeValueFields", Sets.union(includeValueFields, missingFields));
 
         DocSignatureProcessor fieldsNamesSignatureProcessor =
                 createProcessor(DocSignatureProcessor.class, config);
@@ -196,7 +199,7 @@ public class DocSignatureProcessorTest {
 
         int signature = doc.getField(DOC_SIGNATURE_FIELD);
         String expectedSignature = JsonUtils.toJsonString(
-                getFieldsValues(doc, ListUtils.union(includeValueFields, missingFields)));
+                getFieldsValues(doc, Sets.union(includeValueFields, missingFields)));
         assertThat(signature).isEqualTo(expectedSignature.hashCode());
     }
 
@@ -233,8 +236,39 @@ public class DocSignatureProcessorTest {
         assertThat(firstSignature).isNotEqualTo(secondSignature);
     }
 
-    private List<String> getFieldsValues(Doc doc, List<String> includeValueFields) {
-        return includeValueFields.stream()
+    @Test
+    public void testExecutionTime() throws InterruptedException {
+        Map<String, Object> config = new HashMap<>();
+        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_NAMES);
+
+        DocSignatureProcessor fieldsNamesSignatureProcessor =
+                createProcessor(DocSignatureProcessor.class, config);
+
+        Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
+
+        List<Long> executions = new ArrayList<>();
+
+        ProcessResult result = null;
+        for(int i=0; i<5000; i++) {
+            Instant start = Instant.now();
+            result = fieldsNamesSignatureProcessor.process(doc);
+            assertThat(result.isSucceeded()).isTrue();
+            Instant finish = Instant.now();
+            long timeElapsed = Duration.between(start, finish).toMillis();
+            executions.add(timeElapsed);
+        }
+        System.out.println("execution avg: " + getAvg(executions));
+    }
+
+    public double getAvg(List<Long> executions) {
+        return executions.stream()
+                .mapToDouble(d -> d)
+                .average()
+                .orElse(0.0);
+    }
+    private List<String> getFieldsValues(Doc doc, Set<String> includeValueFields) {
+        return includeValueFields.stream().collect(Collectors.toList())
+                .stream()
                 .filter(doc::hasField)
                 .map(doc::getField)
                 .map(Object::toString)
