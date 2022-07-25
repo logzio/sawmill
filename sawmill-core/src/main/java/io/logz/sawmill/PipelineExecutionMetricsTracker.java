@@ -11,7 +11,7 @@ public interface PipelineExecutionMetricsTracker {
 
     void processorFinishedSuccessfully(String pipelineId, String processorName, long timeTookNs);
 
-    void processorFailed(String pipelineId, String processorName, Doc doc);
+    void processorFailed(String pipelineId, String processorName, Doc doc, ProcessResult.Error error);
 
     void pipelineFailedOnUnexpectedError(String pipelineId, Doc doc, Exception e);
 

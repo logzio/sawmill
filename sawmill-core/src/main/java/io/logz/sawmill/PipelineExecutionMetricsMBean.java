@@ -75,7 +75,7 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     }
 
     @Override
-    public void processorFailed(String pipelineId, String processorName, Doc doc) {
+    public void processorFailed(String pipelineId, String processorName, Doc doc, ProcessResult.Error error) {
         processorsMetrics.computeIfAbsent(processorName, k -> new ProcessorMetrics()).incrementFailure();
     }
 
