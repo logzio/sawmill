@@ -9,15 +9,11 @@ import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ProcessorProvider(type = "docSignature", factory = DocSignatureProcessor.Factory.class)
 public class DocSignatureProcessor implements Processor {
@@ -32,49 +28,53 @@ public class DocSignatureProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) throws InterruptedException {
-        Collection<String> signatureCollection;
+        int signature;
         try {
-            signatureCollection = createSignatureCollection(doc);
+            signature = createSignature(doc);
         } catch (Exception e) {
             return ProcessResult.failure(
                     "failed to create signature, SignatureMode: " + signatureMode,
                     new ProcessorExecutionException(DocSignatureProcessor.class.getSimpleName(), e));
         }
 
-        if(signatureCollection.isEmpty()) {
+        if(signature == 0) {
             if(signatureMode.equals(SignatureMode.FIELDS_NAMES) || signatureMode.equals(SignatureMode.HYBRID)) {
                 return ProcessResult.failure("failed to extract fields names, SignatureMode: " + signatureMode);
             }
             return ProcessResult.failure("failed to add signature field, signature collection is empty");
         }
 
-        addSignatureField(doc, signatureCollection);
+        addSignatureField(doc, signature);
         return ProcessResult.success();
     }
 
-    private Collection<String> createSignatureCollection(Doc doc) throws InterruptedException {
+    private int createSignature(Doc doc) throws InterruptedException {
         switch(signatureMode) {
-            case FIELDS_VALUES:
-                return getFieldsValues(doc);
             case FIELDS_NAMES:
-                return extractFieldsNames(doc);
+                return hashIfNotEmpty(extractFieldsNames(doc));
+            case FIELDS_VALUES:
+                return hashIfNotEmpty(getFieldsValues(doc));
             case HYBRID:
-                return Stream.concat(getFieldsValues(doc).stream(), extractFieldsNames(doc)
-                        .stream()).collect(Collectors.toList());
-            default: return Collections.emptyList();
+                return hashIfNotEmpty(extractFieldsNames(doc)) + hashIfNotEmpty(getFieldsValues(doc));
+            default: return 0;
         }
     }
 
-    private void addSignatureField(Doc doc, Collection<String> signatureCollection) {
-        doc.addField(signatureFieldName, hash(signatureCollection));
+    private int hashIfNotEmpty(Set<String> set) {
+        return set.isEmpty() ? 0 : set.hashCode();
     }
 
-    private List<String> getFieldsValues(Doc doc) {
+    private void addSignatureField(Doc doc, int signature) {
+        doc.addField(signatureFieldName, signature);
+    }
+
+    private Set<String> getFieldsValues(Doc doc) {
         return includeValueFields.stream()
                 .filter(doc::hasField)
-                .map(doc::getField)
-                .map(Object::toString)
-                .collect(Collectors.toList());
+                .map(fieldName -> {
+                    String value = doc.getField(fieldName);
+                    return "value_" + fieldName + "_" + value;
+                }).collect(Collectors.toSet());
     }
 
     private Set<String> extractFieldsNames(Doc doc) throws InterruptedException {
@@ -105,18 +105,6 @@ public class DocSignatureProcessor implements Processor {
 
     private boolean isListOfMaps(Object object) {
         return object instanceof List && !((List) object).isEmpty() && ((List) object).get(0) instanceof Map;
-    }
-
-    public int hash(Collection<String> collection) {
-        int h = 0;
-        Iterator<String> i = collection.iterator();
-        while(i.hasNext()) {
-            String str = i.next();
-            if(str != null) {
-                h += str.hashCode();
-            }
-        }
-        return h;
     }
 
     public static class Factory implements Processor.Factory {
