@@ -7,12 +7,12 @@ import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.junit.Test;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -111,7 +111,7 @@ public class DocSignatureProcessorTest {
         assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
 
         int signature = doc.getField(DOC_SIGNATURE_FIELD);
-        int expectedSignature = new ArrayList<>(fieldsNames).hashCode();
+        int expectedSignature = hash(fieldsNames);
         assertThat(signature).isEqualTo(expectedSignature);
     }
 
@@ -132,7 +132,7 @@ public class DocSignatureProcessorTest {
         assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
 
         int signature = doc.getField(DOC_SIGNATURE_FIELD);
-        int expectedSignature = getFieldsValues(doc, includeValueFields).hashCode();
+        int expectedSignature = hash(getFieldsValues(doc, includeValueFields));
         assertThat(signature).isEqualTo(expectedSignature);
     }
 
@@ -154,8 +154,8 @@ public class DocSignatureProcessorTest {
 
         int signature = doc.getField(DOC_SIGNATURE_FIELD);
         List<String> values = getFieldsValues(doc, includeValueFields);
-        int expectedSignature = Stream.concat(values.stream(), fieldsNames.stream())
-                .collect(Collectors.toList()).hashCode();
+        int expectedSignature = hash(Stream.concat(values.stream(), fieldsNames.stream())
+                .collect(Collectors.toList()));
         assertThat(signature).isEqualTo(expectedSignature);
     }
 
@@ -177,7 +177,7 @@ public class DocSignatureProcessorTest {
         assertThat(result.isSucceeded()).isFalse();
         assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isFalse();
         assertThat(result.getError().isPresent()).isTrue();
-        assertThat(result.getError().get().getMessage().contains("signature is empty")).isTrue();
+        assertThat(result.getError().get().getMessage().contains("failed to extract fields names")).isTrue();
     }
 
     @Test
@@ -196,7 +196,7 @@ public class DocSignatureProcessorTest {
         assertThat(result.isSucceeded()).isFalse();
         assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isFalse();
         assertThat(result.getError().isPresent()).isTrue();
-        assertThat(result.getError().get().getMessage().contains("signature is empty")).isTrue();
+        assertThat(result.getError().get().getMessage().contains("failed to add signature field, signature collection is empty")).isTrue();
     }
 
     @Test
@@ -216,7 +216,7 @@ public class DocSignatureProcessorTest {
         assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
 
         int signature = doc.getField(DOC_SIGNATURE_FIELD);
-        int expectedSignature = getFieldsValues(doc, Sets.union(includeValueFields, missingFields)).hashCode();
+        int expectedSignature = hash(getFieldsValues(doc, Sets.union(includeValueFields, missingFields)));
         assertThat(signature).isEqualTo(expectedSignature);
     }
 
@@ -272,12 +272,12 @@ public class DocSignatureProcessorTest {
         assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
 
         int signature = doc.getField(DOC_SIGNATURE_FIELD);
-        int expectedSignature = getFieldsValues(doc, includeValueFields).hashCode();
+        int expectedSignature = hash(getFieldsValues(doc, includeValueFields));
         assertThat(signature).isEqualTo(expectedSignature);
     }
 
     @Test
-    public void testMissingSignatureFieldName() throws InterruptedException {
+    public void testMissingSignatureFieldName() {
         Map<String, Object> config = new HashMap<>();
         config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_NAMES);
         config.put("signatureFieldName", "");
@@ -298,6 +298,57 @@ public class DocSignatureProcessorTest {
         assertThatThrownBy(() -> createProcessor(DocSignatureProcessor.class, config))
                 .isInstanceOf(ProcessorConfigurationException.class)
                 .hasMessageContaining("includeValueFields can not be empty");
+    }
+
+    @Test
+    public void testSameConfigAndUnorderedLogProduceIdenticalSignature() throws InterruptedException {
+        //FOREACH SIGNATURE MODE
+
+    }
+
+    @Test
+    public void testSameConfigAndLogProduceIdenticalSignature() throws InterruptedException {
+        //FOREACH SIGNATURE MODE
+        Map<String, Object> config = new HashMap<>();
+        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
+        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_NAMES);
+
+
+        DocSignatureProcessor fieldsNamesSignatureProcessor =
+                createProcessor(DocSignatureProcessor.class, config);
+        Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
+
+        ProcessResult firstResult = fieldsNamesSignatureProcessor.process(doc);
+
+        assertThat(firstResult.isSucceeded()).isTrue();
+        assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
+
+        int firstSignature = doc.getField(DOC_SIGNATURE_FIELD);
+        int expectedSignature = hash(fieldsNames);
+        assertThat(firstSignature).isEqualTo(expectedSignature);
+
+        doc.removeField(DOC_SIGNATURE_FIELD);
+
+        fieldsNamesSignatureProcessor = createProcessor(DocSignatureProcessor.class, config);
+        ProcessResult secondResult = fieldsNamesSignatureProcessor.process(doc);
+
+        assertThat(secondResult.isSucceeded()).isTrue();
+        assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
+
+        int secondSignature = doc.getField(DOC_SIGNATURE_FIELD);
+        assertThat(secondSignature).isEqualTo(firstSignature);
+    }
+
+    private int hash(Collection<String> collection) {
+        int h = 0;
+        Iterator<String> i = collection.iterator();
+        while(i.hasNext()) {
+            String str = i.next();
+            if(str != null) {
+                h += str.hashCode();
+            }
+        }
+        return h;
     }
 
     private List<String> getFieldsValues(Doc doc, Set<String> includeValueFields) {

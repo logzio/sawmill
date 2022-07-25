@@ -9,10 +9,10 @@ import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,9 +22,9 @@ import java.util.stream.Stream;
 @ProcessorProvider(type = "docSignature", factory = DocSignatureProcessor.Factory.class)
 public class DocSignatureProcessor implements Processor {
     private final SignatureMode signatureMode;
-    private final LinkedHashSet<String> includeValueFields;
+    private final Set<String> includeValueFields;
     private final String signatureFieldName;
-    public DocSignatureProcessor(SignatureMode signatureMode, String signatureFieldName, LinkedHashSet<String> includeValueFields) {
+    public DocSignatureProcessor(SignatureMode signatureMode, String signatureFieldName, Set<String> includeValueFields) {
         this.signatureMode = signatureMode;
         this.signatureFieldName = signatureFieldName;
         this.includeValueFields = includeValueFields;
@@ -32,7 +32,7 @@ public class DocSignatureProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) throws InterruptedException {
-        List<String> signatureCollection;
+        Collection<String> signatureCollection;
         try {
             signatureCollection = createSignatureCollection(doc);
         } catch (Exception e) {
@@ -41,19 +41,23 @@ public class DocSignatureProcessor implements Processor {
                     new ProcessorExecutionException(DocSignatureProcessor.class.getSimpleName(), e));
         }
 
-        if(signatureCollection.isEmpty())
-            return ProcessResult.failure("signature is empty, SignatureMode: " + signatureMode);
+        if(signatureCollection.isEmpty()) {
+            if(signatureMode.equals(SignatureMode.FIELDS_NAMES) || signatureMode.equals(SignatureMode.HYBRID)) {
+                return ProcessResult.failure("failed to extract fields names, SignatureMode: " + signatureMode);
+            }
+            return ProcessResult.failure("failed to add signature field, signature collection is empty");
+        }
 
         addSignatureField(doc, signatureCollection);
         return ProcessResult.success();
     }
 
-    private List<String> createSignatureCollection(Doc doc) throws InterruptedException {
+    private Collection<String> createSignatureCollection(Doc doc) throws InterruptedException {
         switch(signatureMode) {
             case FIELDS_VALUES:
                 return getFieldsValues(doc);
             case FIELDS_NAMES:
-                return new ArrayList<>(extractFieldsNames(doc));
+                return extractFieldsNames(doc);
             case HYBRID:
                 return Stream.concat(getFieldsValues(doc).stream(), extractFieldsNames(doc)
                         .stream()).collect(Collectors.toList());
@@ -61,8 +65,8 @@ public class DocSignatureProcessor implements Processor {
         }
     }
 
-    private void addSignatureField(Doc doc, List<String> signatureCollection) {
-        doc.addField(signatureFieldName, signatureCollection.hashCode());
+    private void addSignatureField(Doc doc, Collection<String> signatureCollection) {
+        doc.addField(signatureFieldName, hash(signatureCollection));
     }
 
     private List<String> getFieldsValues(Doc doc) {
@@ -103,6 +107,18 @@ public class DocSignatureProcessor implements Processor {
         return object instanceof List && !((List) object).isEmpty() && ((List) object).get(0) instanceof Map;
     }
 
+    public int hash(Collection<String> collection) {
+        int h = 0;
+        Iterator<String> i = collection.iterator();
+        while(i.hasNext()) {
+            String str = i.next();
+            if(str != null) {
+                h += str.hashCode();
+            }
+        }
+        return h;
+    }
+
     public static class Factory implements Processor.Factory {
         public Factory() {}
 
@@ -133,8 +149,8 @@ public class DocSignatureProcessor implements Processor {
     public static class Configuration implements Processor.Configuration {
         private SignatureMode signatureMode = SignatureMode.FIELDS_NAMES;
         private String signatureFieldName;
-        private LinkedHashSet<String> includeValueFields = new LinkedHashSet<>();
-        public Configuration(SignatureMode signatureMode, String signatureFieldName, LinkedHashSet<String> includeValueFields) {
+        private Set<String> includeValueFields = new HashSet<>();
+        public Configuration(SignatureMode signatureMode, String signatureFieldName, Set<String> includeValueFields) {
             this.signatureMode = signatureMode;
             this.signatureFieldName = signatureFieldName;
             this.includeValueFields = includeValueFields;
@@ -143,7 +159,7 @@ public class DocSignatureProcessor implements Processor {
 
         public SignatureMode getSignatureMode() { return signatureMode; }
         public String getSignatureFieldName() { return signatureFieldName; }
-        public LinkedHashSet<String> getIncludeValueFields() { return includeValueFields; }
+        public Set<String> getIncludeValueFields() { return includeValueFields; }
     }
 
     public enum SignatureMode {
