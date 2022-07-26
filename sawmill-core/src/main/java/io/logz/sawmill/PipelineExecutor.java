@@ -132,9 +132,7 @@ public class PipelineExecutor implements Closeable {
             if (onFailureExecutionSteps.isPresent()) {
                 return executeSteps(onFailureExecutionSteps.get(), pipeline, doc, pipelineStopwatch);
             } else {
-                ProcessResult.Error error = processResult.getError().isPresent() ?
-                        processResult.getError().get() : null;
-                pipelineExecutionMetricsTracker.processorFailed(pipelineId, processorName, doc, error);
+                pipelineExecutionMetricsTracker.processorFailed(pipelineId, processorName, doc, processResult.getError());
                 return processorErrorExecutionResult(processResult.getError().get(), processorName, pipeline);
             }
         }

@@ -2,6 +2,7 @@ package io.logz.sawmill;
 
 import org.weakref.jmx.Managed;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.LongAdder;
@@ -75,7 +76,7 @@ public class PipelineExecutionMetricsMBean implements PipelineExecutionMetricsTr
     }
 
     @Override
-    public void processorFailed(String pipelineId, String processorName, Doc doc, ProcessResult.Error error) {
+    public void processorFailed(String pipelineId, String processorName, Doc doc, Optional<ProcessResult.Error> optionalError) {
         processorsMetrics.computeIfAbsent(processorName, k -> new ProcessorMetrics()).incrementFailure();
     }
 
