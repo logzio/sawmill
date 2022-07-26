@@ -20,7 +20,7 @@ import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class DocSignatureProcessorTest {
+public class AddSignatureProcessorTest {
 
     private final String message = "{\n" +
             "\t\"hostname\": \"log-analytics-56fc86d6f7-bpg4g\",\n" +
@@ -87,15 +87,15 @@ public class DocSignatureProcessorTest {
                     "nestedObject1.nestedObject2.name")
             .collect(Collectors.toSet());
 
-    private final String DOC_SIGNATURE_FIELD = "logzio_doc_signature";
+    private final String SIGNATURE_FIELD_NAME = "logzio_doc_signature";
     private final Set<String> includeValueFields = Stream.of("logger", "line").collect(Collectors.toSet());
     private final Set<String> missingFields = Stream.of("missingField").collect(Collectors.toSet());
 
     @Test
     public void testFieldsNamesSignature() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_NAMES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_NAMES);
 
         int expectedSignature = fieldsNames.hashCode();
         testSignature(config, expectedSignature);
@@ -104,8 +104,8 @@ public class DocSignatureProcessorTest {
     @Test
     public void testFieldsValuesSignature() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_VALUES);
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_VALUES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
         config.put("includeValueFields", includeValueFields);
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
@@ -116,8 +116,8 @@ public class DocSignatureProcessorTest {
     @Test
     public void testHybridSignature() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.HYBRID);
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.HYBRID);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
         config.put("includeValueFields", includeValueFields);
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
@@ -128,11 +128,11 @@ public class DocSignatureProcessorTest {
     @Test
     public void testFieldsNamesEmptySignature() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_NAMES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_NAMES);
 
-        DocSignatureProcessor fieldsNamesSignatureProcessor =
-                createProcessor(DocSignatureProcessor.class, config);
+        AddSignatureProcessor fieldsNamesSignatureProcessor =
+                createProcessor(AddSignatureProcessor.class, config);
 
         Map<String, Object> map = new HashMap<>();
         map.put("key", "value");
@@ -141,7 +141,7 @@ public class DocSignatureProcessorTest {
 
         ProcessResult result = fieldsNamesSignatureProcessor.process(doc);
         assertThat(result.isSucceeded()).isFalse();
-        assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isFalse();
+        assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isFalse();
         assertThat(result.getError().isPresent()).isTrue();
         assertThat(result.getError().get().getMessage().contains("failed to extract fields names")).isTrue();
     }
@@ -149,18 +149,18 @@ public class DocSignatureProcessorTest {
     @Test
     public void testFieldsValuesEmptySignature() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_VALUES);
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_VALUES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
         config.put("includeValueFields", missingFields);
 
-        DocSignatureProcessor fieldsNamesSignatureProcessor =
-                createProcessor(DocSignatureProcessor.class, config);
+        AddSignatureProcessor fieldsNamesSignatureProcessor =
+                createProcessor(AddSignatureProcessor.class, config);
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
 
         ProcessResult result = fieldsNamesSignatureProcessor.process(doc);
 
         assertThat(result.isSucceeded()).isFalse();
-        assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isFalse();
+        assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isFalse();
         assertThat(result.getError().isPresent()).isTrue();
         assertThat(result.getError().get().getMessage().contains("failed to add signature field, signature collection is empty")).isTrue();
     }
@@ -168,20 +168,20 @@ public class DocSignatureProcessorTest {
     @Test
     public void testFieldsValuesSignatureMissingFields() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_VALUES);
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_VALUES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
         config.put("includeValueFields", Sets.union(includeValueFields, missingFields));
 
-        DocSignatureProcessor fieldsNamesSignatureProcessor =
-                createProcessor(DocSignatureProcessor.class, config);
+        AddSignatureProcessor fieldsNamesSignatureProcessor =
+                createProcessor(AddSignatureProcessor.class, config);
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
 
         ProcessResult result = fieldsNamesSignatureProcessor.process(doc);
 
         assertThat(result.isSucceeded()).isTrue();
-        assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
+        assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
 
-        int signature = doc.getField(DOC_SIGNATURE_FIELD);
+        int signature = doc.getField(SIGNATURE_FIELD_NAME);
         int expectedSignature = getFieldsValues(doc, Sets.union(includeValueFields, missingFields)).hashCode();
         assertThat(signature).isEqualTo(expectedSignature);
     }
@@ -189,21 +189,21 @@ public class DocSignatureProcessorTest {
     @Test
     public void testFieldsValuesSignatureNestedField() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_VALUES);
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_VALUES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
         Set<String> includeValueFields = Stream.of("nestedObject1.nestedObject2.field2").collect(Collectors.toSet());
         config.put("includeValueFields", includeValueFields);
 
-        DocSignatureProcessor fieldsNamesSignatureProcessor =
-                createProcessor(DocSignatureProcessor.class, config);
+        AddSignatureProcessor fieldsNamesSignatureProcessor =
+                createProcessor(AddSignatureProcessor.class, config);
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
 
         ProcessResult result = fieldsNamesSignatureProcessor.process(doc);
 
         assertThat(result.isSucceeded()).isTrue();
-        assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
+        assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
 
-        int signature = doc.getField(DOC_SIGNATURE_FIELD);
+        int signature = doc.getField(SIGNATURE_FIELD_NAME);
         int expectedSignature = getFieldsValues(doc, includeValueFields).hashCode();
         assertThat(signature).isEqualTo(expectedSignature);
     }
@@ -211,11 +211,11 @@ public class DocSignatureProcessorTest {
     @Test
     public void testMissingSignatureFieldName() {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_NAMES);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_NAMES);
         config.put("signatureFieldName", "");
         config.put("includeValueFields", includeValueFields);
 
-        assertThatThrownBy(() -> createProcessor(DocSignatureProcessor.class, config))
+        assertThatThrownBy(() -> createProcessor(AddSignatureProcessor.class, config))
                 .isInstanceOf(ProcessorConfigurationException.class)
                 .hasMessageContaining("signatureFieldName can not be empty");
     }
@@ -223,11 +223,11 @@ public class DocSignatureProcessorTest {
     @Test
     public void testFieldsValuesSignatureEmptyFieldsNames() {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_VALUES);
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_VALUES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
         config.put("includeValueFields", Collections.emptySet());
 
-        assertThatThrownBy(() -> createProcessor(DocSignatureProcessor.class, config))
+        assertThatThrownBy(() -> createProcessor(AddSignatureProcessor.class, config))
                 .isInstanceOf(ProcessorConfigurationException.class)
                 .hasMessageContaining("includeValueFields can not be empty");
     }
@@ -235,8 +235,8 @@ public class DocSignatureProcessorTest {
     @Test
     public void testFieldsNamesIdenticalSignature() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_NAMES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_NAMES);
 
         int expectedSignature = fieldsNames.hashCode();
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
@@ -246,8 +246,8 @@ public class DocSignatureProcessorTest {
     @Test
     public void testFieldsValuesIdenticalSignature() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_VALUES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_VALUES);
         config.put("includeValueFields", includeValueFields);
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
@@ -258,8 +258,8 @@ public class DocSignatureProcessorTest {
     @Test
     public void testHybridIdenticalSignature() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.HYBRID);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.HYBRID);
         config.put("includeValueFields", includeValueFields);
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
@@ -273,11 +273,11 @@ public class DocSignatureProcessorTest {
         String unorderedMsg = "{\"b\":\"c\",\"a\":\"b\"}";
 
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_NAMES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_NAMES);
 
-        DocSignatureProcessor fieldsNamesSignatureProcessor =
-                createProcessor(DocSignatureProcessor.class, config);
+        AddSignatureProcessor fieldsNamesSignatureProcessor =
+                createProcessor(AddSignatureProcessor.class, config);
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, msg));
         Doc unorderedDoc = new Doc(JsonUtils.fromJsonString(Map.class, unorderedMsg));
@@ -286,15 +286,15 @@ public class DocSignatureProcessorTest {
         ProcessResult unorderedDocResult = fieldsNamesSignatureProcessor.process(unorderedDoc);
 
         assertThat(result.isSucceeded()).isEqualTo(unorderedDocResult.isSucceeded()).isTrue();
-        assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isEqualTo(unorderedDoc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
-        assertThat((int)doc.getField(DOC_SIGNATURE_FIELD)).isEqualTo(unorderedDoc.getField(DOC_SIGNATURE_FIELD));
+        assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isEqualTo(unorderedDoc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
+        assertThat((int)doc.getField(SIGNATURE_FIELD_NAME)).isEqualTo(unorderedDoc.getField(SIGNATURE_FIELD_NAME));
     }
 
     @Test
     public void testUnorderedIncludeValueFieldsIdenticalSignature() throws InterruptedException {
         Map<String, Object> config = new HashMap<>();
-        config.put("signatureMode", DocSignatureProcessor.SignatureMode.FIELDS_VALUES);
-        config.put("signatureFieldName", DOC_SIGNATURE_FIELD);
+        config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_VALUES);
+        config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
         config.put("includeValueFields", new ArrayList<>(includeValueFields));
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
@@ -307,41 +307,41 @@ public class DocSignatureProcessorTest {
     }
 
     private void testSignature(Map<String, Object> config, int expectedSignature) throws InterruptedException {
-        DocSignatureProcessor fieldsNamesSignatureProcessor =
-                createProcessor(DocSignatureProcessor.class, config);
+        AddSignatureProcessor fieldsNamesSignatureProcessor =
+                createProcessor(AddSignatureProcessor.class, config);
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
 
         ProcessResult result = fieldsNamesSignatureProcessor.process(doc);
 
         assertThat(result.isSucceeded()).isTrue();
-        assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
+        assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
 
-        int signature = doc.getField(DOC_SIGNATURE_FIELD);
+        int signature = doc.getField(SIGNATURE_FIELD_NAME);
         assertThat(signature).isEqualTo(expectedSignature);
     }
 
     private void testLogProduceIdenticalSignature(Map<String, Object> config, int expectedSignature, Doc doc)
             throws InterruptedException {
-        DocSignatureProcessor fieldsNamesSignatureProcessor =
-                createProcessor(DocSignatureProcessor.class, config);
+        AddSignatureProcessor fieldsNamesSignatureProcessor =
+                createProcessor(AddSignatureProcessor.class, config);
 
         ProcessResult firstResult = fieldsNamesSignatureProcessor.process(doc);
 
         assertThat(firstResult.isSucceeded()).isTrue();
-        assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
+        assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
 
-        int firstSignature = doc.getField(DOC_SIGNATURE_FIELD);
+        int firstSignature = doc.getField(SIGNATURE_FIELD_NAME);
         assertThat(firstSignature).isEqualTo(expectedSignature);
 
-        doc.removeField(DOC_SIGNATURE_FIELD);
+        doc.removeField(SIGNATURE_FIELD_NAME);
 
-        fieldsNamesSignatureProcessor = createProcessor(DocSignatureProcessor.class, config);
+        fieldsNamesSignatureProcessor = createProcessor(AddSignatureProcessor.class, config);
         ProcessResult secondResult = fieldsNamesSignatureProcessor.process(doc);
 
         assertThat(secondResult.isSucceeded()).isTrue();
-        assertThat(doc.hasField(DOC_SIGNATURE_FIELD)).isTrue();
+        assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
 
-        int secondSignature = doc.getField(DOC_SIGNATURE_FIELD);
+        int secondSignature = doc.getField(SIGNATURE_FIELD_NAME);
         assertThat(secondSignature).isEqualTo(firstSignature);
     }
 

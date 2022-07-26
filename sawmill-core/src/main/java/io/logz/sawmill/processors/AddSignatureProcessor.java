@@ -15,12 +15,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@ProcessorProvider(type = "docSignature", factory = DocSignatureProcessor.Factory.class)
-public class DocSignatureProcessor implements Processor {
+@ProcessorProvider(type = "addSignature", factory = AddSignatureProcessor.Factory.class)
+public class AddSignatureProcessor implements Processor {
     private final SignatureMode signatureMode;
     private final Set<String> includeValueFields;
     private final String signatureFieldName;
-    public DocSignatureProcessor(SignatureMode signatureMode, String signatureFieldName, Set<String> includeValueFields) {
+    public AddSignatureProcessor(SignatureMode signatureMode, String signatureFieldName, Set<String> includeValueFields) {
         this.signatureMode = signatureMode;
         this.signatureFieldName = signatureFieldName;
         this.includeValueFields = includeValueFields;
@@ -34,7 +34,7 @@ public class DocSignatureProcessor implements Processor {
         } catch (Exception e) {
             return ProcessResult.failure(
                     "failed to create signature, SignatureMode: " + signatureMode,
-                    new ProcessorExecutionException(DocSignatureProcessor.class.getSimpleName(), e));
+                    new ProcessorExecutionException(AddSignatureProcessor.class.getSimpleName(), e));
         }
 
         if(signature == 0) {
@@ -111,13 +111,13 @@ public class DocSignatureProcessor implements Processor {
         public Factory() {}
 
         @Override
-        public DocSignatureProcessor create(Map<String,Object> config) {
-            DocSignatureProcessor.Configuration docSignatureConfig =
-                    JsonUtils.fromJsonMap(DocSignatureProcessor.Configuration.class, config);
+        public AddSignatureProcessor create(Map<String,Object> config) {
+            AddSignatureProcessor.Configuration docSignatureConfig =
+                    JsonUtils.fromJsonMap(AddSignatureProcessor.Configuration.class, config);
 
             validateConfiguration(docSignatureConfig);
 
-            return new DocSignatureProcessor(docSignatureConfig.getSignatureMode(),
+            return new AddSignatureProcessor(docSignatureConfig.getSignatureMode(),
                     docSignatureConfig.getSignatureFieldName(),
                     docSignatureConfig.getIncludeValueFields());
         }
