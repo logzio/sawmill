@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
 @ProcessorProvider(type = "addSignature", factory = AddSignatureProcessor.Factory.class)
 public class AddSignatureProcessor implements Processor {
     private final SignatureMode signatureMode;
-    private final Set<String> includeValueFields;
     private final String signatureFieldName;
+    private final Set<String> includeValueFields;
     public AddSignatureProcessor(SignatureMode signatureMode, String signatureFieldName, Set<String> includeValueFields) {
         this.signatureMode = signatureMode;
         this.signatureFieldName = signatureFieldName;
@@ -84,7 +84,7 @@ public class AddSignatureProcessor implements Processor {
         return fields;
     }
 
-    public void extractFieldsNames(Object object, String parentKey, Set<String> fields) throws InterruptedException {
+    private void extractFieldsNames(Object object, String parentKey, Set<String> fields) throws InterruptedException {
         if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
         if(object instanceof Map) {
             Map<String, Object> map = (Map) object;
