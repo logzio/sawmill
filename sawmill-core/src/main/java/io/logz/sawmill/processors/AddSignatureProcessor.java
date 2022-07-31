@@ -37,7 +37,7 @@ public class AddSignatureProcessor implements Processor {
             signature = createSignature(doc);
         } catch (Exception e) {
             String errorMessage = "failed to create signature, SignatureMode: " + signatureMode;
-            logger.debug(errorMessage + ", Exception: " + JsonUtils.toJsonString(e.getStackTrace()));
+            logger.debug(errorMessage, e);
             return ProcessResult.failure(errorMessage,
                     new ProcessorExecutionException(AddSignatureProcessor.class.getSimpleName(), e));
         }
