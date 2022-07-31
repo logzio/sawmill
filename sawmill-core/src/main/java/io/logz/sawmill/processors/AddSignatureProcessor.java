@@ -8,7 +8,10 @@ import io.logz.sawmill.exceptions.ProcessorConfigurationException;
 import io.logz.sawmill.exceptions.ProcessorExecutionException;
 import io.logz.sawmill.utilities.JsonUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
 
 @ProcessorProvider(type = "addSignature", factory = AddSignatureProcessor.Factory.class)
 public class AddSignatureProcessor implements Processor {
+    private final static Logger logger = LoggerFactory.getLogger(AddSignatureProcessor.class);
     private final SignatureMode signatureMode;
     private final String signatureFieldName;
     private final Set<String> includeValueFields;
@@ -32,12 +36,14 @@ public class AddSignatureProcessor implements Processor {
         try {
             signature = createSignature(doc);
         } catch (Exception e) {
-            return ProcessResult.failure(
-                    "failed to create signature, SignatureMode: " + signatureMode,
+            String errorMessage = "failed to create signature, SignatureMode: " + signatureMode;
+            logger.debug(errorMessage, e);
+            return ProcessResult.failure(errorMessage,
                     new ProcessorExecutionException(AddSignatureProcessor.class.getSimpleName(), e));
         }
 
         if(signature == 0) {
+            logger.debug("signature collection is empty, SignatureMode: " + signatureMode);
             if(signatureMode.equals(SignatureMode.FIELDS_NAMES) || signatureMode.equals(SignatureMode.HYBRID)) {
                 return ProcessResult.failure("failed to extract fields names, SignatureMode: " + signatureMode);
             }
