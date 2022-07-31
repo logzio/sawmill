@@ -1,6 +1,5 @@
 package io.logz.sawmill;
 
-import java.util.Optional;
 
 public interface PipelineExecutionMetricsTracker {
     void pipelineFinishedSuccessfully(String pipelineId, Doc doc, long timeTookNs);
@@ -13,7 +12,7 @@ public interface PipelineExecutionMetricsTracker {
 
     void processorFinishedSuccessfully(String pipelineId, String processorName, long timeTookNs);
 
-    void processorFailed(String pipelineId, String processorName, Doc doc, Optional<ProcessResult.Error> optionalError);
+    void processorFailed(String pipelineId, String processorName, Doc doc);
 
     void pipelineFailedOnUnexpectedError(String pipelineId, Doc doc, Exception e);
 
