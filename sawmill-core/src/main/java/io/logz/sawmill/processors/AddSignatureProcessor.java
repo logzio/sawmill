@@ -78,7 +78,7 @@ public class AddSignatureProcessor implements Processor {
         return includeValueFields.stream()
                 .filter(doc::hasField)
                 .map(fieldName -> {
-                    String value = doc.getField(fieldName);
+                    String value = doc.getField(fieldName).toString();
                     return "value_" + fieldName + "_" + value;
                 }).collect(Collectors.toSet());
     }
