@@ -11,11 +11,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @ProcessorProvider(type = "addSignature", factory = AddSignatureProcessor.Factory.class)
@@ -71,7 +71,10 @@ public class AddSignatureProcessor implements Processor {
     }
 
     private void addSignatureField(Doc doc, int signature) {
-        doc.addField(signatureFieldName, signature);
+        doc.addField(
+                signatureFieldName,
+                UUID.nameUUIDFromBytes(String.valueOf(signature).getBytes()).toString()
+        );
     }
 
     private Set<String> getFieldsValues(Doc doc) {

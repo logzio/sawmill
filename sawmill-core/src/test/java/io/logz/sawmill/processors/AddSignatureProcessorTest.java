@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -97,7 +98,7 @@ public class AddSignatureProcessorTest {
         config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
         config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_NAMES);
 
-        int expectedSignature = fieldsNames.hashCode();
+        String expectedSignature = getSignature(fieldsNames.hashCode());
         testSignature(config, expectedSignature);
     }
 
@@ -109,7 +110,7 @@ public class AddSignatureProcessorTest {
         config.put("includeValueFields", includeValueFields);
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
-        int expectedSignature = getFieldsValues(doc, includeValueFields).hashCode();
+        String expectedSignature = getSignature(getFieldsValues(doc, includeValueFields).hashCode());
         testSignature(config, expectedSignature);
     }
 
@@ -121,7 +122,8 @@ public class AddSignatureProcessorTest {
         config.put("includeValueFields", includeValueFields);
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
-        int expectedSignature = fieldsNames.hashCode() + getFieldsValues(doc, includeValueFields).hashCode();
+        int hashCode = fieldsNames.hashCode() + getFieldsValues(doc, includeValueFields).hashCode();
+        String expectedSignature = getSignature(hashCode);
         testSignature(config, expectedSignature);
     }
 
@@ -181,8 +183,9 @@ public class AddSignatureProcessorTest {
         assertThat(result.isSucceeded()).isTrue();
         assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
 
-        int signature = doc.getField(SIGNATURE_FIELD_NAME);
-        int expectedSignature = getFieldsValues(doc, Sets.union(includeValueFields, missingFields)).hashCode();
+        String signature = doc.getField(SIGNATURE_FIELD_NAME);
+        int hashCode = getFieldsValues(doc, Sets.union(includeValueFields, missingFields)).hashCode();
+        String expectedSignature = getSignature(hashCode);
         assertThat(signature).isEqualTo(expectedSignature);
     }
 
@@ -203,8 +206,8 @@ public class AddSignatureProcessorTest {
         assertThat(result.isSucceeded()).isTrue();
         assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
 
-        int signature = doc.getField(SIGNATURE_FIELD_NAME);
-        int expectedSignature = getFieldsValues(doc, includeValueFields).hashCode();
+        String signature = doc.getField(SIGNATURE_FIELD_NAME);
+        String expectedSignature = getSignature(getFieldsValues(doc, includeValueFields).hashCode());
         assertThat(signature).isEqualTo(expectedSignature);
     }
 
@@ -238,7 +241,7 @@ public class AddSignatureProcessorTest {
         config.put("signatureFieldName", SIGNATURE_FIELD_NAME);
         config.put("signatureMode", AddSignatureProcessor.SignatureMode.FIELDS_NAMES);
 
-        int expectedSignature = fieldsNames.hashCode();
+        String expectedSignature = getSignature(fieldsNames.hashCode());
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
         testLogProduceIdenticalSignature(config, expectedSignature, doc);
     }
@@ -251,7 +254,7 @@ public class AddSignatureProcessorTest {
         config.put("includeValueFields", includeValueFields);
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
-        int expectedSignature = getFieldsValues(doc, includeValueFields).hashCode();
+        String expectedSignature = getSignature(getFieldsValues(doc, includeValueFields).hashCode());
         testLogProduceIdenticalSignature(config, expectedSignature, doc);
     }
 
@@ -263,7 +266,8 @@ public class AddSignatureProcessorTest {
         config.put("includeValueFields", includeValueFields);
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
-        int expectedSignature = fieldsNames.hashCode() + getFieldsValues(doc, includeValueFields).hashCode();
+        int hashCode = fieldsNames.hashCode() + getFieldsValues(doc, includeValueFields).hashCode();
+        String expectedSignature = getSignature(hashCode);
         testLogProduceIdenticalSignature(config, expectedSignature, doc);
     }
 
@@ -287,7 +291,7 @@ public class AddSignatureProcessorTest {
 
         assertThat(result.isSucceeded()).isEqualTo(unorderedDocResult.isSucceeded()).isTrue();
         assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isEqualTo(unorderedDoc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
-        assertThat((int)doc.getField(SIGNATURE_FIELD_NAME)).isEqualTo(unorderedDoc.getField(SIGNATURE_FIELD_NAME));
+        assertThat((String)doc.getField(SIGNATURE_FIELD_NAME)).isEqualTo(unorderedDoc.getField(SIGNATURE_FIELD_NAME));
     }
 
     @Test
@@ -298,7 +302,7 @@ public class AddSignatureProcessorTest {
         config.put("includeValueFields", new ArrayList<>(includeValueFields));
 
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
-        int expectedSignature = getFieldsValues(doc, includeValueFields).hashCode();
+        String expectedSignature = getSignature(getFieldsValues(doc, includeValueFields).hashCode());
         testSignature(config, expectedSignature);
 
         List<String> unorderedIncludeValueFields = Stream.of("line", "logger").collect(Collectors.toList());
@@ -306,7 +310,11 @@ public class AddSignatureProcessorTest {
         testSignature(config, expectedSignature);
     }
 
-    private void testSignature(Map<String, Object> config, int expectedSignature) throws InterruptedException {
+    private String getSignature(int hashCode) {
+        return UUID.nameUUIDFromBytes(String.valueOf(hashCode).getBytes()).toString();
+    }
+
+    private void testSignature(Map<String, Object> config, String expectedSignature) throws InterruptedException {
         AddSignatureProcessor fieldsNamesSignatureProcessor =
                 createProcessor(AddSignatureProcessor.class, config);
         Doc doc = new Doc(JsonUtils.fromJsonString(Map.class, message));
@@ -316,11 +324,11 @@ public class AddSignatureProcessorTest {
         assertThat(result.isSucceeded()).isTrue();
         assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
 
-        int signature = doc.getField(SIGNATURE_FIELD_NAME);
+        String signature = doc.getField(SIGNATURE_FIELD_NAME);
         assertThat(signature).isEqualTo(expectedSignature);
     }
 
-    private void testLogProduceIdenticalSignature(Map<String, Object> config, int expectedSignature, Doc doc)
+    private void testLogProduceIdenticalSignature(Map<String, Object> config, String expectedSignature, Doc doc)
             throws InterruptedException {
         AddSignatureProcessor fieldsNamesSignatureProcessor =
                 createProcessor(AddSignatureProcessor.class, config);
@@ -330,7 +338,7 @@ public class AddSignatureProcessorTest {
         assertThat(firstResult.isSucceeded()).isTrue();
         assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
 
-        int firstSignature = doc.getField(SIGNATURE_FIELD_NAME);
+        String firstSignature = doc.getField(SIGNATURE_FIELD_NAME);
         assertThat(firstSignature).isEqualTo(expectedSignature);
 
         doc.removeField(SIGNATURE_FIELD_NAME);
@@ -341,7 +349,7 @@ public class AddSignatureProcessorTest {
         assertThat(secondResult.isSucceeded()).isTrue();
         assertThat(doc.hasField(SIGNATURE_FIELD_NAME)).isTrue();
 
-        int secondSignature = doc.getField(SIGNATURE_FIELD_NAME);
+        String secondSignature = doc.getField(SIGNATURE_FIELD_NAME);
         assertThat(secondSignature).isEqualTo(firstSignature);
     }
 
