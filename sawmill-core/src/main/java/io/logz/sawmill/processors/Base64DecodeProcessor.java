@@ -9,46 +9,29 @@ import io.logz.sawmill.utilities.JsonUtils;
 
 import java.util.Base64;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
 @ProcessorProvider(type = "base64Decode", factory = Base64DecodeProcessor.Factory.class)
 public class Base64DecodeProcessor implements Processor {
 
-    private final Set<String> fields;
-    private final boolean allowMissingFields;
+    private final String sourceField;
+    private final String targetField;
 
-    public Base64DecodeProcessor(Set<String> fields, boolean allowMissingFields) {
-        this.fields = requireNonNull(fields);
-        this.allowMissingFields = allowMissingFields;
+    public Base64DecodeProcessor(String sourceField, String targetField) {
+        this.sourceField = requireNonNull(sourceField);
+        this.targetField = requireNonNull(targetField);
     }
 
     @Override
     public ProcessResult process(Doc doc) {
-        Set<String> missingFields = listMissingFields(doc);
-        if(!validateMissingFields(missingFields))
-            return ProcessResult.failure("some or all fields are missing from doc");
+        if(!doc.hasField(sourceField, String.class))
+            return ProcessResult.failure("field is missing from doc");
 
-        fields.stream()
-                .filter(field -> !missingFields.contains(field))
-                .forEach(field -> {
-                    String value = doc.getField(field);
-                    doc.addField(field, new String(Base64.getDecoder().decode(value)));
-                });
+        String value = doc.getField(sourceField);
+        String decodedValue = new String(Base64.getDecoder().decode(value));
+        doc.addField(targetField, decodedValue);
         return ProcessResult.success();
-    }
-
-    private boolean validateMissingFields(Set<String> missingFields) {
-        return missingFields.isEmpty() ||
-                (missingFields.size() < fields.size() && allowMissingFields);
-    }
-
-    private Set<String> listMissingFields(Doc doc) {
-        return fields.stream()
-                .filter(field -> !doc.hasField(field, String.class))
-                .collect(Collectors.toSet());
     }
 
     public static class Factory implements Processor.Factory {
@@ -59,26 +42,27 @@ public class Base64DecodeProcessor implements Processor {
             Base64DecodeProcessor.Configuration configuration =
                     JsonUtils.fromJsonMap(Base64DecodeProcessor.Configuration.class, config);
             validateConfiguration(configuration);
-            return new Base64DecodeProcessor(configuration.getFields(), configuration.getAllowMissingFields());
+            return new Base64DecodeProcessor(configuration.getSourceField(), configuration.getTargetField());
         }
 
         private void validateConfiguration(Configuration configuration) {
-            if(configuration.getFields().isEmpty())
-                throw new ProcessorConfigurationException("fields can not be empty");
+            if(configuration.getSourceField() == null || configuration.getSourceField().isEmpty()
+                || configuration.getTargetField() == null || configuration.getTargetField().isEmpty())
+                throw new ProcessorConfigurationException("sourceField, targetField can not be null or empty");
         }
     }
 
     public static class Configuration implements Processor.Configuration {
-        private Set<String> fields;
-        private boolean allowMissingFields;
+        private String sourceField;
+        private String targetField;
 
         public Configuration() {}
-        public Configuration(Set<String> fields, boolean allowMissingFields) {
-            this.fields = fields;
-            this.allowMissingFields = allowMissingFields;
+        public Configuration(String sourceField, String targetField) {
+            this.sourceField = sourceField;
+            this.targetField = targetField;
         }
 
-        public boolean getAllowMissingFields() { return allowMissingFields; }
-        public Set<String> getFields() { return fields; }
+        public String getSourceField() { return sourceField; }
+        public String getTargetField() { return targetField; }
     }
 }
