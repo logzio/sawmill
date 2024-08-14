@@ -1,8 +1,8 @@
 name: deploy
 on:
   push:
-    tags:
-    - '*'
+    branches:
+    - check-gpg-key
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -34,8 +34,8 @@ jobs:
         gpg --list-packets
         ./mvnw versions:set -DnewVersion=${GITHUB_REF#refs/tags/}
 
-    - name: Deploy
-      run: |
-        echo 'Deploy'
-        ./mvnw deploy --settings release/settings.xml
-        echo 'Deploy finished successfully'
+    # - name: Deploy
+    #   run: |
+    #     echo 'Deploy'
+    #     ./mvnw deploy --settings release/settings.xml
+    #     echo 'Deploy finished successfully'
