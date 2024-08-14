@@ -31,7 +31,7 @@ jobs:
         openssl aes-256-cbc  -in release/codesigning.asc.enc -out release/codesigning.asc -d -k $CODESIGNING
         gpg --batch --fast-import release/codesigning.asc
         rm release/codesigning.asc
-        gpg --list-packets
+        gpg -k 
         ./mvnw versions:set -DnewVersion=${GITHUB_REF#refs/tags/}
 
     # - name: Deploy
