@@ -77,18 +77,19 @@ public class GrokProcessor implements Processor {
             return ProcessResult.failure(String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", fieldValue, field, expressions));
         }
 
-        matches.stream()
-                .filter(match -> !CollectionUtils.isEmpty(match.getValues()))
-                .forEach(match -> {
-                    String field = match.getName();
-                    List<Object> matchValues = match.getValues();
-                    Object value = getValue(matchValues);
-                    if (overwrite.contains(field) || !doc.hasField(field)) {
-                        doc.addField(field, value);
-                    } else {
-                        doc.appendList(field, value);
-                    }
-                });
+        for (Grok.Match match : matches) {
+            // getValues() builds a new list on every call
+            List<Object> matchValues = match.getValues();
+            if (CollectionUtils.isEmpty(matchValues)) continue;
+
+            String name = match.getName();
+            Object value = getValue(matchValues);
+            if (overwrite.contains(name) || !doc.hasField(name)) {
+                doc.addField(name, value);
+            } else {
+                doc.appendList(name, value);
+            }
+        }
 
         return ProcessResult.success();
     }
