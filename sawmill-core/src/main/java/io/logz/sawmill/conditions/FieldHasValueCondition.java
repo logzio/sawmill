@@ -33,14 +33,11 @@ public class FieldHasValueCondition implements Condition {
         if (!doc.hasField(field)) return false;
         Object value = getValueFromDoc(doc);
 
-        return possibleValues.stream()
-                .map(possibleValue -> {
-                    if (possibleValue instanceof Template) {
-                        return ((Template) possibleValue).render(doc);
-                    } else {
-                        return possibleValue;
-                    }
-                }).anyMatch(value::equals);
+        for (Object possibleValue : possibleValues) {
+            Object candidate = possibleValue instanceof Template ? ((Template) possibleValue).render(doc) : possibleValue;
+            if (value.equals(candidate)) return true;
+        }
+        return false;
     }
 
     private Object getValueFromDoc(Doc doc) {
