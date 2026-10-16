@@ -18,6 +18,7 @@ public class PipelineExecutor implements Closeable {
 
     private final PipelineExecutionTimeWatchdog watchdog;
     private final PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker;
+    private final boolean tracksProcessorTime;
 
     public PipelineExecutor() {
         this(new PipelineExecutionMetricsMBean());
@@ -30,6 +31,7 @@ public class PipelineExecutor implements Closeable {
     public PipelineExecutor(PipelineExecutionTimeWatchdog watchdog, PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker) {
         this.watchdog = watchdog;
         this.pipelineExecutionMetricsTracker = pipelineExecutionMetricsTracker;
+        this.tracksProcessorTime = pipelineExecutionMetricsTracker.tracksProcessorTime();
     }
 
     public ExecutionResult execute(Pipeline pipeline, Doc doc) {
@@ -114,9 +116,9 @@ public class PipelineExecutor implements Closeable {
         String pipelineId = pipeline.getId();
         String processorName = executionStep.getProcessorName();
 
-        pipelineStopwatch.startProcessor();
+        if (tracksProcessorTime) pipelineStopwatch.startProcessor();
         ProcessResult processResult = processor.process(doc);
-        long processorTook = pipelineStopwatch.processorElapsed();
+        long processorTook = tracksProcessorTime ? pipelineStopwatch.processorElapsed() : 0;
 
         if (processResult.isSucceeded()) {
             pipelineExecutionMetricsTracker.processorFinishedSuccessfully(pipelineId, processorName, processorTook);

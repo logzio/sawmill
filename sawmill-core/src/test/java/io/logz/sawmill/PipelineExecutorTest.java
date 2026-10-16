@@ -15,6 +15,7 @@ import java.util.List;
 
 import static io.logz.sawmill.utils.DocUtils.createDoc;
 import static io.logz.sawmill.utils.FactoryUtils.createProcessor;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -346,6 +347,87 @@ public class PipelineExecutorTest {
         String value2 = doc2.getField(fieldToAdd);
         assertThat(value2).isEqualTo(valueOnFalse);
         assertThat(pipelineExecutorMetrics.getTotalDocsSucceededProcessing()).isEqualTo(2);
+    }
+
+    @Test
+    public void testProcessorTimeTracked() {
+        TimeRecordingTracker tracker = new TimeRecordingTracker(true);
+        Doc doc = createDoc("id", "testProcessorTimeTracked", "message", "hola");
+
+        ExecutionResult executionResult = executeWith(tracker, createSleepExecutionStep(20), doc);
+
+        assertThat(executionResult.isSucceeded()).isTrue();
+        assertThat(tracker.processorTimes).hasSize(1);
+        assertThat(tracker.processorTimes.get(0)).isGreaterThanOrEqualTo(MILLISECONDS.toNanos(20));
+    }
+
+    @Test
+    public void testProcessorTimeNotTracked() {
+        TimeRecordingTracker tracker = new TimeRecordingTracker(false);
+        Doc doc = createDoc("id", "testProcessorTimeNotTracked", "message", "hola");
+
+        ExecutionResult executionResult = executeWith(tracker, createSleepExecutionStep(20), doc);
+
+        assertThat(executionResult.isSucceeded()).isTrue();
+        assertThat(tracker.processorTimes).containsExactly(0L);
+        assertThat(tracker.pipelineTimes).hasSize(1);
+        assertThat(tracker.pipelineTimes.get(0)).isGreaterThanOrEqualTo(MILLISECONDS.toNanos(20));
+    }
+
+    private ExecutionResult executeWith(PipelineExecutionMetricsTracker tracker, ExecutionStep step, Doc doc) {
+        PipelineExecutionTimeWatchdog watchdog = new PipelineExecutionTimeWatchdog(WARNING_THRESHOLD_TIME_MS, EXPIRED_THRESHOLD_TIME_MS, tracker, watchedPipeline -> {});
+        try (PipelineExecutor executor = new PipelineExecutor(watchdog, tracker)) {
+            return executor.execute(createPipeline(step), doc);
+        }
+    }
+
+    private static class TimeRecordingTracker implements PipelineExecutionMetricsTracker {
+        private final boolean tracksProcessorTime;
+        private final List<Long> processorTimes = new ArrayList<>();
+        private final List<Long> pipelineTimes = new ArrayList<>();
+
+        TimeRecordingTracker(boolean tracksProcessorTime) {
+            this.tracksProcessorTime = tracksProcessorTime;
+        }
+
+        @Override
+        public boolean tracksProcessorTime() {
+            return tracksProcessorTime;
+        }
+
+        @Override
+        public void processorFinishedSuccessfully(String pipelineId, String processorName, long timeTookNs) {
+            processorTimes.add(timeTookNs);
+        }
+
+        @Override
+        public void pipelineFinishedSuccessfully(String pipelineId, Doc doc, long timeTookNs) {
+            pipelineTimes.add(timeTookNs);
+        }
+
+        @Override
+        public void pipelineFailed(String pipelineId, Doc doc) {
+        }
+
+        @Override
+        public void pipelineExpired(String pipelineId, Doc doc) {
+        }
+
+        @Override
+        public void docDropped(String pipelineId, Doc doc) {
+        }
+
+        @Override
+        public void processorFailed(String pipelineId, String processorName, Doc doc) {
+        }
+
+        @Override
+        public void pipelineFailedOnUnexpectedError(String pipelineId, Doc doc, Exception e) {
+        }
+
+        @Override
+        public void overtimeProcessingDoc(String pipelineId, Doc doc) {
+        }
     }
 
     private List<ExecutionStep> createExecutionSteps(ExecutionStep... steps) {
