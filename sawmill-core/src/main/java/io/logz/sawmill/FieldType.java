@@ -20,13 +20,13 @@ public enum FieldType {
     FLOAT {
         @Override
         public Object convertFrom(Object value) {
-            return Doubles.tryParse(String.valueOf(value));
+            return parseDouble(String.valueOf(value));
         }
     },
     DOUBLE {
         @Override
         public Object convertFrom(Object value) {
-            return Doubles.tryParse(String.valueOf(value)); }
+            return parseDouble(String.valueOf(value)); }
     },
     STRING {
         @Override
@@ -37,15 +37,42 @@ public enum FieldType {
     BOOLEAN {
         @Override
         public Object convertFrom(Object value) {
-            if (String.valueOf(value).matches("^(t|true|yes|y|1)$")) {
-                return true;
-            } else if (String.valueOf(value).matches("^(f|false|no|n|0)$")) {
-                return false;
-            } else {
-                return null;
+            // exactly the strings ^(t|true|yes|y|1)$ and ^(f|false|no|n|0)$ matched
+            switch (String.valueOf(value)) {
+                case "t": case "true": case "yes": case "y": case "1":
+                    return true;
+                case "f": case "false": case "no": case "n": case "0":
+                    return false;
+                default:
+                    return null;
             }
         }
     };
+
+    /**
+     * {@code Doubles.tryParse}, which checks every value with a regex first. Plain decimals ({@code -digits.digits},
+     * the sign and fraction optional) pass that check and end in {@code Double.parseDouble}, so they go there directly.
+     */
+    private static Double parseDouble(String text) {
+        return isPlainDecimal(text) ? Double.valueOf(Double.parseDouble(text)) : Doubles.tryParse(text);
+    }
+
+    private static boolean isPlainDecimal(String text) {
+        int length = text.length();
+        int i = length > 0 && text.charAt(0) == '-' ? 1 : 0;
+        int integerStart = i;
+        while (i < length && isDigit(text.charAt(i))) i++;
+        if (i == integerStart) return false;
+        if (i == length) return true;
+        if (text.charAt(i) != '.') return false;
+        int fractionStart = ++i;
+        while (i < length && isDigit(text.charAt(i))) i++;
+        return i > fractionStart && i == length;
+    }
+
+    private static boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
+    }
 
     @Override
     public String toString() {
