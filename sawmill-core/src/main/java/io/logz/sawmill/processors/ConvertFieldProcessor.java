@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.logz.sawmill.FieldType.BOOLEAN;
@@ -35,10 +36,10 @@ public class ConvertFieldProcessor implements Processor {
 
     @Override
     public ProcessResult process(Doc doc) {
-        List<String> errorMessages = new ArrayList<>();
+        List<Supplier<String>> errorMessages = new ArrayList<>();
         for (String path : paths) {
             if (!doc.hasField(path)) {
-                errorMessages.add(String.format("failed to convert field in path [%s], field is missing.", path));
+                errorMessages.add(() -> String.format("failed to convert field in path [%s], field is missing.", path));
                 continue;
             }
             Object beforeCast = doc.getField(path);
@@ -51,7 +52,7 @@ public class ConvertFieldProcessor implements Processor {
             }
 
             if (afterCast == null) {
-                errorMessages.add(String.format("failed to convert field in path [%s] to %s, value [%s].", path, fieldType, beforeCast));
+                errorMessages.add(conversionError(path, beforeCast));
                 continue;
             }
 
@@ -60,14 +61,19 @@ public class ConvertFieldProcessor implements Processor {
                 doc.addField(path, afterCast);
             }
             else {
-                errorMessages.add(String.format("failed to convert field in path [%s] to %s, value [%s].", path, fieldType, beforeCast));
+                errorMessages.add(conversionError(path, beforeCast));
             }
         }
         if (errorMessages.isEmpty()) {
             return ProcessResult.success();
         }
-        String allErrorMessages = errorMessages.stream().collect(Collectors.joining("\n"));
-        return ProcessResult.failure(allErrorMessages);
+        return ProcessResult.failure(() -> errorMessages.stream().map(Supplier::get).collect(Collectors.joining("\n")));
+    }
+
+    private Supplier<String> conversionError(String path, Object value) {
+        // render the value now: it belongs to the doc and may change before the message is read
+        String shownValue = String.valueOf(value);
+        return () -> String.format("failed to convert field in path [%s] to %s, value [%s].", path, fieldType, shownValue);
     }
 
     public static class Factory implements Processor.Factory {

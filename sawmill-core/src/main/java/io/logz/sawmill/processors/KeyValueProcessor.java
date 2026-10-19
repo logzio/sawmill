@@ -114,7 +114,7 @@ public class KeyValueProcessor implements Processor {
     @Override
     public ProcessResult process(Doc doc) throws InterruptedException {
         if (!doc.hasField(field)) {
-            return ProcessResult.failure(String.format("failed to process kv, couldn't find field [%s]", field));
+            return ProcessResult.failure(() -> String.format("failed to process kv, couldn't find field [%s]", field));
         }
 
         Map<String, Object> kvMap = new HashMap<>();
@@ -131,7 +131,7 @@ public class KeyValueProcessor implements Processor {
         } else if (kvField instanceof String) {
             kvMap = parse((String) kvField);
         } else {
-            return ProcessResult.failure(String.format("failed to process kv, cannot parse type [%s] of field [%s]", kvField.getClass(), field));
+            return ProcessResult.failure(() -> String.format("failed to process kv, cannot parse type [%s] of field [%s]", kvField.getClass(), field));
         }
 
         if (includeKeys != null) {

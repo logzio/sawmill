@@ -65,7 +65,7 @@ public class GrokProcessor implements Processor {
         if (!doc.hasField(field, String.class)) {
             if (ignoreMissing) return ProcessResult.success();
 
-            return ProcessResult.failure(String.format("failed to grok field in path [%s], field is missing or not instance of [%s]", field, String.class));
+            return ProcessResult.failure(() -> String.format("failed to grok field in path [%s], field is missing or not instance of [%s]", field, String.class));
         }
 
         String fieldValue = doc.getField(field);
@@ -74,7 +74,7 @@ public class GrokProcessor implements Processor {
 
         if (CollectionUtils.isEmpty(matches)) {
             doc.appendList("tags", tagsOnFailure);
-            return ProcessResult.failure(String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", fieldValue, field, expressions));
+            return ProcessResult.failure(() -> String.format("failed to grok field [%s] in path [%s], doesn't match any of the expressions [%s]", fieldValue, field, expressions));
         }
 
         for (Grok.Match match : matches) {

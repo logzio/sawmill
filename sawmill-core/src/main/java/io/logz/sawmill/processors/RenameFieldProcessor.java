@@ -43,7 +43,7 @@ public class RenameFieldProcessor implements Processor {
         }
 
         if (!missingFields.isEmpty()) {
-            return ProcessResult.failure(String.format("failed to rename fields [%s], fields are missing", missingFields));
+            return ProcessResult.failure(() -> String.format("failed to rename fields [%s], fields are missing", missingFields));
         }
 
         return ProcessResult.success();

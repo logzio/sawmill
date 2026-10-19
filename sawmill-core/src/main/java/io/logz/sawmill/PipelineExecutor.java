@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -141,7 +142,7 @@ public class PipelineExecutor implements Closeable {
     }
 
     private ExecutionResult processorErrorExecutionResult(ProcessResult.Error error, String processorName, Pipeline pipeline) {
-        String message = error.getMessage();
+        Supplier<String> message = error::getMessage;
         if (error.getException().isPresent()) {
             return ExecutionResult.failure(message, processorName,
                     new PipelineExecutionException(pipeline.getId(), error.getException().get()));

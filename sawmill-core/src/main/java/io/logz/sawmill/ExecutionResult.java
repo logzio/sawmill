@@ -3,6 +3,7 @@ package io.logz.sawmill;
 import io.logz.sawmill.exceptions.PipelineExecutionException;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static io.logz.sawmill.Result.DROPPED;
 import static io.logz.sawmill.Result.EXPIRED;
@@ -42,6 +43,12 @@ public class ExecutionResult {
         this.overtimeTook = Optional.empty();
     }
 
+    private ExecutionResult(Supplier<String> errorMessage, String failedProcessorName, PipelineExecutionException e) {
+        this.result = FAILED;
+        this.error = Optional.of(new Error(errorMessage, failedProcessorName, Optional.ofNullable(e)));
+        this.overtimeTook = Optional.empty();
+    }
+
     public static ExecutionResult success() {
         return executionSucceeded;
     }
@@ -51,6 +58,15 @@ public class ExecutionResult {
     }
 
     public static ExecutionResult failure(String errorMessage, String failedProcessorName, PipelineExecutionException e) {
+        return new ExecutionResult(errorMessage, failedProcessorName, e);
+    }
+
+    /** The message is built only if it is read; see {@link ProcessResult#failure(Supplier)}. */
+    static ExecutionResult failure(Supplier<String> errorMessage, String failedProcessorName) {
+        return new ExecutionResult(errorMessage, failedProcessorName, null);
+    }
+
+    static ExecutionResult failure(Supplier<String> errorMessage, String failedProcessorName, PipelineExecutionException e) {
         return new ExecutionResult(errorMessage, failedProcessorName, e);
     }
 
@@ -106,18 +122,25 @@ public class ExecutionResult {
     }
 
     public static class Error {
-        private final String message;
+        private final Supplier<String> message;
         private final String failedProcessorName;
         private final Optional<PipelineExecutionException> exception;
 
         public Error(String message, String failedProcessorName, Optional<PipelineExecutionException> exception) {
+            this.message = () -> message;
+            this.failedProcessorName = failedProcessorName;
+            this.exception = exception;
+        }
+
+        Error(Supplier<String> message, String failedProcessorName, Optional<PipelineExecutionException> exception) {
+            // not memoized again: the executor passes ProcessResult.Error::getMessage, which is
             this.message = message;
             this.failedProcessorName = failedProcessorName;
             this.exception = exception;
         }
 
         public String getMessage() {
-            return message;
+            return message.get();
         }
 
         public String getFailedProcessorName() {
