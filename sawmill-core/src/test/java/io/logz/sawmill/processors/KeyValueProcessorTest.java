@@ -334,4 +334,52 @@ public class KeyValueProcessorTest {
     public void testBadConfigs() {
         assertThatThrownBy(() -> createProcessor(KeyValueProcessor.class)).isInstanceOf(NullPointerException.class);
     }
+
+    @Test
+    public void testDuplicateKeysKeepMapAndOrder() throws InterruptedException {
+        java.util.Random random = new java.util.Random(23);
+        KeyValueProcessor processor = new KeyValueProcessor("kv", templateFor("out"), null, null, " ", "=",
+                true, true, "", false, null, null, 40);
+        for (int n = 0; n < 3000; n++) {
+            // 1-70 pairs from a key pool sized to cross HashMap's resize thresholds with and without duplicates
+            int pairs = 1 + random.nextInt(70);
+            int keyPool = 1 + random.nextInt(80);
+            StringBuilder text = new StringBuilder();
+            Map<String, Object> expected = new java.util.HashMap<>();
+            for (int i = 0; i < pairs; i++) {
+                String key = "k" + random.nextInt(keyPool);
+                String value = "v" + i;
+                text.append(key).append('=').append(value).append(' ');
+                // the previous implementation
+                expected.compute(key, (k, oldVal) -> {
+                    if (oldVal == null) return value;
+                    if (oldVal instanceof List) {
+                        ((List) oldVal).add(value);
+                        return oldVal;
+                    }
+                    return new java.util.ArrayList<>(Arrays.asList(oldVal, value));
+                });
+            }
+            Doc doc = createDoc("kv", text.toString());
+            assertThat(processor.process(doc).isSucceeded()).isTrue();
+            Map<String, Object> actual = doc.getField("out");
+            assertThat(new java.util.ArrayList<>(actual.entrySet())).as("[%s]", text).isEqualTo(new java.util.ArrayList<>(expected.entrySet()));
+        }
+    }
+
+    @Test
+    public void testKeyPrefixes() throws InterruptedException {
+        for (String prefix : new String[]{"", "p_", null}) {
+            KeyValueProcessor processor = new KeyValueProcessor("kv", null, null, null, " ", "=",
+                    true, true, prefix, false, null, null, 40);
+            Doc doc = createDoc("kv", "a=1  b = 2");
+            assertThat(processor.process(doc).isSucceeded()).isTrue();
+            assertThat((String) doc.getField(prefix + "a")).isEqualTo("1");
+            assertThat((String) doc.getField(prefix + "b")).isEqualTo("2");
+        }
+    }
+
+    private static io.logz.sawmill.Template templateFor(String value) {
+        return new io.logz.sawmill.TemplateService().createTemplate(value);
+    }
 }
