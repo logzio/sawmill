@@ -11,6 +11,7 @@ import org.joni.exception.ValueException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +48,10 @@ public final class Grok {
 
     /** Field name, type and group numbers of each named capture, resolved once instead of on every match. */
     private List<CaptureGroup> captureGroups(Regex regex) {
-        List<CaptureGroup> groups = new ArrayList<>();
         if (regex.numberOfNames() == 0) {
-            return groups;
+            return Collections.emptyList();
         }
+        List<CaptureGroup> groups = new ArrayList<>();
         for (Iterator<NameEntry> iterator = regex.namedBackrefIterator(); iterator.hasNext();) {
             NameEntry entry = iterator.next();
             groups.add(CaptureGroup.of(extractString(entry.name, entry.nameP, entry.nameEnd), entry.getBackRefs()));
