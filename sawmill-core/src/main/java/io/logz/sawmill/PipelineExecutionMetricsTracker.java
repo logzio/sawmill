@@ -17,4 +17,12 @@ public interface PipelineExecutionMetricsTracker {
     void pipelineFailedOnUnexpectedError(String pipelineId, Doc doc, Exception e);
 
     void overtimeProcessingDoc(String pipelineId, Doc doc);
+
+    /**
+     * Whether {@link #processorFinishedSuccessfully} uses the processor time. If not, the executor skips the two clock
+     * reads around every processor and passes 0. Read once, when the executor is created.
+     */
+    default boolean tracksProcessorTime() {
+        return true;
+    }
 }

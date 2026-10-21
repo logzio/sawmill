@@ -153,7 +153,7 @@ public class DateProcessor implements Processor {
     @Override
     public ProcessResult process(Doc doc) {
         if (!doc.hasField(field)) {
-            return ProcessResult.failure(String.format("failed to process date, field in path [%s] is missing", field));
+            return ProcessResult.failure(() -> String.format("failed to process date, field in path [%s] is missing", field));
         }
 
         Object dateTimeDocValue = doc.getField(field);
@@ -172,7 +172,9 @@ public class DateProcessor implements Processor {
         }
 
         if (dateTime == null) {
-            return ProcessResult.failure(String.format("failed to parse date in path [%s], [%s] is not one of the formats [%s]", field, dateTimeDocValue, formats));
+            // render the value now: it belongs to the doc and may change before the message is read
+            String shownValue = String.valueOf(dateTimeDocValue);
+            return ProcessResult.failure(() -> String.format("failed to parse date in path [%s], [%s] is not one of the formats [%s]", field, shownValue, formats));
         }
 
         doc.addField(targetField, dateTime.format(outputFormatter));

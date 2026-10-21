@@ -8,6 +8,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -125,5 +126,48 @@ public class DocTest {
         assertThat(doc.hasField("message")).isTrue();
         assertThat(doc.hasField("message." + nonExistentField)).isFalse();
         assertThat(doc.hasField(nonExistentField)).isFalse();
+    }
+
+    @Test
+    public void testSimpleAndEscapedPaths() {
+        Doc doc = createDoc("message", "hello", "a.b", "dotted key");
+        doc.addField("x.y", "nested");
+
+        assertThat(doc.hasField("message")).isTrue();
+        assertThat((String) doc.getField("message")).isEqualTo("hello");
+        assertThat((String) doc.getField("a\\.b")).isEqualTo("dotted key");
+        assertThat(doc.hasField("a.b")).isFalse();
+        assertThat((String) doc.getField("x.y")).isEqualTo("nested");
+        assertThat(doc.hasField("")).isFalse();
+
+        assertThat(doc.removeField("message")).isTrue();
+        assertThat(doc.hasField("message")).isFalse();
+        assertThat(doc.removeField("a\\.b")).isTrue();
+        assertThat(doc.hasField("a\\.b")).isFalse();
+    }
+
+    @Test
+    public void testNullValuesAndTypesOnSingleFields() {
+        Map<String, Object> source = new HashMap<>();
+        source.put("message", "m");
+        source.put("empty", null);
+        source.put("n", 5L);
+        Doc doc = new Doc(source);
+
+        assertThat(doc.hasField("empty")).isFalse();
+        assertThat(doc.hasField("missing")).isFalse();
+        assertThat(doc.hasField("n", Long.class)).isTrue();
+        assertThat(doc.hasField("n", String.class)).isFalse();
+        assertThat(doc.removeField("empty")).isFalse();
+        assertThat(source.containsKey("empty")).isTrue();
+        assertThatThrownBy(() -> doc.getField("empty")).isInstanceOf(IllegalStateException.class)
+                .hasMessage("Couldn't resolve field in path [empty]");
+
+        doc.addField("n", 6L);
+        assertThat((Long) doc.getField("n")).isEqualTo(6L);
+        doc.appendList("n", 7L);
+        assertThat((List) doc.getField("n")).isEqualTo(Arrays.asList(6L, 7L));
+        assertThat(doc.removeField("n")).isTrue();
+        assertThat(source.containsKey("n")).isFalse();
     }
 }

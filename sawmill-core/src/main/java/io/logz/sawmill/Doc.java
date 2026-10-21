@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -22,22 +21,24 @@ public class Doc {
     public Map<String, Object> getSource() { return source; }
 
     public boolean hasField(String path) {
-        Optional<Object> field = getByPath(source, path);
-        return field.isPresent();
+        return lookup(source, path) != null;
     }
 
     public boolean hasField(String path, Class clazz) {
-        Optional<Object> field = getByPath(source, path);
-        return field.isPresent() && clazz.isInstance(field.get());
+        return clazz.isInstance(lookup(source, path));
     }
 
     public <T> T getField(String path) {
-        Optional<Object> field = getByPath(source, path);
-        checkState(field.isPresent(), "Couldn't resolve field in path [%s]", path);
-        return (T) field.get();
+        Object field = lookup(source, path);
+        checkState(field != null, "Couldn't resolve field in path [%s]", path);
+        return (T) field;
     }
 
     public void addField(String path, Object value) {
+        if (isSingleField(path)) {
+            source.put(path, value);
+            return;
+        }
         Map<String, Object> context = source;
         List<String> pathElements = tokenizePath(path);
 
@@ -66,6 +67,10 @@ public class Doc {
     public boolean removeField(String path) {
         if (!hasField(path)) {
             return false;
+        }
+        if (isSingleField(path)) {
+            source.remove(path);
+            return true;
         }
         Map<String, Object> context = source;
         List<String> pathElements = tokenizePath(path);
@@ -136,23 +141,28 @@ public class Doc {
      * json OGNL (Object Graph Navigation Language) getter.
      * <p>for example:
      * <pre>
-     * JsonUtils.getByPath(json, "x.y.z")
+     * lookup(json, "x.y.z")
      * </pre>
      *
-     * @return Optional of the value in paths
-     * @throws Exception on any error
+     * @return the value in path, or null if it is missing or null
      **/
-    private static <T> Optional<T> getByPath(Map json, String... paths) {
-        Object cursor = json;
-        for (String path : paths) {
-            for (String pathElement : tokenizePath(path)) {
-                if (!(cursor instanceof Map)) return Optional.empty();
-
-                cursor = ((Map) cursor).get(pathElement);
-                if (cursor == null) return Optional.empty();
-            }
+    private static Object lookup(Map json, String path) {
+        if (isSingleField(path)) {
+            return json.get(path);
         }
-        return Optional.of((T) cursor);
+        Object cursor = json;
+        for (String pathElement : tokenizePath(path)) {
+            if (!(cursor instanceof Map)) return null;
+
+            cursor = ((Map) cursor).get(pathElement);
+            if (cursor == null) return null;
+        }
+        return cursor;
+    }
+
+    /** A path with nothing to split or unescape: one key of the source map. */
+    private static boolean isSingleField(String path) {
+        return path.indexOf('.') < 0 && path.indexOf('\\') < 0;
     }
 
     private static List<String> tokenizePath(String s) {

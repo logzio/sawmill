@@ -23,7 +23,10 @@ public class OrCondition implements Condition {
 
     @Override
     public boolean evaluate(Doc doc) {
-        return conditions.stream().anyMatch(condition -> condition.evaluate(doc));
+        for (Condition condition : conditions) {
+            if (condition.evaluate(doc)) return true;
+        }
+        return false;
     }
 
     public static class Factory implements Condition.Factory {

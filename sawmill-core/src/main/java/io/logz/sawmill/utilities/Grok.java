@@ -11,10 +11,10 @@ import org.joni.exception.ValueException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static io.logz.sawmill.FieldType.STRING;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -33,6 +33,7 @@ public final class Grok {
     private final Map<String, String> patternBank;
     private final boolean namedOnly;
     private final Regex compiledExpression;
+    private final List<CaptureGroup> captureGroups;
 
     public Grok(Map<String, String> patternBank, String grokPattern) {
         this(patternBank, grokPattern, true);
@@ -42,6 +43,20 @@ public final class Grok {
         this.patternBank = patternBank;
         this.namedOnly = namedOnly;
         this.compiledExpression = compilePattern(grokPattern);
+        this.captureGroups = captureGroups(compiledExpression);
+    }
+
+    /** Field name, type and group numbers of each named capture, resolved once instead of on every match. */
+    private List<CaptureGroup> captureGroups(Regex regex) {
+        if (regex.numberOfNames() == 0) {
+            return Collections.emptyList();
+        }
+        List<CaptureGroup> groups = new ArrayList<>();
+        for (Iterator<NameEntry> iterator = regex.namedBackrefIterator(); iterator.hasNext();) {
+            NameEntry entry = iterator.next();
+            groups.add(CaptureGroup.of(extractString(entry.name, entry.nameP, entry.nameEnd), entry.getBackRefs()));
+        }
+        return groups;
     }
 
     private Regex compilePattern(String grokPattern) {
@@ -108,17 +123,10 @@ public final class Grok {
         if (result == INTERRUPTED) {
             throw new InterruptedException();
         }
-        if (compiledExpression.numberOfNames() == 0) {
-            return matches;
-        }
 
         Region region = matcher.getEagerRegion();
-        for (Iterator<NameEntry> iterator = compiledExpression.namedBackrefIterator(); iterator.hasNext();) {
-            NameEntry entry = iterator.next();
-            String groupName = extractString(entry.name, entry.nameP, entry.nameEnd);
-            int[] matchNumbers = entry.getBackRefs();
-
-            matches.add(match(groupName, region, textAsBytes, matchNumbers));
+        for (CaptureGroup group : captureGroups) {
+            matches.add(match(group, region, textAsBytes));
         }
 
         return matches;
@@ -128,7 +136,7 @@ public final class Grok {
         try {
             int matchNumber = GROK_PATTERN_REGEX.nameToBackrefNumber(groupName.getBytes(StandardCharsets.UTF_8), 0,
                     groupName.getBytes(StandardCharsets.UTF_8).length, region);
-            Match match = match(groupName, region, pattern.getBytes(), matchNumber);
+            Match match = match(CaptureGroup.of(groupName, matchNumber), region, pattern.getBytes());
             List<Object> values = match.getValues();
             return values.size() == 0 ? null : (String) values.get(0);
         } catch (ValueException e) {
@@ -136,15 +144,11 @@ public final class Grok {
         }
     }
 
-    private Match match(String groupName, Region region, byte[] textAsBytes, int... matchNumbers) {
-        String[] parts = groupName.split(":");
-        String fieldName = parts[0];
-        FieldType type = parts.length == 2 ? FieldType.tryParseOrDefault(parts[1]) : STRING;
+    private Match match(CaptureGroup group, Region region, byte[] textAsBytes) {
+        List<Offset> offsets = getOffsets(region.beg, region.end, group.backRefs);
+        List<MatchValue> values = getMatchValue(textAsBytes, offsets, group.type);
 
-        List<Offset> offsets = getOffsets(region.beg, region.end, matchNumbers);
-        List<MatchValue> values = getMatchValue(textAsBytes, offsets, type);
-
-        return new Match(fieldName, values);
+        return new Match(group.fieldName, values);
     }
 
     private List<Offset> getOffsets(int[] beg, int[] end, int[] matchNumbers) {
@@ -186,6 +190,25 @@ public final class Grok {
         }
     }
 
+    private static final class CaptureGroup {
+        private final String fieldName;
+        private final FieldType type;
+        private final int[] backRefs;
+
+        private CaptureGroup(String fieldName, FieldType type, int[] backRefs) {
+            this.fieldName = fieldName;
+            this.type = type;
+            this.backRefs = backRefs;
+        }
+
+        /** {@code groupName} is the field name, optionally followed by {@code :type}. */
+        private static CaptureGroup of(String groupName, int... backRefs) {
+            String[] parts = groupName.split(":");
+            FieldType type = parts.length == 2 ? FieldType.tryParseOrDefault(parts[1]) : STRING;
+            return new CaptureGroup(parts[0], type, backRefs);
+        }
+    }
+
     public final class Match {
         private final String name;
         private final List<MatchValue> values;
@@ -204,7 +227,11 @@ public final class Grok {
         }
 
         public List<Object> getValues() {
-            return values.stream().map(MatchValue::getValue).collect(Collectors.toList());
+            List<Object> result = new ArrayList<>(values.size());
+            for (MatchValue value : values) {
+                result.add(value.getValue());
+            }
+            return result;
         }
     }
 

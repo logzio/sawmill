@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -18,6 +19,7 @@ public class PipelineExecutor implements Closeable {
 
     private final PipelineExecutionTimeWatchdog watchdog;
     private final PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker;
+    private final boolean tracksProcessorTime;
 
     public PipelineExecutor() {
         this(new PipelineExecutionMetricsMBean());
@@ -30,6 +32,7 @@ public class PipelineExecutor implements Closeable {
     public PipelineExecutor(PipelineExecutionTimeWatchdog watchdog, PipelineExecutionMetricsTracker pipelineExecutionMetricsTracker) {
         this.watchdog = watchdog;
         this.pipelineExecutionMetricsTracker = pipelineExecutionMetricsTracker;
+        this.tracksProcessorTime = pipelineExecutionMetricsTracker.tracksProcessorTime();
     }
 
     public ExecutionResult execute(Pipeline pipeline, Doc doc) {
@@ -114,9 +117,9 @@ public class PipelineExecutor implements Closeable {
         String pipelineId = pipeline.getId();
         String processorName = executionStep.getProcessorName();
 
-        pipelineStopwatch.startProcessor();
+        if (tracksProcessorTime) pipelineStopwatch.startProcessor();
         ProcessResult processResult = processor.process(doc);
-        long processorTook = pipelineStopwatch.processorElapsed();
+        long processorTook = tracksProcessorTime ? pipelineStopwatch.processorElapsed() : 0;
 
         if (processResult.isSucceeded()) {
             pipelineExecutionMetricsTracker.processorFinishedSuccessfully(pipelineId, processorName, processorTook);
@@ -139,7 +142,7 @@ public class PipelineExecutor implements Closeable {
     }
 
     private ExecutionResult processorErrorExecutionResult(ProcessResult.Error error, String processorName, Pipeline pipeline) {
-        String message = error.getMessage();
+        Supplier<String> message = error::getMessage;
         if (error.getException().isPresent()) {
             return ExecutionResult.failure(message, processorName,
                     new PipelineExecutionException(pipeline.getId(), error.getException().get()));

@@ -20,9 +20,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.BiFunction;
 
 import static org.joni.Matcher.INTERRUPTED;
 
@@ -42,8 +45,10 @@ public class KeyValueProcessor implements Processor {
     private final String field;
     private final Template targetField;
     private final Regex pattern;
-    private final List<String> includeKeys;
-    private final List<String> excludeKeys;
+    private final int keyGroupNumber;
+    private final int[] valueGroupNumbers;
+    private final Set<String> includeKeys;
+    private final Set<String> excludeKeys;
     private final boolean allowDuplicateValues;
     private final String prefix;
     private final boolean recursive;
@@ -67,8 +72,11 @@ public class KeyValueProcessor implements Processor {
         this.field = requireNonNull(field, "field cannot be null");
         this.targetField = targetField;
         this.pattern = buildPattern(fieldSplit, valueSplit, includeBrackets);
-        this.includeKeys = includeKeys;
-        this.excludeKeys = excludeKeys;
+        this.keyGroupNumber = pattern.nameToBackrefNumber(KEY.getBytes(), 0, KEY.getBytes().length, null);
+        this.valueGroupNumbers = valueGroupNumbers(pattern);
+        // sets: retainAll/removeAll call contains() once per parsed key
+        this.includeKeys = includeKeys == null ? null : new HashSet<>(includeKeys);
+        this.excludeKeys = excludeKeys == null ? null : new HashSet<>(excludeKeys);
         this.allowDuplicateValues = allowDuplicateValues;
         this.prefix = prefix;
         this.recursive = recursive;
@@ -106,7 +114,7 @@ public class KeyValueProcessor implements Processor {
     @Override
     public ProcessResult process(Doc doc) throws InterruptedException {
         if (!doc.hasField(field)) {
-            return ProcessResult.failure(String.format("failed to process kv, couldn't find field [%s]", field));
+            return ProcessResult.failure(() -> String.format("failed to process kv, couldn't find field [%s]", field));
         }
 
         Map<String, Object> kvMap = new HashMap<>();
@@ -123,7 +131,7 @@ public class KeyValueProcessor implements Processor {
         } else if (kvField instanceof String) {
             kvMap = parse((String) kvField);
         } else {
-            return ProcessResult.failure(String.format("failed to process kv, cannot parse type [%s] of field [%s]", kvField.getClass(), field));
+            return ProcessResult.failure(() -> String.format("failed to process kv, cannot parse type [%s] of field [%s]", kvField.getClass(), field));
         }
 
         if (includeKeys != null) {
@@ -143,8 +151,9 @@ public class KeyValueProcessor implements Processor {
     }
 
     private String getKey(byte[] message, Region region) {
-        int matchNumber = pattern.nameToBackrefNumber(KEY.getBytes(), 0, KEY.getBytes().length, region);
-        String key = prefix + trim(extractString(message, region.beg[matchNumber], region.end[matchNumber]), trimKey);
+        String trimmed = trim(extractString(message, region.beg[keyGroupNumber], region.end[keyGroupNumber]), trimKey);
+        // "" + key would copy the key; a null prefix still concatenates to "null...", as before
+        String key = "".equals(prefix) ? trimmed : prefix + trimmed;
         return key.length() <= maxKeyLength ? key : null;
     }
 
@@ -185,14 +194,10 @@ public class KeyValueProcessor implements Processor {
                 if (value != null) {
 
                     if (allowDuplicateValues) {
-                        kvMap.compute(key, (k, oldVal) -> {
-                            if (oldVal == null) return value;
-                            if (oldVal instanceof List) {
-                                ((List) oldVal).add(value);
-                                return oldVal;
-                            }
-                            return new ArrayList<>(Arrays.asList(oldVal, value));
-                        });
+                        // merge, not putIfAbsent: HashMap resizes before inserting in merge and compute but after
+                        // in put, so keeping compute's timing keeps the map's iteration order, and with it the order
+                        // fields reach the doc
+                        kvMap.merge(key, value, APPEND_VALUE);
                     } else {
                         kvMap.putIfAbsent(key, value);
                     }
@@ -211,22 +216,35 @@ public class KeyValueProcessor implements Processor {
         return kvMap;
     }
 
+    private static final BiFunction<Object, Object, Object> APPEND_VALUE = (oldVal, value) -> {
+        if (oldVal instanceof List) {
+            ((List) oldVal).add(value);
+            return oldVal;
+        }
+        return new ArrayList<>(Arrays.asList(oldVal, value));
+    };
+
     private String getMatchedValue(byte[] message, Region region) {
-        Iterator<NameEntry> iterator = pattern.namedBackrefIterator();
-
-        // Skip the key
-        iterator.next();
-
-        // Running all over the value options and take the one that captured
-        while (iterator.hasNext()) {
-            NameEntry entry = iterator.next();
-            for (int number : entry.getBackRefs()) {
-                if (region.beg[number] >= 0) {
-                    return extractString(message, region.beg[number], region.end[number]);
-                }
+        // the value alternative that captured
+        for (int number : valueGroupNumbers) {
+            if (region.beg[number] >= 0) {
+                return extractString(message, region.beg[number], region.end[number]);
             }
         }
         return null;
+    }
+
+    /** Value group numbers in the order of the named groups after the key, resolved once per pattern. */
+    private static int[] valueGroupNumbers(Regex pattern) {
+        List<Integer> numbers = new ArrayList<>();
+        Iterator<NameEntry> iterator = pattern.namedBackrefIterator();
+        iterator.next(); // the key
+        while (iterator.hasNext()) {
+            for (int number : iterator.next().getBackRefs()) {
+                numbers.add(number);
+            }
+        }
+        return numbers.stream().mapToInt(Integer::intValue).toArray();
     }
 
     private String extractString(byte[] original, int start, int end) {

@@ -23,7 +23,10 @@ public class NotCondition implements Condition {
 
     @Override
     public boolean evaluate(Doc doc) {
-        return conditions.stream().allMatch(condition -> !condition.evaluate(doc));
+        for (Condition condition : conditions) {
+            if (condition.evaluate(doc)) return false;
+        }
+        return true;
     }
 
     public static class Factory implements Condition.Factory {

@@ -73,6 +73,23 @@ public class GrokProcessorTest {
     }
 
     @Test
+    public void testRepeatedAndUnmatchedCaptures() throws InterruptedException {
+        String field = "message";
+        Doc doc = createDoc(field, "a b y");
+
+        Map<String,Object> config = new HashMap<>();
+        config.put("field", field);
+        config.put("patterns", Arrays.asList("^(?<w>\\w) (?<w>\\w) (?<o>x)?(?<y>y)$"));
+
+        GrokProcessor grokProcessor = factory.create(config);
+
+        assertThat(grokProcessor.process(doc).isSucceeded()).isTrue();
+        assertThat((List) doc.getField("w")).isEqualTo(Arrays.asList("a", "b"));
+        assertThat((String) doc.getField("y")).isEqualTo("y");
+        assertThat(doc.hasField("o")).isFalse();
+    }
+
+    @Test
     public void testOverwrite() throws InterruptedException {
         String field = "message";
         List<String> patterns = Arrays.asList("%{COMBINEDAPACHELOG}+%{GREEDYDATA:extra_fields}");
