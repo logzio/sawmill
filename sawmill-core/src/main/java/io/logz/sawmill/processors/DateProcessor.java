@@ -16,15 +16,16 @@ import java.time.ZonedDateTime;
 import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.time.format.SignStyle;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalQueries;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
@@ -117,9 +118,12 @@ public class DateProcessor implements Processor {
     private final String field;
     private final String targetField;
     private final List<String> formats;
-    private final List<DateTimeFormatter> formatters;
+    // per format: the parsed value, or null
+    private final List<Function<String, ZonedDateTime>> parsers;
     private final ZoneId timeZone;
-    private final DateTimeFormatter outputFormatter;
+    // the zone of parsed values that carry none
+    private final ZoneId zoneIfMissing;
+    private final Function<ZonedDateTime, String> output;
 
     public DateProcessor(String field, String targetField, List<String> formats, ZoneId timeZone, String outputFormat) {
         checkState(CollectionUtils.isNotEmpty(formats), "formats cannot be empty");
@@ -127,13 +131,19 @@ public class DateProcessor implements Processor {
         this.targetField = requireNonNull(targetField, "target field cannot be null");
         this.formats = formats;
         this.timeZone = timeZone;
-        this.outputFormatter = computeAndGetFormatter(outputFormat, timeZone);
+        this.zoneIfMissing = timeZone == null ? ZoneOffset.UTC : timeZone;
+        DateTimeFormatter outputFormatter = computeAndGetFormatter(outputFormat, timeZone);
+        this.output = "ELASTIC".equals(outputFormat) ? ElasticDateFormat::format : outputFormatter::format;
 
-        this.formatters = new ArrayList<>();
+        this.parsers = new ArrayList<>();
         formats.forEach(format -> {
             DateTimeFormatter formatter = computeAndGetFormatter(format, timeZone);
+            FastDateParser.Parser fastParser = FastDateParser.forFormat(format);
 
-            formatters.add(formatter);
+            parsers.add(value -> {
+                ZonedDateTime dateTime = fastParser == null ? null : fastParser.parse(value, zoneIfMissing);
+                return dateTime != null ? dateTime : getZonedDateTime(value, formatter);
+            });
         });
 
     }
@@ -177,32 +187,36 @@ public class DateProcessor implements Processor {
             return ProcessResult.failure(() -> String.format("failed to parse date in path [%s], [%s] is not one of the formats [%s]", field, shownValue, formats));
         }
 
-        doc.addField(targetField, dateTime.format(outputFormatter));
+        doc.addField(targetField, output.apply(dateTime));
 
         return ProcessResult.success();
     }
 
     private ZonedDateTime getISODateTime(String value) {
-        for (DateTimeFormatter formatter : formatters) {
-            try {
-                return getZonedDateTime(value, formatter);
-            } catch (DateTimeParseException e) {
-                // keep trying
-            }
+        for (Function<String, ZonedDateTime> parser : parsers) {
+            ZonedDateTime dateTime = parser.apply(value);
+            if (dateTime != null) return dateTime;
         }
         return null;
     }
 
+    /**
+     * Same result as {@code formatter.parseBest(value, ZonedDateTime::from, LocalDateTime::from)}, or {@code null} where
+     * parseBest throws, without {@code ZonedDateTime.from} throwing (and filling in a stack trace) for every value that
+     * has no zone: the zone is checked first.
+     */
     private ZonedDateTime getZonedDateTime(String value, DateTimeFormatter formatter) {
-        TemporalAccessor temporal = formatter.parseBest(value, ZonedDateTime::from, LocalDateTime::from);
-        if (temporal instanceof LocalDateTime) {
-            if (timeZone == null) {
-                return ZonedDateTime.of((LocalDateTime) temporal, ZoneOffset.UTC);
-            } else {
-                return ZonedDateTime.of((LocalDateTime) temporal, timeZone);
+        try {
+            TemporalAccessor parsed = formatter.parse(value);
+            try {
+                // the zone query itself throws for an offset outside +-18:00
+                if (parsed.query(TemporalQueries.zone()) != null) return ZonedDateTime.from(parsed);
+            } catch (RuntimeException e) {
+                // parseBest moves on to LocalDateTime::from
             }
-        } else {
-            return ZonedDateTime.from(temporal);
+            return ZonedDateTime.of(LocalDateTime.from(parsed), zoneIfMissing);
+        } catch (RuntimeException e) {
+            return null;
         }
     }
 
